@@ -14,18 +14,20 @@ use ndarray::{concatenate, Zip};
 use ndarray_rand::rand::SeedableRng;
 use ndarray_rand::rand_distr::Normal;
 use ndarray_rand::RandomExt;
-use num::complex::Complex;
+use ndrustfft::{ndfft_par, ndfft_r2c_par, ndifft_par, ndifft_r2c_par, Complex, FftHandler};
 use numpy::c64;
 
 /// Utility functions used for turbulence generation.
 pub mod utilities {
     use super::*;
+
     pub fn sinc2(x: f64) -> f64 {
         match x {
             x if x == 0.0 => 1.0,
             x => (x.sin() / x).powi(2),
         }
     }
+
     /// Returns the frequency components for a fft given a signal length (N) and a
     /// sampling distance. This function replicates the behaviour of
     /// `numpy.fft.fftfreq`.
@@ -37,6 +39,43 @@ pub mod utilities {
         df * concatenate![Axis(0), f1, f2]
     }
 
+    pub fn rfft3d(input: &mut Array3<f64>) -> Array3<c64> {
+        let (nx, ny, nz) = input.dim();
+        let mut vhat: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
+
+        let mut handler: FftHandler<f64> = FftHandler::new(nz);
+        ndfft_r2c_par(input, &mut vhat, &mut handler, 2);
+
+        let mut vhat2: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut handler: FftHandler<f64> = FftHandler::new(nx);
+
+        ndfft_par(&mut vhat, &mut vhat2, &mut handler, 0);
+
+        let mut vhat3: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut handler: FftHandler<f64> = FftHandler::new(ny);
+
+        ndfft_par(&mut vhat2, &mut vhat3, &mut handler, 1);
+
+        vhat3
+    }
+    pub fn irfft3d(input: &mut Array3<c64>) -> Array3<f64> {
+        let (nx, ny, _nz) = input.dim();
+        let nz = (_nz - 1) * 2;
+
+        let mut handler: FftHandler<f64> = FftHandler::new(nx);
+        let mut vhat2: Array3<c64> = Array3::zeros((nx, ny, _nz));
+        ndifft_par(input, &mut vhat2, &mut handler, 0);
+
+        let mut handler: FftHandler<f64> = FftHandler::new(ny);
+        let mut vhat: Array3<c64> = Array3::zeros((nx, ny, _nz));
+        ndifft_par(&mut vhat2, &mut vhat, &mut handler, 1);
+
+        let mut output: Array3<f64> = Array3::zeros((nx, ny, nz));
+        let mut handler: FftHandler<f64> = FftHandler::new(nz);
+        ndifft_r2c_par(&mut vhat, &mut output, &mut handler, 2);
+
+        output
+    }
     /// Returns the frequency components for a real fft given a signal length (N)
     /// and a sampling distance. This function replicates the behaviour of
     /// `numpy.fft.rfftfreq`.
@@ -46,6 +85,8 @@ pub mod utilities {
         let f: Array1<f64> = Array1::from_iter(0.._N).mapv(|elem| elem as f64);
         df * f
     }
+
+    /// Returns wave numbers for a turbulence box specification.
     pub fn freq_components(
         Lx: f64,
         Ly: f64,
@@ -66,30 +107,13 @@ pub mod utilities {
     pub fn complex_random_gaussian(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<c64> {
         let mut rng = ndarray_rand::rand::rngs::SmallRng::seed_from_u64(seed);
         let dist = Normal::new(0.0, SQRT_2.recip()).unwrap();
-        let real: Array4<Complex<f64>> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
+        let real: Array4<c64> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
             .mapv(|elem| Complex::new(elem, 0.0));
-        let imag: Array4<Complex<f64>> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
+        let imag: Array4<c64> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
             .mapv(|elem| Complex::new(0.0, elem));
 
         real + imag
     }
-}
-pub fn lifetime_approx(mut kL: f64) -> f64 {
-    if kL < 0.005 {
-        kL = 0.005;
-    }
-    let kSqr = kL.powi(2);
-    (1.0 + kSqr).powf(1.0 / 6.0) / kL
-        * (1.2050983316598936 - 0.04079766636961979 * kL + 1.1050803451576134 * kSqr)
-        / (1.0 - 0.04103886513006046 * kL + 1.1050902034670118 * kSqr)
-}
-
-pub fn lifetime_exact(_kL: f64) -> f64 {
-    unimplemented!();
-}
-
-pub fn vonkarman_spectrum(ae: f64, k: f64, L: f64) -> f64 {
-    ae * L.powf(5.0 / 3.0) * (L * k).powi(4) / (1.0 + (L * k).powi(2)).powf(17.0 / 6.0)
 }
 
 /// Mann tensor calculations
@@ -228,6 +252,24 @@ pub mod Tensors {
     }
 }
 
+pub fn lifetime_approx(mut kL: f64) -> f64 {
+    if kL < 0.005 {
+        kL = 0.005;
+    }
+    let kSqr = kL.powi(2);
+    (1.0 + kSqr).powf(1.0 / 6.0) / kL
+        * (1.2050983316598936 - 0.04079766636961979 * kL + 1.1050803451576134 * kSqr)
+        / (1.0 - 0.04103886513006046 * kL + 1.1050902034670118 * kSqr)
+}
+
+pub fn lifetime_exact(_kL: f64) -> f64 {
+    unimplemented!();
+}
+
+pub fn vonkarman_spectrum(ae: f64, k: f64, L: f64) -> f64 {
+    ae * L.powf(5.0 / 3.0) * (L * k).powi(4) / (1.0 + (L * k).powi(2)).powf(17.0 / 6.0)
+}
+
 pub fn stencilate(
     ae: f64,
     L: f64,
@@ -299,5 +341,25 @@ pub fn partial_turbulate(
         UVW_f.slice(s![.., .., .., 2]).to_owned(),
     )
 }
+
+pub fn turbulate(
+    stencil: &ArrayView5<f64>,
+    seed: u64,
+    Nx: usize,
+    Ny: usize,
+    Nz: usize,
+    Lx: f64,
+    Ly: f64,
+    Lz: f64,
+) -> (Array3<f64>, Array3<f64>, Array3<f64>) {
+    let (mut U_f, mut V_f, mut W_f): (Array3<c64>, Array3<c64>, Array3<c64>) =
+        partial_turbulate(stencil, seed, Nx, Ny, Nz, Lx, Ly, Lz);
+
+    let U: Array3<f64> = utilities::irfft3d(&mut U_f);
+    let V: Array3<f64> = utilities::irfft3d(&mut V_f);
+    let W: Array3<f64> = utilities::irfft3d(&mut W_f);
+    (U, V, W)
+}
+
 mod python_interface;
 mod tests;

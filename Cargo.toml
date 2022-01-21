@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2018"
 
 
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "rustmann"
@@ -17,3 +16,4 @@ ndarray = { version = "0.15.4", features = ["rayon"] }
 numpy = "0.15.0"
 ndarray-rand = "0.14.0"
 num = "0.4.0"
+ndrustfft = "0.1.6"
