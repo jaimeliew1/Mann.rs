@@ -1,15 +1,11 @@
-/// Utility functions used for turbulence generation.
-use std::f64::consts::{PI, SQRT_2};
-use ndarray::prelude::*;
-use ndarray::{concatenate};
-use ndarray_rand::rand::SeedableRng;
-use ndarray_rand::rand_distr::Normal;
-use ndarray_rand::RandomExt;
+use ndarray::{concatenate, prelude::*};
+use ndarray_rand::{rand::SeedableRng, rand_distr::Normal, RandomExt};
 use ndrustfft::{ndfft_par, ndfft_r2c_par, ndifft_par, ndifft_r2c_par, Complex, FftHandler};
+use std::f64::consts::{PI, SQRT_2};
 
 use numpy::c64;
 
-
+/// Various mathematical function implementations.
 pub mod Utilities {
     use super::*;
 

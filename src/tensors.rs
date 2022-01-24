@@ -1,7 +1,6 @@
 pub use crate::utilities::Utilities;
 use ndarray::prelude::*;
 use ndarray_linalg::cholesky::*;
-/// Mann tensor calculations
 use std::f64::consts::PI;
 
 pub fn lifetime_approx(mut kL: f64) -> f64 {
@@ -10,14 +9,18 @@ pub fn lifetime_approx(mut kL: f64) -> f64 {
     }
     let kSqr = kL.powi(2);
     (1.0 + kSqr).powf(1.0 / 6.0) / kL
-        * (1.2050983316598936 - 0.04079766636961979 * kL + 1.1050803451576134 * kSqr)
-        / (1.0 - 0.04103886513006046 * kL + 1.1050902034670118 * kSqr)
+    * (1.2050983316598936 - 0.04079766636961979 * kL + 1.1050803451576134 * kSqr)
+    / (1.0 - 0.04103886513006046 * kL + 1.1050902034670118 * kSqr)
 }
 
 pub fn vonkarman_spectrum(ae: f64, k: f64, L: f64) -> f64 {
     ae * L.powf(5.0 / 3.0) * (L * k).powi(4) / (1.0 + (L * k).powi(2)).powf(17.0 / 6.0)
 }
 
+/// Spectral tensor calculations
+/// 
+/// Contains calculations for various spectral tensors, including isotropic,
+/// Mann (sheared), and their decompositions.
 pub mod Tensors {
     use super::*;
 

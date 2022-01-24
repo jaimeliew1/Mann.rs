@@ -1,28 +1,30 @@
-import numpy as np
-import rustmann
-from tqdm import trange
-import time
+import rustmann.Mann as Mann
+from tqdm import tqdm, trange
+params = {
+    "ae": 0.2,
+    "L": 30.0,
+    "gamma": 3.2,
+    "Lx": 6000,
+    "Ly": 200,
+    "Lz": 200,
+    "Nx": 8192,
+    "Ny": 64,
+    "Nz": 64,
+}
 
-
-Nx, Ny, Nz = 8192, 256, 256
-Lx, Ly, Lz = 8192, 200, 200
-ae = 0.2
-gamma = 3.2
-L = 30.0
-seed = 1000
-
+N = 10
 
 if __name__ == "__main__":
+    print("Generating stencil...")
+    for _ in trange(1, desc="stencil"):
+        stencil = Mann.Stencil(**params)
 
-    t_start = time.time()
-    print("Generating stencil...", end="")
+    print(f"Generating {N} turbulence boxes to turb/...")
+    for seed in trange(N, desc="turbulence"):
+        U, V, W = stencil.turbulence(seed)
+        
+        Mann.save_box(f"turb/U_{seed}.bin", U)
+        Mann.save_box(f"turb/V_{seed}.bin", V)
+        Mann.save_box(f"turb/W_{seed}.bin", W)
 
-    stencil = rustmann.stencilate_f64(ae, L, gamma, Lx, Ly, Lz, Nx, Ny, Nz)
-    print(f"Done ({time.time() - t_start:2.2f} seconds)")
-
-    t_start = time.time()
-    print("Generating stencil...", end="")
-
-    U, V, W = rustmann.turbulate_f64(stencil, seed, Nx, Ny, Nz, Lx, Ly, Lz)
-
-    print(f"Done ({time.time() - t_start:2.2f} seconds)")
+  
