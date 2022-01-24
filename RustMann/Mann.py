@@ -1,4 +1,4 @@
-from . import rustmann
+from . import RustMann
 from pydantic import BaseModel, Extra, PositiveInt, NonNegativeFloat, PositiveFloat
 import numpy as np
 from pathlib import Path
@@ -17,7 +17,7 @@ class Stencil(BaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.stencil = rustmann.stencilate_f64(
+        self.stencil = RustMann.stencilate_f64(
             self.ae,
             self.L,
             self.gamma,
@@ -33,7 +33,7 @@ class Stencil(BaseModel):
         extra = Extra.allow
 
     def turbulence(self, seed: int):
-        U, V, W = rustmann.turbulate_f64(
+        U, V, W = RustMann.turbulate_f64(
             self.stencil, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
         )
 

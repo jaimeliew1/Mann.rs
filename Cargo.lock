@@ -3,6 +3,19 @@
 version = 3
 
 [[package]]
+name = "RustMann"
+version = "0.1.0"
+dependencies = [
+ "ndarray",
+ "ndarray-linalg",
+ "ndarray-rand",
+ "ndrustfft",
+ "num",
+ "numpy",
+ "pyo3",
+]
+
+[[package]]
 name = "approx"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -683,19 +696,6 @@ dependencies = [
  "primal-check",
  "strength_reduce",
  "transpose",
-]
-
-[[package]]
-name = "rustmann"
-version = "0.1.0"
-dependencies = [
- "ndarray",
- "ndarray-linalg",
- "ndarray-rand",
- "ndrustfft",
- "num",
- "numpy",
- "pyo3",
 ]
 
 [[package]]

@@ -10,7 +10,7 @@ use crate::{
     Utilities::complex_random_gaussian, Utilities::freq_components,
 };
 #[pymodule]
-fn rustmann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
     fn sheared_f64<'py>(
         py: Python<'py>,
@@ -40,7 +40,6 @@ fn rustmann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         ae: f64,
         L: f64,
         gamma: f64,
-        Lx: f64,
         Ly: f64,
         Lz: f64,
         Ny: usize,

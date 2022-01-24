@@ -1,9 +1,14 @@
 import numpy as np
-import rustmann
+from RustMann import RustMann
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+
 Lx, Ly, Lz = 1000, 1000, 1000
 Ny, Nz = 33, 33
+ae = 1
+L = 33.6
+gamma = 3.9
+
 def one_comp_spec(kx, ae, L, gamma, sinc=False):
 
     Nr = 150
@@ -19,10 +24,8 @@ def one_comp_spec(kx, ae, L, gamma, sinc=False):
         for j, theta in enumerate(Thetas):
             ky = r * np.cos(theta)
             kz = r * np.sin(theta)
-            if sinc:
-                tensor = rustmann.sheared_tensor_sinc_f64(np.array([kx, ky, kz]), ae, L, gamma, Lx, Ly, Lz, Ny, Nz)
-            else:
-                tensor = rustmann.sheared_tensor_f64(np.array([kx, ky, kz]), ae, L, gamma)
+
+            tensor = RustMann.sheared_f64(np.array([kx, ky, kz]), ae, L, gamma)
             UU_grid[i, j] = r * tensor[0, 0]
             VV_grid[i, j] = r * tensor[1, 1]
             WW_grid[i, j] = r * tensor[2, 2]
@@ -35,12 +38,10 @@ def one_comp_spec(kx, ae, L, gamma, sinc=False):
 
 
 
-ae = 1
-L = 33.6
-gamma = 3.9
+
 if __name__ == "__main__":
 
-    Kxs = np.logspace(-4, 2, 50)
+    Kxs = np.logspace(-5, 1, 50)
 
     UU = np.zeros_like(Kxs)
     VV = np.zeros_like(Kxs)
@@ -51,31 +52,20 @@ if __name__ == "__main__":
         UU[j], VV[j], WW[j], UW[j] = one_comp_spec(kx, ae, L, gamma)
 
     plt.figure()
-    plt.semilogx(Kxs, Kxs * UU, '--', label="UU (nosinc)")
-    plt.semilogx(Kxs, Kxs * VV, '--', label="VV (nosinc)")
-    plt.semilogx(Kxs, Kxs * WW, '--', label="WW (nosinc)")
-    plt.semilogx(Kxs, Kxs * UW, '--', label="UW (nosinc)")
+    plt.semilogx(Kxs, Kxs * UU, '--', label="UU")
+    plt.semilogx(Kxs, Kxs * VV, '--', label="VV")
+    plt.semilogx(Kxs, Kxs * WW, '--', label="WW")
+    plt.semilogx(Kxs, Kxs * UW, '--', label="UW")
     UU = np.zeros_like(Kxs)
     VV = np.zeros_like(Kxs)
     WW = np.zeros_like(Kxs)
     UW = np.zeros_like(Kxs)
 
-    # for j, kx in enumerate(tqdm(Kxs)):
-    #     UU[j], VV[j], WW[j], UW[j] = one_comp_spec(kx, ae, L, gamma, sinc=True)
-
-    # # plt.figure()
-    # plt.semilogx(Kxs, Kxs * UU, label="UU")
-    # plt.semilogx(Kxs, Kxs * VV, label="VV")
-    # plt.semilogx(Kxs, Kxs * WW, label="WW")
-    # plt.semilogx(Kxs, Kxs * UW, label="UW")
-
-    plt.legend(loc="upper center", ncol=4)
+    plt.legend()
     plt.grid()
-    # plt.ylim(-1, 2.5)
 
     plt.title(rf"$\gamma={gamma:2.2f}$")
     plt.xlabel("Wave number, $k1$ [rad/m]")
     plt.ylabel("Cross spectra [(rad/m)(m^2/s^2)]")
 
     plt.show()
-    # plt.savefig(fig_dir / f"spectra_gamma{gamma}.png", dpi=200, bbox_inches="tight")

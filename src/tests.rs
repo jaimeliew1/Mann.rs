@@ -28,16 +28,6 @@ mod tests {
         assert!((ans - correct).abs() < TOL);
     }
 
-    // // #[test]
-    // fn test_lifetime_exact() {
-    //     let kL = 1.0;
-    //     let correct = 1.234430999866;
-
-    //     let ans = lifetime_exact(kL);
-
-    //     // assert!((ans - correct).abs() < TOL);
-    // }
-
     #[test]
     fn test_isotropic_tensor() {
         let ae: f64 = 1.0;
