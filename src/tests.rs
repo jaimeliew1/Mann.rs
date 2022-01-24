@@ -49,7 +49,7 @@ mod tests {
             [-7.40562240e-05, 3.70281120e-04, -2.22168672e-04],
             [-1.11084336e-04, -2.22168672e-04, 1.85140560e-04],
         ];
-        let ans: Array2<f64> = Tensors::iso_tensor(&K.view(), ae, L);
+        let ans: Array2<f64> = Tensors::isotropic(&K.view(), ae, L);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -65,7 +65,7 @@ mod tests {
             [-0.01825522, 0., 0.00608507],
             [0.01217015, -0.00608507, 0.],
         ];
-        let ans: Array2<f64> = Tensors::sqrt_iso_tensor(&K.view(), ae, L);
+        let ans: Array2<f64> = Tensors::isotropic_sqrt(&K.view(), ae, L);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -89,7 +89,7 @@ mod tests {
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
     }
     #[test]
-    fn test_sqrt_sheared_tensor() {
+    fn test_sheared_sqrt() {
         let gamma = 1.0;
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
@@ -100,13 +100,13 @@ mod tests {
             [-0.01527416, -0.00058533, 0.0048014],
             [0.0114758, -0.0057379, 0.],
         ];
-        let ans: Array2<f64> = Tensors::sqrt_sheared_tensor(&K.view(), ae, L, gamma);
+        let ans: Array2<f64> = Tensors::sheared_sqrt(&K.view(), ae, L, gamma);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
     }
     #[test]
-    fn test_sheared_tensor() {
+    fn test_sheared() {
         let gamma = 1.0;
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
@@ -117,7 +117,7 @@ mod tests {
             [2.38208492e-06, 2.56695868e-04, -1.71924607e-04],
             [-1.50003417e-04, -1.71924607e-04, 1.64617544e-04],
         ];
-        let ans: Array2<f64> = Tensors::sheared_tensor(&K.view(), ae, L, gamma);
+        let ans: Array2<f64> = Tensors::sheared(&K.view(), ae, L, gamma);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));

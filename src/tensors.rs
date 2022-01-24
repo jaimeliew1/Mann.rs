@@ -9,8 +9,8 @@ pub fn lifetime_approx(mut kL: f64) -> f64 {
     }
     let kSqr = kL.powi(2);
     (1.0 + kSqr).powf(1.0 / 6.0) / kL
-    * (1.2050983316598936 - 0.04079766636961979 * kL + 1.1050803451576134 * kSqr)
-    / (1.0 - 0.04103886513006046 * kL + 1.1050902034670118 * kSqr)
+        * (1.2050983316598936 - 0.04079766636961979 * kL + 1.1050803451576134 * kSqr)
+        / (1.0 - 0.04103886513006046 * kL + 1.1050902034670118 * kSqr)
 }
 
 pub fn vonkarman_spectrum(ae: f64, k: f64, L: f64) -> f64 {
@@ -18,13 +18,14 @@ pub fn vonkarman_spectrum(ae: f64, k: f64, L: f64) -> f64 {
 }
 
 /// Spectral tensor calculations
-/// 
+///
 /// Contains calculations for various spectral tensors, including isotropic,
-/// Mann (sheared), and their decompositions.
+/// sheared (Mann), and their decompositions.
 pub mod Tensors {
     use super::*;
 
-    pub fn sqrt_iso_tensor(K: &ArrayView1<f64>, ae: f64, L: f64) -> Array2<f64> {
+    /// Decomposition of isotropic spectral tensor
+    pub fn isotropic_sqrt(K: &ArrayView1<f64>, ae: f64, L: f64) -> Array2<f64> {
         let k_norm = K.dot(K).sqrt();
         if k_norm == 0.0 {
             return Array2::zeros((3, 3));
@@ -36,7 +37,8 @@ pub mod Tensors {
         tensor
     }
 
-    pub fn iso_tensor(K: &ArrayView1<f64>, ae: f64, L: f64) -> Array2<f64> {
+    /// Isotropic spectral tensor
+    pub fn isotropic(K: &ArrayView1<f64>, ae: f64, L: f64) -> Array2<f64> {
         let k_norm = K.dot(K).sqrt();
         if k_norm == 0.0 {
             return Array2::zeros((3, 3));
@@ -51,6 +53,7 @@ pub mod Tensors {
         tensor
     }
 
+    /// Isotropic to sheared tensor transformation
     pub fn sheared_transform(K: &ArrayView1<f64>, _ae: f64, L: f64, gamma: f64) -> Array2<f64> {
         let k_norm2 = K.dot(K);
         if k_norm2 == 0.0 {
@@ -86,7 +89,8 @@ pub mod Tensors {
         ])
     }
 
-    pub fn sqrt_sheared_tensor(K: &ArrayView1<f64>, ae: f64, L: f64, gamma: f64) -> Array2<f64> {
+    /// Decomposition of sheared (Mann) spectral tensor
+    pub fn sheared_sqrt(K: &ArrayView1<f64>, ae: f64, L: f64, gamma: f64) -> Array2<f64> {
         let k_norm2 = K.dot(K);
         if k_norm2 == 0.0 {
             return Array2::zeros((3, 3));
@@ -96,12 +100,13 @@ pub mod Tensors {
 
         // Equation (12)
         let K0: Array1<f64> = K + arr1(&[0.0, 0.0, beta * K[0]]);
-        let iso_tensor = sqrt_iso_tensor(&K0.view(), ae, L);
+        let iso_tensor = isotropic_sqrt(&K0.view(), ae, L);
 
         A.dot(&iso_tensor)
     }
 
-    pub fn sheared_tensor(K: &ArrayView1<f64>, ae: f64, L: f64, gamma: f64) -> Array2<f64> {
+    /// Sheared (Mann) spectral tensor
+    pub fn sheared(K: &ArrayView1<f64>, ae: f64, L: f64, gamma: f64) -> Array2<f64> {
         let k_norm2 = K.dot(K);
         if k_norm2 == 0.0 {
             return Array2::zeros((3, 3));
@@ -111,17 +116,17 @@ pub mod Tensors {
 
         // Equation (12)
         let K0: Array1<f64> = K + arr1(&[0.0, 0.0, beta * K[0]]);
-        let iso_tensor = iso_tensor(&K0.view(), ae, L);
+        let iso_tensor = isotropic(&K0.view(), ae, L);
 
         A.dot(&iso_tensor).dot(&A.t())
     }
 
-    pub fn sheared_tensor_sinc(
+    /// Sheared spectral tensor with sinc correction
+    pub fn sheared_sinc(
         K: &ArrayView1<f64>,
         ae: f64,
         L: f64,
         gamma: f64,
-        _Lx: f64,
         Ly: f64,
         Lz: f64,
         Ny: usize,
@@ -145,7 +150,7 @@ pub mod Tensors {
                 ans = ans
                     + factor
                         * sinc
-                        * sheared_tensor(
+                        * sheared(
                             &arr1(&[K[0], K[1] + *ky * 2.0 * PI / Ly, K[2] + *kz * 2.0 * PI / Lz])
                                 .view(),
                             ae,
@@ -158,18 +163,18 @@ pub mod Tensors {
         ans
     }
 
-    pub fn sqrt_sheared_tensor_sinc(
+    /// Decomposition of sheared spectral tensor with sinc correction
+    pub fn sheared_sqrt_sinc(
         K: &ArrayView1<f64>,
         ae: f64,
         L: f64,
         gamma: f64,
-        _Lx: f64,
         Ly: f64,
         Lz: f64,
         Ny: usize,
         Nz: usize,
     ) -> Array2<f64> {
-        sheared_tensor_sinc(K, ae, L, gamma, _Lx, Ly, Lz, Ny, Nz)
+        sheared_sinc(K, ae, L, gamma, Ly, Lz, Ny, Nz)
             .cholesky(UPLO::Lower)
             .unwrap()
     }

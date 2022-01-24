@@ -43,7 +43,7 @@ pub fn stencilate(
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K: Array1<f64> = arr1(&[Kx[i], Ky[j], Kz[k]]);
-                    component.assign(&Tensors::sqrt_sheared_tensor(&K.view(), ae, L, gamma));
+                    component.assign(&Tensors::sheared_sqrt(&K.view(), ae, L, gamma));
                 }
             }
         });
@@ -73,19 +73,18 @@ pub fn stencilate_sinc(
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K: Array1<f64> = arr1(&[Kx[i], Ky[j], Kz[k]]);
                     if K.norm_l2() < 3.0 / L {
-                        component.assign(&Tensors::sqrt_sheared_tensor_sinc(
+                        component.assign(&Tensors::sheared_sqrt_sinc(
                             &K.view(),
                             ae,
                             L,
                             gamma,
-                            Lx,
                             Ly,
                             Lz,
                             Ny,
                             Nz,
                         ));
                     } else {
-                        component.assign(&Tensors::sqrt_sheared_tensor(&K.view(), ae, L, gamma));
+                        component.assign(&Tensors::sheared_sqrt(&K.view(), ae, L, gamma));
                     }
                 }
             }

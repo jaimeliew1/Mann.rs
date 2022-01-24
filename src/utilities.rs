@@ -9,6 +9,7 @@ use numpy::c64;
 pub mod Utilities {
     use super::*;
 
+    /// Unnormalized sinc squared function
     pub fn sinc2(x: f64) -> f64 {
         match x {
             x if x == 0.0 => 1.0,

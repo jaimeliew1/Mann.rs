@@ -1,39 +1,40 @@
-use ndarray::{Array3, Array1};
+use ndarray::{Array1, Array3};
 use numpy::{
-    c64, PyArray1, PyArray2, PyArray3, PyArray4, PyArray5, PyReadonlyArray1, PyReadonlyArray5, ToPyArray,
+    c64, PyArray1, PyArray2, PyArray3, PyArray4, PyArray5, PyReadonlyArray1, PyReadonlyArray5,
+    ToPyArray,
 };
 use pyo3::prelude::*;
 
 use crate::{
-    partial_turbulate, stencilate, turbulate, Utilities::complex_random_gaussian,
-    Utilities::freq_components, Tensors, stencilate_sinc,
+    partial_turbulate, stencilate, stencilate_sinc, turbulate, Tensors,
+    Utilities::complex_random_gaussian, Utilities::freq_components,
 };
 #[pymodule]
 fn rustmann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
-    fn sheared_tensor_f64<'py>(
+    fn sheared_f64<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f64>,
         ae: f64,
         L: f64,
         gamma: f64,
     ) -> &'py PyArray2<f64> {
-        Tensors::sheared_tensor(&K.as_array(), ae, L, gamma).to_pyarray(py)
+        Tensors::sheared(&K.as_array(), ae, L, gamma).to_pyarray(py)
     }
 
     #[pyfn(m)]
-    fn sqrt_sheared_tensor_f64<'py>(
+    fn sheared_sqrt_f64<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f64>,
         ae: f64,
         L: f64,
         gamma: f64,
     ) -> &'py PyArray2<f64> {
-        Tensors::sqrt_sheared_tensor(&K.as_array(), ae, L, gamma).to_pyarray(py)
+        Tensors::sheared_sqrt(&K.as_array(), ae, L, gamma).to_pyarray(py)
     }
 
     #[pyfn(m)]
-    fn sheared_tensor_sinc_f64<'py>(
+    fn sheared_sinc_f64<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f64>,
         ae: f64,
@@ -45,7 +46,7 @@ fn rustmann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         Ny: usize,
         Nz: usize,
     ) -> &'py PyArray2<f64> {
-        Tensors::sheared_tensor_sinc(&K.as_array(), ae, L, gamma, Lx, Ly, Lz, Ny, Nz).to_pyarray(py)
+        Tensors::sheared_sinc(&K.as_array(), ae, L, gamma, Ly, Lz, Ny, Nz).to_pyarray(py)
     }
 
     #[pyfn(m)]
