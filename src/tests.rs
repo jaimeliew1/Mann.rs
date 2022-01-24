@@ -13,7 +13,7 @@ mod tests {
         let L = 2.0;
 
         let correct = 0.5305357774587827;
-        let ans = vonkarman_spectrum(ae, k, L);
+        let ans = tensors::vonkarman_spectrum(ae, k, L);
 
         assert!((ans - correct).abs() < TOL);
     }
@@ -23,7 +23,7 @@ mod tests {
         let kL = 1.0;
         let correct = 1.2341234009393085;
 
-        let ans = lifetime_approx(kL);
+        let ans = tensors::lifetime_approx(kL);
 
         assert!((ans - correct).abs() < TOL);
     }
@@ -128,7 +128,7 @@ mod tests {
         let (Lx, Ly, Lz) = (10.0, 20.0, 30.0);
         let (Nx, Ny, Nz) = (10, 10, 10);
         let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
-            utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
+            Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
         println!("{:?}", Kx);
         let ans_Kx = [
             0.,
