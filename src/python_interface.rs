@@ -6,7 +6,7 @@ use numpy::{
 use pyo3::prelude::*;
 
 use crate::{
-    partial_turbulate, stencilate, stencilate_sinc, turbulate, Tensors,
+    partial_turbulate, stencilate, stencilate_sinc, turbulate, Tensors::*,
     Utilities::complex_random_gaussian, Utilities::freq_components,
 };
 #[pymodule]
@@ -19,7 +19,9 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         L: f64,
         gamma: f64,
     ) -> &'py PyArray2<f64> {
-        Tensors::sheared(&K.as_array(), ae, L, gamma).to_pyarray(py)
+        Sheared::from_params(ae, L, gamma)
+            .tensor(&K.as_slice().unwrap())
+            .to_pyarray(py)
     }
 
     #[pyfn(m)]
@@ -30,7 +32,9 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         L: f64,
         gamma: f64,
     ) -> &'py PyArray2<f64> {
-        Tensors::sheared_sqrt(&K.as_array(), ae, L, gamma).to_pyarray(py)
+        Sheared::from_params(ae, L, gamma)
+            .decomp(&K.as_slice().unwrap())
+            .to_pyarray(py)
     }
 
     #[pyfn(m)]
@@ -42,10 +46,10 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         gamma: f64,
         Ly: f64,
         Lz: f64,
-        Ny: usize,
-        Nz: usize,
     ) -> &'py PyArray2<f64> {
-        Tensors::sheared_sinc(&K.as_array(), ae, L, gamma, Ly, Lz, Ny, Nz).to_pyarray(py)
+        ShearedSinc::from_params(ae, L, gamma, Ly, Lz)
+            .tensor(&K.as_slice().unwrap())
+            .to_pyarray(py)
     }
 
     #[pyfn(m)]

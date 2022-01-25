@@ -92,7 +92,7 @@ pub mod Utilities {
     }
 
     /// Returns Array3 of of complex, gaussian distributed random numbers with
-    /// standard deviation if 1/(sqrt(2)).
+    /// unit variance.
     pub fn complex_random_gaussian(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<c64> {
         let mut rng = ndarray_rand::rand::rngs::SmallRng::seed_from_u64(seed);
         let dist = Normal::new(0.0, SQRT_2.recip()).unwrap();

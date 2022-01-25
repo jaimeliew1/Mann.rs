@@ -17,7 +17,7 @@ class Stencil(BaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.stencil = RustMann.stencilate_f64(
+        self.stencil = RustMann.stencilate_sinc_f64(
             self.ae,
             self.L,
             self.gamma,

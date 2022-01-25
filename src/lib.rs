@@ -20,6 +20,8 @@ use ndarray_linalg::Norm;
 use ndrustfft::Complex;
 use numpy::c64;
 use std::f64::consts::{PI, SQRT_2};
+use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
+
 
 pub fn stencilate(
     ae: f64,
@@ -35,6 +37,7 @@ pub fn stencilate(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
+    let tensor_gen = Sheared::from_params(ae, L, gamma);
     stencil
         .outer_iter_mut()
         .into_par_iter()
@@ -42,8 +45,8 @@ pub fn stencilate(
         .for_each(|(i, mut slice)| {
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
-                    let K: Array1<f64> = arr1(&[Kx[i], Ky[j], Kz[k]]);
-                    component.assign(&Tensors::sheared_sqrt(&K.view(), ae, L, gamma));
+                    let K = &[Kx[i], Ky[j], Kz[k]];
+                    component.assign(&tensor_gen.decomp(K));
                 }
             }
         });
@@ -64,6 +67,9 @@ pub fn stencilate_sinc(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
+    let tensor_gen_sinc = ShearedSinc::from_params(ae, L, gamma, Ly, Lz);
+    let tensor_gen = Sheared::from_params(ae, L, gamma);
+
     stencil
         .outer_iter_mut()
         .into_par_iter()
@@ -71,20 +77,11 @@ pub fn stencilate_sinc(
         .for_each(|(i, mut slice)| {
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
-                    let K: Array1<f64> = arr1(&[Kx[i], Ky[j], Kz[k]]);
-                    if K.norm_l2() < 3.0 / L {
-                        component.assign(&Tensors::sheared_sqrt_sinc(
-                            &K.view(),
-                            ae,
-                            L,
-                            gamma,
-                            Ly,
-                            Lz,
-                            Ny,
-                            Nz,
-                        ));
+                    let K = &[Kx[i], Ky[j], Kz[k]];
+                    if arr1(K).norm_l2() < 3.0 / L {
+                        component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
-                        component.assign(&Tensors::sheared_sqrt(&K.view(), ae, L, gamma));
+                        component.assign(&tensor_gen.decomp(K));
                     }
                 }
             }

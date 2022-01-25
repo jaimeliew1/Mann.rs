@@ -2,8 +2,8 @@
 #![cfg(test)]
 
 mod tests {
+    use crate::tensors::Tensors::*;
     use crate::*;
-
     static TOL: f64 = 1e-7;
 
     #[test]
@@ -32,14 +32,14 @@ mod tests {
     fn test_isotropic_tensor() {
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
-        let K: Array1<f64> = arr1(&[1.0, 2.0, 3.0]);
+        let K = &[1.0, 2.0, 3.0];
 
         let correct = [
             [4.81365456e-04, -7.40562240e-05, -1.11084336e-04],
             [-7.40562240e-05, 3.70281120e-04, -2.22168672e-04],
             [-1.11084336e-04, -2.22168672e-04, 1.85140560e-04],
         ];
-        let ans: Array2<f64> = Tensors::isotropic(&K.view(), ae, L);
+        let ans: Array2<f64> = Tensors::Isotropic::from_params(ae, L).tensor(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -48,14 +48,14 @@ mod tests {
     fn test_sqrt_isotropic_tensor() {
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
-        let K: Array1<f64> = arr1(&[1.0, 2.0, 3.0]);
+        let K = &[1.0, 2.0, 3.0];
 
         let correct = [
             [0., 0.01825522, -0.01217015],
             [-0.01825522, 0., 0.00608507],
             [0.01217015, -0.00608507, 0.],
         ];
-        let ans: Array2<f64> = Tensors::isotropic_sqrt(&K.view(), ae, L);
+        let ans: Array2<f64> = Tensors::Isotropic::from_params(ae, L).decomp(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -65,14 +65,14 @@ mod tests {
         let gamma = 1.0;
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
-        let K: Array1<f64> = arr1(&[1.0, 2.0, 3.0]);
+        let K = &[1.0, 2.0, 3.0];
 
         let correct = [
             [1., 0., -0.40395476],
             [0., 1., 0.12190881],
             [0., 0., 1.195048],
         ];
-        let ans: Array2<f64> = Tensors::sheared_transform(&K.view(), ae, L, gamma);
+        let ans: Array2<f64> = Tensors::Sheared::from_params(ae, L, gamma).sheared_transform(K);
 
         ans.into_iter()
             .zip(correct.iter().flatten())
@@ -83,14 +83,14 @@ mod tests {
         let gamma = 1.0;
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
-        let K: Array1<f64> = arr1(&[1.0, 2.0, 3.0]);
+        let K = &[1.0, 2.0, 3.0];
 
         let correct = [
             [-0.0038791, 0.01838437, -0.0096028],
             [-0.01527416, -0.00058533, 0.0048014],
             [0.0114758, -0.0057379, 0.],
         ];
-        let ans: Array2<f64> = Tensors::sheared_sqrt(&K.view(), ae, L, gamma);
+        let ans: Array2<f64> = Tensors::Sheared::from_params(ae, L, gamma).decomp(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -100,14 +100,14 @@ mod tests {
         let gamma = 1.0;
         let ae: f64 = 1.0;
         let L: f64 = 1.0;
-        let K: Array1<f64> = arr1(&[1.0, 2.0, 3.0]);
+        let K = &[1.0, 2.0, 3.0];
 
         let correct = [
             [4.45246082e-04, 2.38208492e-06, -1.50003417e-04],
             [2.38208492e-06, 2.56695868e-04, -1.71924607e-04],
             [-1.50003417e-04, -1.71924607e-04, 1.64617544e-04],
         ];
-        let ans: Array2<f64> = Tensors::sheared(&K.view(), ae, L, gamma);
+        let ans: Array2<f64> = Tensors::Sheared::from_params(ae, L, gamma).tensor(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
