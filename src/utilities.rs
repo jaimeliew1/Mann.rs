@@ -1,6 +1,6 @@
 use ndarray::{concatenate, prelude::*};
 use ndarray_rand::{rand::SeedableRng, rand_distr::Normal, RandomExt};
-use ndrustfft::{ndfft_par, ndfft_r2c_par, ndifft_par, ndifft_r2c_par, Complex, FftHandler};
+use ndrustfft::{ndfft_par, ndfft_r2c_par, ndifft_par, ndifft_r2c_par, ndfft, ndfft_r2c, ndifft, ndifft_r2c, Complex, FftHandler};
 use std::f64::consts::{PI, SQRT_2};
 
 use numpy::c64;
@@ -28,7 +28,7 @@ pub mod Utilities {
         df * concatenate![Axis(0), f1, f2]
     }
 
-    pub fn rfft3d(input: &mut Array3<f64>) -> Array3<c64> {
+    pub fn rfft3d_par(input: &mut Array3<f64>) -> Array3<c64> {
         let (nx, ny, nz) = input.dim();
         let mut vhat: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
 
@@ -47,7 +47,7 @@ pub mod Utilities {
 
         vhat3
     }
-    pub fn irfft3d(input: &mut Array3<c64>) -> Array3<f64> {
+    pub fn irfft3d_par(input: &mut Array3<c64>) -> Array3<f64> {
         let (nx, ny, _nz) = input.dim();
         let nz = (_nz - 1) * 2;
 
@@ -62,6 +62,43 @@ pub mod Utilities {
         let mut output: Array3<f64> = Array3::zeros((nx, ny, nz));
         let mut handler: FftHandler<f64> = FftHandler::new(nz);
         ndifft_r2c_par(&mut vhat, &mut output, &mut handler, 2);
+
+        output
+    }
+    pub fn rfft3d(input: &mut Array3<f64>) -> Array3<c64> {
+        let (nx, ny, nz) = input.dim();
+        let mut vhat: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
+
+        let mut handler: FftHandler<f64> = FftHandler::new(nz);
+        ndfft_r2c(input, &mut vhat, &mut handler, 2);
+
+        let mut vhat2: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut handler: FftHandler<f64> = FftHandler::new(nx);
+
+        ndfft(&mut vhat, &mut vhat2, &mut handler, 0);
+
+        let mut vhat3: Array3<c64> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut handler: FftHandler<f64> = FftHandler::new(ny);
+
+        ndfft(&mut vhat2, &mut vhat3, &mut handler, 1);
+
+        vhat3
+    }
+    pub fn irfft3d(input: &mut Array3<c64>) -> Array3<f64> {
+        let (nx, ny, _nz) = input.dim();
+        let nz = (_nz - 1) * 2;
+
+        let mut handler: FftHandler<f64> = FftHandler::new(nx);
+        let mut vhat2: Array3<c64> = Array3::zeros((nx, ny, _nz));
+        ndifft(input, &mut vhat2, &mut handler, 0);
+
+        let mut handler: FftHandler<f64> = FftHandler::new(ny);
+        let mut vhat: Array3<c64> = Array3::zeros((nx, ny, _nz));
+        ndifft(&mut vhat2, &mut vhat, &mut handler, 1);
+
+        let mut output: Array3<f64> = Array3::zeros((nx, ny, nz));
+        let mut handler: FftHandler<f64> = FftHandler::new(nz);
+        ndifft_r2c(&mut vhat, &mut output, &mut handler, 2);
 
         output
     }
