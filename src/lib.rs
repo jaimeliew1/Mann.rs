@@ -24,7 +24,6 @@ use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
 
 
 pub fn stencilate_par(
-    ae: f64,
     L: f64,
     gamma: f64,
     Lx: f64,
@@ -37,7 +36,7 @@ pub fn stencilate_par(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let tensor_gen = Sheared::from_params(ae, L, gamma);
+    let tensor_gen = Sheared::from_params(1.0, L, gamma);
     stencil
         .outer_iter_mut()
         .into_par_iter()
@@ -54,7 +53,6 @@ pub fn stencilate_par(
 }
 
 pub fn stencilate_sinc_par(
-    ae: f64,
     L: f64,
     gamma: f64,
     Lx: f64,
@@ -67,8 +65,8 @@ pub fn stencilate_sinc_par(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let tensor_gen_sinc = ShearedSinc::from_params(ae, L, gamma, Ly, Lz);
-    let tensor_gen = Sheared::from_params(ae, L, gamma);
+    let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz);
+    let tensor_gen = Sheared::from_params(1.0, L, gamma);
 
     stencil
         .outer_iter_mut()
@@ -91,6 +89,7 @@ pub fn stencilate_sinc_par(
 
 pub fn partial_turbulate_par(
     stencil: &ArrayView5<f64>,
+    ae: f64, 
     seed: u64,
     Nx: usize,
     Ny: usize,
@@ -100,7 +99,7 @@ pub fn partial_turbulate_par(
     Lz: f64,
 ) -> (Array3<c64>, Array3<c64>, Array3<c64>) {
     let KVolScaleFac: c64 = Complex::new(
-        2.0 * (Nx * Ny * (Nz / 2 + 1)) as f64 * ((8.0 * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
+        2.0 * (Nx * Ny * (Nz / 2 + 1)) as f64 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
     let random: Array4<c64> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
@@ -134,6 +133,7 @@ pub fn partial_turbulate_par(
 
 pub fn turbulate_par(
     stencil: &ArrayView5<f64>,
+    ae: f64,
     seed: u64,
     Nx: usize,
     Ny: usize,
@@ -143,7 +143,7 @@ pub fn turbulate_par(
     Lz: f64,
 ) -> (Array3<f64>, Array3<f64>, Array3<f64>) {
     let (mut U_f, mut V_f, mut W_f): (Array3<c64>, Array3<c64>, Array3<c64>) =
-        partial_turbulate_par(stencil, seed, Nx, Ny, Nz, Lx, Ly, Lz);
+        partial_turbulate_par(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f64> = Utilities::irfft3d_par(&mut U_f);
     let V: Array3<f64> = Utilities::irfft3d_par(&mut V_f);
@@ -152,7 +152,6 @@ pub fn turbulate_par(
 }
 
 pub fn stencilate(
-    ae: f64,
     L: f64,
     gamma: f64,
     Lx: f64,
@@ -165,7 +164,7 @@ pub fn stencilate(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let tensor_gen = Sheared::from_params(ae, L, gamma);
+    let tensor_gen = Sheared::from_params(1.0, L, gamma);
     stencil
         .outer_iter_mut()
         .into_iter()
@@ -182,7 +181,6 @@ pub fn stencilate(
 }
 
 pub fn stencilate_sinc(
-    ae: f64,
     L: f64,
     gamma: f64,
     Lx: f64,
@@ -195,8 +193,8 @@ pub fn stencilate_sinc(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let tensor_gen_sinc = ShearedSinc::from_params(ae, L, gamma, Ly, Lz);
-    let tensor_gen = Sheared::from_params(ae, L, gamma);
+    let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz);
+    let tensor_gen = Sheared::from_params(1.0, L, gamma);
 
     stencil
         .outer_iter_mut()
@@ -219,6 +217,7 @@ pub fn stencilate_sinc(
 
 pub fn partial_turbulate(
     stencil: &ArrayView5<f64>,
+    ae: f64,
     seed: u64,
     Nx: usize,
     Ny: usize,
@@ -228,7 +227,7 @@ pub fn partial_turbulate(
     Lz: f64,
 ) -> (Array3<c64>, Array3<c64>, Array3<c64>) {
     let KVolScaleFac: c64 = Complex::new(
-        2.0 * (Nx * Ny * (Nz / 2 + 1)) as f64 * ((8.0 * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
+        2.0 * (Nx * Ny * (Nz / 2 + 1)) as f64 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
     let random: Array4<c64> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
@@ -262,6 +261,7 @@ pub fn partial_turbulate(
 
 pub fn turbulate(
     stencil: &ArrayView5<f64>,
+    ae: f64,
     seed: u64,
     Nx: usize,
     Ny: usize,
@@ -271,7 +271,7 @@ pub fn turbulate(
     Lz: f64,
 ) -> (Array3<f64>, Array3<f64>, Array3<f64>) {
     let (mut U_f, mut V_f, mut W_f): (Array3<c64>, Array3<c64>, Array3<c64>) =
-        partial_turbulate(stencil, seed, Nx, Ny, Nz, Lx, Ly, Lz);
+        partial_turbulate(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f64> = Utilities::irfft3d(&mut U_f);
     let V: Array3<f64> = Utilities::irfft3d(&mut V_f);

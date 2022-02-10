@@ -5,7 +5,6 @@ from pathlib import Path
 
 
 class Stencil(BaseModel):
-    ae: NonNegativeFloat
     L: PositiveFloat
     gamma: NonNegativeFloat
     Lx: PositiveFloat
@@ -18,7 +17,6 @@ class Stencil(BaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.stencil = RustMann.stencilate_sinc_f64(
-            self.ae,
             self.L,
             self.gamma,
             self.Lx,
@@ -32,9 +30,9 @@ class Stencil(BaseModel):
     class Config:
         extra = Extra.allow
 
-    def turbulence(self, seed: int):
+    def turbulence(self, ae: float, seed: int):
         U, V, W = RustMann.turbulate_f64(
-            self.stencil, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
+            self.stencil, ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
         )
 
         return U, V, W

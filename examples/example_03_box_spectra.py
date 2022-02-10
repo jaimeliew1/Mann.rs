@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 #     "Nz": 64,
 # }
 params = {
-    "ae": 1,
+    # "ae": 1,
     "L": 50,
     "gamma": 3.2,
     "Lx": 6000,
@@ -27,7 +27,7 @@ params = {
     "Ny": 64,
     "Nz": 64,
 }
-
+ae = 1
 
 c = [plt.cm.tab20(x / 10) for x in [0, 1, 2, 3]]
 c_anal = [plt.cm.tab20(x / 10 + 1 / 20) for x in [0, 1, 2, 3]]
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     Suu_list, Svv_list, Sww_list, Suw_list = [], [], [], []
     for seed in trange(20):
-        U, V, W = stencil.turbulence(seed)
+        U, V, W = stencil.turbulence(ae, seed)
         f, Suu, Svv, Sww, Suw = get_spectra(U, V, W, params["Lx"], params["Nx"])
 
         Suu_list.append(Suu)

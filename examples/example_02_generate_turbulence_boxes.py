@@ -1,8 +1,8 @@
 import RustMann
 from tqdm import tqdm, trange
 
+ae = 0.2
 params = {
-    "ae": 0.2,
     "L": 30.0,
     "gamma": 3.2,
     "Lx": 6000,
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     print(f"Generating {N} turbulence boxes to turb/...")
     for seed in trange(N, desc="turbulence"):
-        U, V, W = stencil.turbulence(seed)
+        U, V, W = stencil.turbulence(ae, seed)
         
         RustMann.save_box(f"turb/U_{seed}.bin", U)
         RustMann.save_box(f"turb/V_{seed}.bin", V)

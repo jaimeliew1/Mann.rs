@@ -9,7 +9,6 @@ RustMann separates the process of generating turbulence into two steps: stencil 
 import RustMann
 
 params = {
-    "ae": 0.2,
     "L": 30.0,
     "gamma": 3.2,
     "Lx": 6000,
@@ -19,23 +18,25 @@ params = {
     "Ny": 64,
     "Nz": 64,
 }
+ae = 0.2
 seed = 1234
 
 stencil = RustMann.Stencil(**params)
-U, V, W = stencil.turbulence(seed)
+U, V, W = stencil.turbulence(ae, seed)
 ```
 
 ## Rust
 ```rust
 use RustMann::Stencil;
 
-let (ae, L, gamma) = (0.2, 30.0, 3.2);
+let (L, gamma) = (30.0, 3.2);
 let (Lx, Ly, Lz) = (6000.0, 200.0, 200.0);
 let (Nx, Ny, Nz) = (8192, 64, 64);
+let ae = 0.2;
 let seed = 1234;
 
-let stencil = Stencil::from_params(ae, L, gamma, Lx, Ly, Lz, Nx, Ny, Nz);
-let (U, V, W) = stencil.turbulence(seed);
+let stencil = Stencil::from_params(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz);
+let (U, V, W) = stencil.turbulence(ae, seed);
 ```
 
 # Installation

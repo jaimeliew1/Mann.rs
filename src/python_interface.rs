@@ -55,7 +55,6 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
     fn stencilate_f64<'py>(
         py: Python<'py>,
-        ae: f64,
         L: f64,
         gamma: f64,
         Lx: f64,
@@ -65,13 +64,12 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         Ny: usize,
         Nz: usize,
     ) -> &'py PyArray5<f64> {
-        stencilate(ae, L, gamma, Lx, Ly, Lz, Nx, Ny, Nz).to_pyarray(py)
+        stencilate(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz).to_pyarray(py)
     }
 
     #[pyfn(m)]
     fn stencilate_sinc_f64<'py>(
         py: Python<'py>,
-        ae: f64,
         L: f64,
         gamma: f64,
         Lx: f64,
@@ -81,7 +79,7 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         Ny: usize,
         Nz: usize,
     ) -> &'py PyArray5<f64> {
-        stencilate_sinc(ae, L, gamma, Lx, Ly, Lz, Nx, Ny, Nz).to_pyarray(py)
+        stencilate_sinc(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz).to_pyarray(py)
     }
 
     #[pyfn(m)]
@@ -99,6 +97,7 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     fn partial_turbulate_f64<'py>(
         py: Python<'py>,
         stencil: PyReadonlyArray5<f64>,
+        ae: f64, 
         seed: u64,
         Nx: usize,
         Ny: usize,
@@ -108,7 +107,7 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         Lz: f64,
     ) -> (&'py PyArray3<c64>, &'py PyArray3<c64>, &'py PyArray3<c64>) {
         let (U_f, V_f, W_f): (Array3<c64>, Array3<c64>, Array3<c64>) =
-            partial_turbulate(&stencil.as_array(), seed, Nx, Ny, Nz, Lx, Ly, Lz);
+            partial_turbulate(&stencil.as_array(), ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
 
@@ -116,6 +115,7 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     fn turbulate_f64<'py>(
         py: Python<'py>,
         stencil: PyReadonlyArray5<f64>,
+        ae: f64,
         seed: u64,
         Nx: usize,
         Ny: usize,
@@ -125,7 +125,7 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         Lz: f64,
     ) -> (&'py PyArray3<f64>, &'py PyArray3<f64>, &'py PyArray3<f64>) {
         let (U_f, V_f, W_f): (Array3<f64>, Array3<f64>, Array3<f64>) =
-            turbulate(&stencil.as_array(), seed, Nx, Ny, Nz, Lx, Ly, Lz);
+            turbulate(&stencil.as_array(), ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
     #[pyfn(m)]
