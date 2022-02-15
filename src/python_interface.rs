@@ -6,7 +6,7 @@ use numpy::{
 use pyo3::prelude::*;
 
 use crate::{
-    partial_turbulate, stencilate, stencilate_sinc, turbulate, Tensors::*,
+    partial_turbulate, stencilate, stencilate_sinc, turbulate, turbulate_unit, estimate_uvar, Tensors::*,
     Utilities::complex_random_gaussian, Utilities::freq_components,
 };
 #[pymodule]
@@ -128,6 +128,25 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
             turbulate(&stencil.as_array(), ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
+
+    #[pyfn(m)]
+    fn turbulate_unit_f64<'py>(
+        py: Python<'py>,
+        stencil: PyReadonlyArray5<f64>,
+        ae: f64,
+        seed: u64,
+        Nx: usize,
+        Ny: usize,
+        Nz: usize,
+        Lx: f64,
+        Ly: f64,
+        Lz: f64,
+    ) -> (&'py PyArray3<f64>, &'py PyArray3<f64>, &'py PyArray3<f64>) {
+        let (U_f, V_f, W_f): (Array3<f64>, Array3<f64>, Array3<f64>) =
+            turbulate_unit(&stencil.as_array(), ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
+        (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
+    }
+
     #[pyfn(m)]
     fn freq_components_f64<'py>(
         py: Python<'py>,

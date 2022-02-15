@@ -1,5 +1,5 @@
 use ndarray::{concatenate, prelude::*};
-use ndarray_rand::{rand::SeedableRng, rand_distr::Normal, RandomExt};
+use ndarray_rand::{rand::SeedableRng, rand_distr::{Normal, Uniform}, RandomExt};
 use ndrustfft::{ndfft_par, ndfft_r2c_par, ndifft_par, ndifft_r2c_par, ndfft, ndfft_r2c, ndifft, ndifft_r2c, Complex, FftHandler};
 use std::f64::consts::{PI, SQRT_2};
 
@@ -139,5 +139,14 @@ pub mod Utilities {
             .mapv(|elem| Complex::new(0.0, elem));
 
         real + imag
+    }
+
+    /// Returns Array3 of of complex, random numbers with unit length.
+    pub fn complex_random_unit(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<c64> {
+        let mut rng = ndarray_rand::rand::rngs::SmallRng::seed_from_u64(seed);
+        let dist = Uniform::new(0.0, 2.0*PI);
+        let phase: Array4<f64> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng);
+        let out: Array4<c64> = phase.mapv(|elem| Complex::new(elem.cos(), elem.sin()));        
+        out
     }
 }

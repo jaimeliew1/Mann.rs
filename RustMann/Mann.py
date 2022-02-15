@@ -30,8 +30,22 @@ class Stencil(BaseModel):
     class Config:
         extra = Extra.allow
 
+    def partial_turbulence(self, ae: float, seed: int):
+        Uf, Vf, Wf = RustMann.partial_turbulate_f64(
+            self.stencil, ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
+        )
+
+        return Uf, Vf, Wf
+
     def turbulence(self, ae: float, seed: int):
         U, V, W = RustMann.turbulate_f64(
+            self.stencil, ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
+        )
+
+        return U, V, W
+
+    def turbulence_unit(self, ae: float, seed: int):
+        U, V, W = RustMann.turbulate_unit_f64(
             self.stencil, ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
         )
 

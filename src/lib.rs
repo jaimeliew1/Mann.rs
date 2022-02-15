@@ -252,6 +252,9 @@ pub fn partial_turbulate(
                         })
                 })
         });
+    UVW_f[[0,0,0,0]] = Complex::new(0.0, 0.0);
+    UVW_f[[0,0,0,1]] = Complex::new(0.0, 0.0);
+    UVW_f[[0,0,0,2]] = Complex::new(0.0, 0.0);
     (
         UVW_f.slice(s![.., .., .., 0]).to_owned(),
         UVW_f.slice(s![.., .., .., 1]).to_owned(),
@@ -278,3 +281,71 @@ pub fn turbulate(
     let W: Array3<f64> = Utilities::irfft3d(&mut W_f);
     (U, V, W)
 }
+
+pub fn partial_turbulate_unit(
+    stencil: &ArrayView5<f64>,
+    ae: f64,
+    seed: u64,
+    Nx: usize,
+    Ny: usize,
+    Nz: usize,
+    Lx: f64,
+    Ly: f64,
+    Lz: f64,
+) -> (Array3<c64>, Array3<c64>, Array3<c64>) {
+    let KVolScaleFac: c64 = Complex::new(
+        2.0 * (Nx * Ny * (Nz / 2 + 1)) as f64 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
+        0.0,
+    );
+    let random: Array4<c64> = Utilities::complex_random_unit(seed, Nx, Ny, Nz / 2 + 1);
+
+    let mut UVW_f: Array4<c64> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
+
+    Zip::from(UVW_f.outer_iter_mut())
+        .and(stencil.outer_iter())
+        .and(random.outer_iter())
+        .for_each(|mut UVW_slice, stencil_slice, random_slice| {
+            Zip::from(UVW_slice.outer_iter_mut())
+                .and(stencil_slice.outer_iter())
+                .and(random_slice.outer_iter())
+                .for_each(|mut UVW_col, stencil_col, random_col| {
+                    Zip::from(UVW_col.outer_iter_mut())
+                        .and(stencil_col.outer_iter())
+                        .and(random_col.outer_iter())
+                        .for_each(|mut freq_comp, tensor, n| {
+                            let _tensor = tensor.mapv(|elem| c64::new(elem, 0.0));
+                            freq_comp.assign(&_tensor.dot(&n));
+                            freq_comp *= KVolScaleFac;
+                        })
+                })
+        });
+    UVW_f[[0,0,0,0]] = Complex::new(0.0, 0.0);
+    UVW_f[[0,0,0,1]] = Complex::new(0.0, 0.0);
+    UVW_f[[0,0,0,2]] = Complex::new(0.0, 0.0);
+    (
+        UVW_f.slice(s![.., .., .., 0]).to_owned(),
+        UVW_f.slice(s![.., .., .., 1]).to_owned(),
+        UVW_f.slice(s![.., .., .., 2]).to_owned(),
+    )
+}
+
+pub fn turbulate_unit(
+    stencil: &ArrayView5<f64>,
+    ae: f64,
+    seed: u64,
+    Nx: usize,
+    Ny: usize,
+    Nz: usize,
+    Lx: f64,
+    Ly: f64,
+    Lz: f64,
+) -> (Array3<f64>, Array3<f64>, Array3<f64>) {
+    let (mut U_f, mut V_f, mut W_f): (Array3<c64>, Array3<c64>, Array3<c64>) =
+        partial_turbulate_unit(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
+
+    let U: Array3<f64> = Utilities::irfft3d(&mut U_f);
+    let V: Array3<f64> = Utilities::irfft3d(&mut V_f);
+    let W: Array3<f64> = Utilities::irfft3d(&mut W_f);
+    (U, V, W)
+}
+
