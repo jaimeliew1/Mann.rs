@@ -10,6 +10,6 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["numpy>=1.19.2", "matplotlib>=3", "tqdm>=4"]
+dependencies = ["numpy>=1.19.2", "matplotlib>=3", "tqdm>=4", "pydantic>=1.9.0"]
 
 

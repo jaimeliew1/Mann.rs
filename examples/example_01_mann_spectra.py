@@ -1,5 +1,5 @@
 import numpy as np
-from RustMann import RustMann
+from RustMann import Tensor
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
@@ -9,8 +9,10 @@ ae = 1
 L = 33.6
 gamma = 3.9
 
+
 def one_comp_spec(kx, ae, L, gamma, sinc=False):
 
+    tensor_gen = Tensor.Sheared(ae, L, gamma)
     Nr = 150
     Ntheta = 30
     Rs = np.logspace(-4, 7, Nr)
@@ -25,7 +27,7 @@ def one_comp_spec(kx, ae, L, gamma, sinc=False):
             ky = r * np.cos(theta)
             kz = r * np.sin(theta)
 
-            tensor = RustMann.sheared_f64(np.array([kx, ky, kz]), ae, L, gamma)
+            tensor = tensor_gen.tensor(np.array([kx, ky, kz]))
             UU_grid[i, j] = r * tensor[0, 0]
             VV_grid[i, j] = r * tensor[1, 1]
             WW_grid[i, j] = r * tensor[2, 2]
@@ -35,8 +37,6 @@ def one_comp_spec(kx, ae, L, gamma, sinc=False):
     WW = np.trapz(np.trapz(WW_grid, Rs, axis=0), Thetas)
     UW = np.trapz(np.trapz(UW_grid, Rs, axis=0), Thetas)
     return UU, VV, WW, UW
-
-
 
 
 if __name__ == "__main__":
@@ -52,10 +52,10 @@ if __name__ == "__main__":
         UU[j], VV[j], WW[j], UW[j] = one_comp_spec(kx, ae, L, gamma)
 
     plt.figure()
-    plt.semilogx(Kxs, Kxs * UU, '--', label="UU")
-    plt.semilogx(Kxs, Kxs * VV, '--', label="VV")
-    plt.semilogx(Kxs, Kxs * WW, '--', label="WW")
-    plt.semilogx(Kxs, Kxs * UW, '--', label="UW")
+    plt.semilogx(Kxs, Kxs * UU, "--", label="UU")
+    plt.semilogx(Kxs, Kxs * VV, "--", label="VV")
+    plt.semilogx(Kxs, Kxs * WW, "--", label="WW")
+    plt.semilogx(Kxs, Kxs * UW, "--", label="UW")
     UU = np.zeros_like(Kxs)
     VV = np.zeros_like(Kxs)
     WW = np.zeros_like(Kxs)

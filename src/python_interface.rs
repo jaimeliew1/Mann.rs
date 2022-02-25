@@ -6,11 +6,34 @@ use numpy::{
 use pyo3::prelude::*;
 
 use crate::{
-    partial_turbulate, stencilate, stencilate_sinc, turbulate, turbulate_unit, estimate_uvar, Tensors::*,
-    Utilities::complex_random_gaussian, Utilities::freq_components,
+    partial_turbulate, stencilate, stencilate_sinc, turbulate, turbulate_unit,
+    Tensors::*, Utilities::complex_random_gaussian, Utilities::freq_components,
 };
 #[pymodule]
 fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    #[pyfn(m)]
+    fn isotropic_f64<'py>(
+        py: Python<'py>,
+        K: PyReadonlyArray1<'py, f64>,
+        ae: f64,
+        L: f64,
+    ) -> &'py PyArray2<f64> {
+        Isotropic::from_params(ae, L)
+            .tensor(&K.as_slice().unwrap())
+            .to_pyarray(py)
+    }
+
+    #[pyfn(m)]
+    fn isotropic_sqrt_f64<'py>(
+        py: Python<'py>,
+        K: PyReadonlyArray1<'py, f64>,
+        ae: f64,
+        L: f64,
+    ) -> &'py PyArray2<f64> {
+        Isotropic::from_params(ae, L)
+            .decomp(&K.as_slice().unwrap())
+            .to_pyarray(py)
+    }
     #[pyfn(m)]
     fn sheared_f64<'py>(
         py: Python<'py>,
@@ -97,7 +120,7 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     fn partial_turbulate_f64<'py>(
         py: Python<'py>,
         stencil: PyReadonlyArray5<f64>,
-        ae: f64, 
+        ae: f64,
         seed: u64,
         Nx: usize,
         Ny: usize,
