@@ -41,6 +41,7 @@ let (U, V, W) = stencil.turbulence(ae, seed);
 
 # Installation
 ## Python
+(Coming soon)
 ```bash
 pip install rustmann
 ```
