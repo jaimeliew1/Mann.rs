@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 
 use crate::{
     partial_turbulate, stencilate, stencilate_sinc, turbulate, turbulate_unit,
-    Tensors::*, Utilities::complex_random_gaussian, Utilities::freq_components,
+    Tensors::*, Utilities::complex_random_gaussian, Utilities::freq_components, stencilate_sinc_par,
 };
 #[pymodule]
 fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
@@ -103,6 +103,20 @@ fn RustMann(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
         Nz: usize,
     ) -> &'py PyArray5<f64> {
         stencilate_sinc(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz).to_pyarray(py)
+    }
+    #[pyfn(m)]
+    fn stencilate_sinc_par_f64<'py>(
+        py: Python<'py>,
+        L: f64,
+        gamma: f64,
+        Lx: f64,
+        Ly: f64,
+        Lz: f64,
+        Nx: usize,
+        Ny: usize,
+        Nz: usize,
+    ) -> &'py PyArray5<f64> {
+        stencilate_sinc_par(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz).to_pyarray(py)
     }
 
     #[pyfn(m)]
