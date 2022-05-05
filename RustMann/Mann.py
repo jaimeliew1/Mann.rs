@@ -45,19 +45,32 @@ class Stencil(BaseModel):
     class Config:
         extra = Extra.allow
 
-    def turbulence(self, ae: float, seed: int, domain="space"):
+    def turbulence(self, ae: float, seed: int, domain="space", parallel=False):
         if domain == "space":
-            U, V, W = RustMann.turbulate_f64(
-                self.stencil,
-                ae,
-                seed,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-                self.Lx,
-                self.Ly,
-                self.Lz,
-            )
+            if parallel:
+                U, V, W = RustMann.turbulate_par_f64(
+                    self.stencil,
+                    ae,
+                    seed,
+                    self.Nx,
+                    self.Ny,
+                    self.Nz,
+                    self.Lx,
+                    self.Ly,
+                    self.Lz,
+                )
+            else:
+                U, V, W = RustMann.turbulate_f64(
+                    self.stencil,
+                    ae,
+                    seed,
+                    self.Nx,
+                    self.Ny,
+                    self.Nz,
+                    self.Lx,
+                    self.Ly,
+                    self.Lz,
+                )
 
             return U, V, W
         elif domain == "frequency":
