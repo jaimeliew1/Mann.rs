@@ -16,7 +16,7 @@ env:
 
 
 jobs:
-  package:
+  linux:
     runs-on: ubuntu-18.04
     container:
       image: quay.io/pypa/manylinux2014_x86_64
@@ -37,4 +37,25 @@ jobs:
       with:
         name: wheels
         path: target/wheels/*.whl
+        
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: install rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable  
+    - name: install maturin
+      run: |
+        pipx install maturin
+    - name: Build wheel
+      run: maturin build --release --manylinux 2014
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: target/wheels/*.whl
+  
   
