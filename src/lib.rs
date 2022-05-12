@@ -124,6 +124,9 @@ pub fn partial_turbulate_par(
                         })
                 })
         });
+    UVW_f[[0,0,0,0]] = Complex::new(0.0, 0.0);
+    UVW_f[[0,0,0,1]] = Complex::new(0.0, 0.0);
+    UVW_f[[0,0,0,2]] = Complex::new(0.0, 0.0);
     (
         UVW_f.slice(s![.., .., .., 0]).to_owned(),
         UVW_f.slice(s![.., .., .., 1]).to_owned(),
