@@ -26,9 +26,7 @@ jobs:
 
     - name: install maturin
       run: |
-        pip3 install maturin
-        pip3 show maturin
-        echo "::add-path::$HOME/.local/bin"
+        pipx install maturin
     - name: Build wheel
       run: maturin build --release --manylinux 2014
 
