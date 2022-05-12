@@ -21,7 +21,8 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10']
-        target: [x86_64]
+    container:
+      image: quay.io/pypa/manylinux1_x86_64
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v3
