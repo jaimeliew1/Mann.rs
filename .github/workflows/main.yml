@@ -18,6 +18,8 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
+    container:
+      image: rust
     strategy:
       matrix:
         target: [x86_64, i686]
