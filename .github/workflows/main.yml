@@ -20,12 +20,13 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        target: [x86_64, i686]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
+        target: [x86_64]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v3
       with:
-        python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+        python-version: ${{ matrix.python-version }}
 
     - name: install gfortran
       run: sudo apt update && sudo apt install -y gfortran
