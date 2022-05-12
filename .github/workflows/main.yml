@@ -37,7 +37,7 @@ jobs:
         pip3 show maturin
         echo "::add-path::$HOME/.local/bin"
     - name: Build wheel
-      run: maturin build --release
+      run: maturin build --release --manylinux 2014
 
     - uses: actions/upload-artifact@v2
       with:
