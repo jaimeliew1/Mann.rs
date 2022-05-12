@@ -15,18 +15,24 @@ class Stencil(BaseModel):
     Nz: PositiveInt
 
     def __init__(self, parallel=False, nosinc=False, **kwargs):
+        """
+        Generate a Mann turbulence stencil.
+        args:
+            parallel: Use parallel operations (default: False)
+            nosinc: Skip the Sinc correction as described by Mann (default: False)
+        """
         super().__init__(**kwargs)
         if parallel:
-                self.stencil = RustMann.stencilate_sinc_par_f64(
-                    self.L,
-                    self.gamma,
-                    self.Lx,
-                    self.Ly,
-                    self.Lz,
-                    self.Nx,
-                    self.Ny,
-                    self.Nz,
-                )
+            self.stencil = RustMann.stencilate_sinc_par_f64(
+                self.L,
+                self.gamma,
+                self.Lx,
+                self.Ly,
+                self.Lz,
+                self.Nx,
+                self.Ny,
+                self.Nz,
+            )
         else:
             if nosinc:
                 raise NotImplementedError
@@ -46,6 +52,14 @@ class Stencil(BaseModel):
         extra = Extra.allow
 
     def turbulence(self, ae: float, seed: int, domain="space", parallel=False):
+        """
+        Generate a Mann turbulence from a stencil.
+        args:
+            ae (float): scaling factor.
+            seed (int): random seed.
+            domain: return domain type. Either `space` (default) or `frequency`
+            parallel: Use parallel operations (default: False)
+        """
         if domain == "space":
             if parallel:
                 U, V, W = RustMann.turbulate_par_f64(

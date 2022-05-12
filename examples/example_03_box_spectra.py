@@ -1,32 +1,26 @@
+"""
+Calculates the spectra of a generated turbulence box and compares it to the
+theoretical spectra.
+"""
 from itertools import product
 import numpy as np
-import RustMann
+from RustMann import Tensor, Stencil
 from tqdm import tqdm, trange
 import matplotlib.pyplot as plt
 
-# # Parameters from mann 1998 paper example
-# params = {
-#     "ae": 1,
-#     "L": 1,
-#     "gamma": 3.2,
-#     "Lx": 32,
-#     "Ly": 4,
-#     "Lz": 4,
-#     "Nx": 512,
-#     "Ny": 64,
-#     "Nz": 64,
-# }
+# Parameters from mann 1998 paper example
 params = {
-    # "ae": 1,
-    "L": 50,
+    "ae": 1,
+    "L": 1,
     "gamma": 3.2,
-    "Lx": 6000,
-    "Ly": 200,
-    "Lz": 200,
-    "Nx": 8192,
+    "Lx": 32,
+    "Ly": 8,
+    "Lz": 8,
+    "Nx": 512,
     "Ny": 64,
     "Nz": 64,
 }
+
 ae = 1
 
 c = [plt.cm.tab20(x / 10) for x in [0, 1, 2, 3]]
@@ -35,9 +29,10 @@ c_anal = [plt.cm.tab20(x / 10 + 1 / 20) for x in [0, 1, 2, 3]]
 
 def one_comp_spec(kx, ae, L, gamma):
 
+    tensor_gen = Tensor.Sheared(ae, L, gamma)
     Nr = 150
     Ntheta = 30
-    Rs = np.logspace(-4, 7, Nr)
+    Rs = np.logspace(-3, 7, Nr)
     Thetas = np.linspace(0, 2 * np.pi, Ntheta)
 
     UU_grid = np.zeros((Nr, Ntheta))
@@ -49,7 +44,7 @@ def one_comp_spec(kx, ae, L, gamma):
             ky = r * np.cos(theta)
             kz = r * np.sin(theta)
 
-            tensor = RustMann.RustMann.sheared_f64(np.array([kx, ky, kz]), ae, L, gamma)
+            tensor = tensor_gen.tensor([kx, ky, kz])
             UU_grid[i, j] = r * tensor[0, 0]
             VV_grid[i, j] = r * tensor[1, 1]
             WW_grid[i, j] = r * tensor[2, 2]
@@ -69,10 +64,10 @@ def get_spectra(U, V, W, Lmax, Nx):
     V_f = np.fft.rfft(V, axis=0)
     W_f = np.fft.rfft(W, axis=0)
 
-    Suu = 2 * np.absolute(U_f) ** 2 / (fs * Nx)
-    Svv = 2 * np.absolute(V_f) ** 2 / (fs * Nx)
-    Sww = 2 * np.absolute(W_f) ** 2 / (fs * Nx)
-    Suw = 2 * U_f * np.conj(W_f) / (fs * Nx)
+    Suu = np.absolute(U_f) ** 2 / (fs * Nx)
+    Svv = np.absolute(V_f) ** 2 / (fs * Nx)
+    Sww = np.absolute(W_f) ** 2 / (fs * Nx)
+    Suw = U_f * np.conj(W_f) / (fs * Nx)
     Suu = Suu.mean(axis=1).mean(axis=1)
     Svv = Svv.mean(axis=1).mean(axis=1)
     Sww = Sww.mean(axis=1).mean(axis=1)
@@ -82,7 +77,7 @@ def get_spectra(U, V, W, Lmax, Nx):
 
 
 def get_spectra_anal(ae, L, gamma):
-    f_anal = np.logspace(-4, 1)
+    f_anal = np.logspace(-2, 1)
 
     UU = np.zeros_like(f_anal)
     VV = np.zeros_like(f_anal)
@@ -97,7 +92,7 @@ def get_spectra_anal(ae, L, gamma):
 
 if __name__ == "__main__":
 
-    stencil = RustMann.Stencil(**params)
+    stencil = Stencil(**params)
 
     Suu_list, Svv_list, Sww_list, Suw_list = [], [], [], []
     for seed in trange(20):

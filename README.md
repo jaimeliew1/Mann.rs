@@ -1,8 +1,13 @@
 # RustMann
 A Mann turbulence generator for Python written in Rust. RustMann can generate 3D coherent turbulence boxes for wind turbine simulations as described in *Mann, J. (1998). Wind field simulation. Probabilistic engineering mechanics, 13(4), 269-282.*
 
+Features include:
+- **Parallelized computations:** Just set `parallel=True`
+- **Memory efficient:** Can generate extremely high resolution turbulence.
+- **Blazing fast:** Thanks to the stencil method and the Rust backend.
+
 # Usage
-RustMann separates the process of generating turbulence into two steps: stencil generation and turbulence generation. The stencil is a 5D matrix containing the spectral tensors needed to generate turbulence for a given set of parameters. A stencil can be reused to generate multiple random instances of turbulence. Implementations are provided in Python and Rust.
+RustMann separates the process of generating turbulence into two steps: **stencil generation** and **turbulence generation**. The stencil is a 5D matrix containing the spectral tensors needed to generate turbulence for a given set of parameters. A stencil can be reused to generate multiple random instances of turbulence. Implementations are provided in Python and Rust.
 
 ## Python
 ```python
@@ -40,10 +45,9 @@ let (U, V, W) = stencil.turbulence(ae, seed);
 ```
 
 # Installation
-## Python
-(Coming soon)
+## Python (Linux and MacOS only)
 ```bash
-pip install rustmann
+pip install RustMann
 ```
 
 ## Rust

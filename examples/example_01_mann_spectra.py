@@ -1,16 +1,18 @@
+"""
+Plots the Mann frequency spectrum for given values of ae, L, and Gamma.
+"""
 import numpy as np
 from RustMann import Tensor
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-Lx, Ly, Lz = 1000, 1000, 1000
-Ny, Nz = 33, 33
+
 ae = 1
 L = 33.6
 gamma = 3.9
 
 
-def one_comp_spec(kx, ae, L, gamma, sinc=False):
+def one_comp_spec(kx, ae, L, gamma):
 
     tensor_gen = Tensor.Sheared(ae, L, gamma)
     Nr = 150

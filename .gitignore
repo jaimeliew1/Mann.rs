@@ -1,4 +1,6 @@
-/.github
+
+turb/
+*.png
 /target
 
 # Byte-compiled / optimized / DLL files
