@@ -23,6 +23,9 @@ jobs:
         target: [x86_64, i686]
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
 
     - name: install gfortran
       run: sudo apt update && sudo apt install -y gfortran
@@ -33,7 +36,7 @@ jobs:
         pip3 show maturin
         echo "::add-path::$HOME/.local/bin"
     - name: Build wheel
-      run: maturin build --manylinux=off --release
+      run: maturin build --release
 
     - uses: actions/upload-artifact@v2
       with:
