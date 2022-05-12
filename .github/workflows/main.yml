@@ -12,6 +12,7 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.7" # to build abi3 wheels
+  ACTIONS_ALLOW_UNSECURE_COMMANDS: 1
 
 
 jobs:
