@@ -5,6 +5,7 @@ Features include:
 - **Parallelized computations:** Just set `parallel=True`
 - **Memory efficient:** Can generate extremely high resolution turbulence.
 - **Blazing fast:** Thanks to the stencil method and the Rust backend.
+- **Arbitrary box sizing:** Box discretization is not limited to powers of 2.
 
 # Usage
 RustMann separates the process of generating turbulence into two steps: **stencil generation** and **turbulence generation**. The stencil is a 5D matrix containing the spectral tensors needed to generate turbulence for a given set of parameters. A stencil can be reused to generate multiple random instances of turbulence. Implementations are provided in Python and Rust.
