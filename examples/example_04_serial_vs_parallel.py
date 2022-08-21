@@ -44,7 +44,6 @@ if __name__ == "__main__":
     print(f"{t_turb_par:2.1f}s")
 
     # Assert that serial and parallel results are equal.
-    assert ((stencil_serial.stencil - stencil_par.stencil) ** 2).sum() < 1e-16
     assert ((U - U_par) ** 2).sum() < 1e-16
     assert ((V - V_par) ** 2).sum() < 1e-16
     assert ((W - W_par) ** 2).sum() < 1e-16

@@ -14,39 +14,24 @@ class Stencil(BaseModel):
     Ny: PositiveInt
     Nz: PositiveInt
 
-    def __init__(self, parallel=False, nosinc=False, **kwargs):
+    def __init__(self, parallel=False, **kwargs):
         """
         Generate a Mann turbulence stencil.
         args:
             parallel: Use parallel operations (default: False)
-            nosinc: Skip the Sinc correction as described by Mann (default: False)
         """
         super().__init__(**kwargs)
-        if parallel:
-            self.stencil = RustMann.stencilate_sinc_par_f64(
-                self.L,
-                self.gamma,
-                self.Lx,
-                self.Ly,
-                self.Lz,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-            )
-        else:
-            if nosinc:
-                raise NotImplementedError
-            else:
-                self.stencil = RustMann.stencilate_sinc_f64(
-                    self.L,
-                    self.gamma,
-                    self.Lx,
-                    self.Ly,
-                    self.Lz,
-                    self.Nx,
-                    self.Ny,
-                    self.Nz,
-                )
+        self.stencil = RustMann.RustStencil(
+            self.L,
+            self.gamma,
+            self.Lx,
+            self.Ly,
+            self.Lz,
+            self.Nx,
+            self.Ny,
+            self.Nz,
+            parallel,
+        )
 
     class Config:
         extra = Extra.allow
@@ -61,54 +46,20 @@ class Stencil(BaseModel):
             parallel: Use parallel operations (default: False)
         """
         if domain == "space":
-            if parallel:
-                U, V, W = RustMann.turbulate_par_f64(
-                    self.stencil,
-                    ae,
-                    seed,
-                    self.Nx,
-                    self.Ny,
-                    self.Nz,
-                    self.Lx,
-                    self.Ly,
-                    self.Lz,
-                )
-            else:
-                U, V, W = RustMann.turbulate_f64(
-                    self.stencil,
-                    ae,
-                    seed,
-                    self.Nx,
-                    self.Ny,
-                    self.Nz,
-                    self.Lx,
-                    self.Ly,
-                    self.Lz,
-                )
-
-            return U, V, W
-        elif domain == "frequency":
-            Uf, Vf, Wf = RustMann.partial_turbulate_f64(
-                self.stencil,
+            U, V, W = self.stencil.turbulence(
                 ae,
                 seed,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-                self.Lx,
-                self.Ly,
-                self.Lz,
+                parallel,
             )
-
-            return Uf, Vf, Wf
+        elif domain == "frequency":
+            U, V, W = self.stencil.partial_turbulence(
+                ae,
+                seed,
+                parallel,
+            )
 
         else:
             raise ValueError
-
-    def turbulence_unit(self, ae: float, seed: int):
-        U, V, W = RustMann.turbulate_unit_f64(
-            self.stencil, ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz
-        )
 
         return U, V, W
 
