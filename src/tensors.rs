@@ -72,9 +72,8 @@ pub mod Tensors {
                         / (k_norm2 * (K[0].powi(2) + K[1].powi(2)));
                 // Equation (16)
                 let C2 = K[1] * k0_norm2 / (K[0].powi(2) + K[1].powi(2)).powf(3.0 / 2.0)
-                    * ((beta * K[0] * (K[0].powi(2) + K[1].powi(2)).sqrt())
-                        / (k0_norm2 - K0[2] * K[0] * beta))
-                        .atan();
+                    * (beta * K[0] * (K[0].powi(2) + K[1].powi(2)).sqrt())
+                        .atan2(k0_norm2 - K0[2] * K[0] * beta);
                 // Equation (14)
                 zeta1 = C1 - K[1] / K[0] * C2;
                 zeta2 = K[1] / K[0] * C1 + C2;
