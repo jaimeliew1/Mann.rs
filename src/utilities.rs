@@ -1,6 +1,13 @@
 use ndarray::{concatenate, prelude::*};
-use ndarray_rand::{rand::SeedableRng, rand_distr::{Normal, Uniform}, RandomExt};
-use ndrustfft::{ndfft_par, ndfft_r2c_par, ndifft_par, ndifft_r2c_par, ndfft, ndfft_r2c, ndifft, ndifft_r2c, Complex, FftHandler};
+use ndarray_rand::{
+    rand::SeedableRng,
+    rand_distr::{Normal, Uniform},
+    RandomExt,
+};
+use ndrustfft::{
+    ndfft, ndfft_par, ndfft_r2c, ndfft_r2c_par, ndifft, ndifft_par, ndifft_r2c, ndifft_r2c_par,
+    Complex, FftHandler,
+};
 use std::f64::consts::{PI, SQRT_2};
 
 use numpy::c64;
@@ -144,9 +151,115 @@ pub mod Utilities {
     /// Returns Array3 of of complex, random numbers with unit length.
     pub fn complex_random_unit(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<c64> {
         let mut rng = ndarray_rand::rand::rngs::SmallRng::seed_from_u64(seed);
-        let dist = Uniform::new(0.0, 2.0*PI);
+        let dist = Uniform::new(0.0, 2.0 * PI);
         let phase: Array4<f64> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng);
-        let out: Array4<c64> = phase.mapv(|elem| Complex::new(elem.cos(), elem.sin()));        
+        let out: Array4<c64> = phase.mapv(|elem| Complex::new(elem.cos(), elem.sin()));
         out
+    }
+
+    #[derive(Debug)]
+    struct SimpsonRange {
+        a: f64,
+        m: f64,
+        b: f64,
+        fa: Array2<f64>,
+        fm: Array2<f64>,
+        fb: Array2<f64>,
+        depth: u64,
+    }
+
+    pub fn adaptive_quadrature<F>(
+        mut func: F,
+        A: f64,
+        B: f64,
+        tol: f64,
+        min_depth: u64,
+    ) -> (Array2<f64>, u64)
+    where
+        F: FnMut(f64) -> Array2<f64>,
+    {
+        let m: f64 = (A + B) / 2.0;
+        let mut I: Array2<f64> = Array2::zeros((3, 3));
+
+        let mut S: Vec<SimpsonRange> = Vec::new();
+        S.push(SimpsonRange {
+            a: A,
+            m: m,
+            b: B,
+            fa: func(A),
+            fm: func(m),
+            fb: func(B),
+            depth: 1,
+        });
+        let mut neval: u64 = 3;
+
+        while let Some(SimpsonRange {
+            a,
+            m,
+            b,
+            fa,
+            fm,
+            fb,
+            depth,
+        }) = S.pop()
+        {
+            // simpson rule
+            let I1: Array2<f64> = (b - a) / 6.0 * (&fa + 4.0 * &fm + &fb);
+            let m1: f64 = (a + m) / 2.0;
+            let m3: f64 = (m + b) / 2.0;
+            let fm1: Array2<f64> = func(m1);
+            let fm3: Array2<f64> = func(m3);
+            neval += 2;
+
+            // Composite trapeszoidal rule with 2 equidistant intervals
+            let I2: Array2<f64> =
+                (b - a) / 12.0 * (&fa.view() + 4.0 * &fm1 + 2.0 * &fm + 4.0 * &fm3 + &fb);
+            if depth >= min_depth && (&I2 - &I1).iter().all(|&x| x.abs() < 15.0 * tol) {
+                I += &I2;
+            } else {
+                S.push(SimpsonRange {
+                    a: a,
+                    m: m1,
+                    b: m,
+                    fa: fa,
+                    fm: fm1,
+                    fb: fm.clone(),
+                    depth: depth + 1,
+                });
+                S.push(SimpsonRange {
+                    a: m,
+                    m: m3,
+                    b: b,
+                    fa: fm,
+                    fm: fm3,
+                    fb: fb,
+                    depth: depth + 1,
+                });
+            }
+        }
+        (I, neval)
+    }
+
+    pub fn adaptive_quadrature_2d<F>(
+        mut func: F,
+        x0: f64,
+        x1: f64,
+        y0: f64,
+        y1: f64,
+        tol: f64,
+        min_depth: u64,
+    ) -> (Array2<f64>, u64)
+    where
+        F: FnMut(f64, f64) -> Array2<f64>,
+    {
+        let mut neval: u64 = 0;
+        let g = |x: f64| {
+            let f = |y: f64| func(x, y);
+            let (I, _neval): (Array2<f64>, u64) = adaptive_quadrature(f, y0, y1, tol, min_depth);
+            neval += _neval;
+            I
+        };
+        let (I, _): (Array2<f64>, u64) = adaptive_quadrature(g, x0, x1, tol, min_depth);
+        (I, neval)
     }
 }

@@ -22,7 +22,6 @@ use numpy::c64;
 use std::f64::consts::PI;
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
 
-
 pub fn stencilate_par(
     L: f64,
     gamma: f64,
@@ -65,7 +64,7 @@ pub fn stencilate_sinc_par(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz);
+    let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz, 1.0, 2);
     let tensor_gen = Sheared::from_params(1.0, L, gamma);
 
     stencil
@@ -89,7 +88,7 @@ pub fn stencilate_sinc_par(
 
 pub fn partial_turbulate_par(
     stencil: &ArrayView5<f64>,
-    ae: f64, 
+    ae: f64,
     seed: u64,
     Nx: usize,
     Ny: usize,
@@ -124,9 +123,9 @@ pub fn partial_turbulate_par(
                         })
                 })
         });
-    UVW_f[[0,0,0,0]] = Complex::new(0.0, 0.0);
-    UVW_f[[0,0,0,1]] = Complex::new(0.0, 0.0);
-    UVW_f[[0,0,0,2]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 0]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 1]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 2]] = Complex::new(0.0, 0.0);
     (
         UVW_f.slice(s![.., .., .., 0]).to_owned(),
         UVW_f.slice(s![.., .., .., 1]).to_owned(),
@@ -196,7 +195,7 @@ pub fn stencilate_sinc(
     let mut stencil: Array5<f64> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz);
+    let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz, 1.0, 2);
     let tensor_gen = Sheared::from_params(1.0, L, gamma);
 
     stencil
@@ -255,9 +254,9 @@ pub fn partial_turbulate(
                         })
                 })
         });
-    UVW_f[[0,0,0,0]] = Complex::new(0.0, 0.0);
-    UVW_f[[0,0,0,1]] = Complex::new(0.0, 0.0);
-    UVW_f[[0,0,0,2]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 0]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 1]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 2]] = Complex::new(0.0, 0.0);
     (
         UVW_f.slice(s![.., .., .., 0]).to_owned(),
         UVW_f.slice(s![.., .., .., 1]).to_owned(),
@@ -322,9 +321,9 @@ pub fn partial_turbulate_unit(
                         })
                 })
         });
-    UVW_f[[0,0,0,0]] = Complex::new(0.0, 0.0);
-    UVW_f[[0,0,0,1]] = Complex::new(0.0, 0.0);
-    UVW_f[[0,0,0,2]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 0]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 1]] = Complex::new(0.0, 0.0);
+    UVW_f[[0, 0, 0, 2]] = Complex::new(0.0, 0.0);
     (
         UVW_f.slice(s![.., .., .., 0]).to_owned(),
         UVW_f.slice(s![.., .., .., 1]).to_owned(),
@@ -351,4 +350,3 @@ pub fn turbulate_unit(
     let W: Array3<f64> = Utilities::irfft3d(&mut W_f);
     (U, V, W)
 }
-

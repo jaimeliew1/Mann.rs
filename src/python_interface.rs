@@ -200,5 +200,55 @@ pub fn RustMann(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
+    #[pyfn(module)]
+    fn sheared_sinc_f64<'py>(
+        py: Python<'py>,
+        K: PyReadonlyArray1<'py, f64>,
+        ae: f64,
+        L: f64,
+        gamma: f64,
+        Ly: f64,
+        Lz: f64,
+        tol: f64,
+        min_depth: u64,
+    ) -> &'py PyArray2<f64> {
+        ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
+            .tensor(&K.as_slice().unwrap())
+            .to_pyarray(py)
+    }
+    #[pyfn(module)]
+    fn sheared_sinc_info_f64<'py>(
+        py: Python<'py>,
+        K: PyReadonlyArray1<'py, f64>,
+        ae: f64,
+        L: f64,
+        gamma: f64,
+        Ly: f64,
+        Lz: f64,
+        tol: f64,
+        min_depth: u64,
+    ) -> (&'py PyArray2<f64>, u64) {
+        let (out, neval) = ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
+            .tensor_info(&K.as_slice().unwrap());
+
+        (out.to_pyarray(py), neval)
+    }
+
+    #[pyfn(module)]
+    fn sheared_sinc_sqrt_f64<'py>(
+        py: Python<'py>,
+        K: PyReadonlyArray1<'py, f64>,
+        ae: f64,
+        L: f64,
+        gamma: f64,
+        Ly: f64,
+        Lz: f64,
+        tol: f64,
+        min_depth: u64,
+    ) -> &'py PyArray2<f64> {
+        ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
+            .decomp(&K.as_slice().unwrap())
+            .to_pyarray(py)
+    }
     Ok(())
 }

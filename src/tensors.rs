@@ -98,27 +98,55 @@ pub mod Tensors {
         pub Ly: T,
         /// Vertical box length, $L\_z$
         pub Lz: T,
+        /// Adaptive integration tolerance
+        pub tol: T,
+        /// Adaptive integration minimum depth
+        pub min_depth: u64,
     }
 
     impl ShearedSinc<f64> {
-        pub fn from_params(ae: f64, L: f64, gamma: f64, Ly: f64, Lz: f64) -> ShearedSinc<f64> {
+        pub fn from_params(
+            ae: f64,
+            L: f64,
+            gamma: f64,
+            Ly: f64,
+            Lz: f64,
+            tol: f64,
+            min_depth: u64,
+        ) -> ShearedSinc<f64> {
             ShearedSinc {
                 ae,
                 L,
                 gamma,
                 Ly,
                 Lz,
+                tol,
+                min_depth,
             }
         }
 
-        /// Isotropic to sheared tensor transformation matrix.
-        pub fn sheared_transform(&self, K: &[f64]) -> Array2<f64> {
-            Sheared {
-                ae: self.ae,
-                L: self.L,
-                gamma: self.gamma,
-            }
-            .sheared_transform(K)
+        /// Sinc-corrected spectral tensor with additional information.
+        pub fn tensor_info(&self, K: &[f64]) -> (Array2<f64>, u64) {
+            let tensor_gen: Sheared<f64> = Sheared::from_params(self.ae, self.L, self.gamma);
+
+            let func = |y: f64, z: f64| {
+                Utilities::sinc2(y * self.Ly / 2.0)
+                    * Utilities::sinc2(z * self.Lz / 2.0)
+                    * tensor_gen.tensor(&[K[0], K[1] + y, K[2] + z])
+            };
+
+            let (mut out, neval): (Array2<f64>, u64) = Utilities::adaptive_quadrature_2d(
+                func,
+                -2.0 * PI / self.Ly,
+                2.0 * PI / self.Ly,
+                -2.0 * PI / self.Lz,
+                2.0 * PI / self.Lz,
+                self.tol,
+                self.min_depth,
+            );
+
+            out *= 1.22686 * self.Ly * self.Lz / (2.0 * PI).powi(2);
+            (out, neval)
         }
     }
 
@@ -215,39 +243,10 @@ pub mod Tensors {
 
     impl TensorGenerator<f64> for ShearedSinc<f64> {
         /// Sheared spectral tensor with sinc correction
-        fn tensor(&self, K: &[f64]) -> Array2<f64> {
-            let NN = 51;
-            let kys: Array1<f64> = Array1::linspace(-1.0, 1.0, NN);
-            let kzs: Array1<f64> = Array1::linspace(-1.0, 1.0, NN);
 
-            let mut ans: Array2<f64> = Array2::zeros((3, 3));
-            for (i, ky) in kys.iter().enumerate() {
-                for (j, kz) in kzs.iter().enumerate() {
-                    let mut factor = 4.0;
-                    if i == 0 || i == NN - 1 {
-                        factor /= 2.0
-                    }
-                    if j == 0 || j == NN - 1 {
-                        factor /= 2.0
-                    }
-                    let sinc = Utilities::sinc2(ky * PI) * Utilities::sinc2(kz * PI);
-                    ans = ans
-                        + factor
-                            * sinc
-                            * Sheared {
-                                ae: self.ae,
-                                L: self.L,
-                                gamma: self.gamma,
-                            }
-                            .tensor(&[
-                                K[0],
-                                K[1] + *ky * 2.0 * PI / self.Ly,
-                                K[2] + *kz * 2.0 * PI / self.Lz,
-                            ]);
-                }
-            }
-            ans *= 1.22686 / (NN as f64 - 1.0).powi(2);
-            ans
+        fn tensor(&self, K: &[f64]) -> Array2<f64> {
+            let (out, _): (Array2<f64>, u64) = self.tensor_info(K);
+            out
         }
 
         /// Decomposition of sheared spectral tensor with sinc correction
