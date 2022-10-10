@@ -1,6 +1,6 @@
 use ndarray::{Array1, Array3, Array5};
 use numpy::{
-    c64, PyArray1, PyArray2, PyArray3, PyArray4, PyArray5, PyReadonlyArray1, PyReadonlyArray5,
+    c32, PyArray1, PyArray2, PyArray3, PyArray4, PyArray5, PyReadonlyArray1, PyReadonlyArray5,
     ToPyArray,
 };
 use pyo3::prelude::*;
@@ -13,26 +13,26 @@ use crate::{
 
 #[pyclass]
 struct RustStencil {
-    L: f64,
-    gamma: f64,
-    Lx: f64,
-    Ly: f64,
-    Lz: f64,
+    L: f32,
+    gamma: f32,
+    Lx: f32,
+    Ly: f32,
+    Lz: f32,
     Nx: usize,
     Ny: usize,
     Nz: usize,
-    _stencil: Array5<f64>,
+    _stencil: Array5<f32>,
 }
 
 #[pymethods]
 impl RustStencil {
     #[new]
     fn __new__(
-        L: f64,
-        gamma: f64,
-        Lx: f64,
-        Ly: f64,
-        Lz: f64,
+        L: f32,
+        gamma: f32,
+        Lx: f32,
+        Ly: f32,
+        Lz: f32,
         Nx: usize,
         Ny: usize,
         Nz: usize,
@@ -67,11 +67,11 @@ impl RustStencil {
     fn turbulence<'py>(
         &self,
         py: Python<'py>,
-        ae: f64,
+        ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<f64>, &'py PyArray3<f64>, &'py PyArray3<f64>) {
-        let (U_f, V_f, W_f): (Array3<f64>, Array3<f64>, Array3<f64>) = match parallel {
+    ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
+        let (U_f, V_f, W_f): (Array3<f32>, Array3<f32>, Array3<f32>) = match parallel {
             true => turbulate_par(
                 &self._stencil.view(),
                 ae,
@@ -101,11 +101,11 @@ impl RustStencil {
     fn partial_turbulence<'py>(
         &self,
         py: Python<'py>,
-        ae: f64,
+        ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<c64>, &'py PyArray3<c64>, &'py PyArray3<c64>) {
-        let (U_f, V_f, W_f): (Array3<c64>, Array3<c64>, Array3<c64>) = match parallel {
+    ) -> (&'py PyArray3<c32>, &'py PyArray3<c32>, &'py PyArray3<c32>) {
+        let (U_f, V_f, W_f): (Array3<c32>, Array3<c32>, Array3<c32>) = match parallel {
             true => partial_turbulate_par(
                 &self._stencil.view(),
                 ae,
@@ -138,96 +138,96 @@ pub fn RustMann(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
     module.add_class::<RustStencil>()?;
 
     #[pyfn(module)]
-    fn freq_components_f64<'py>(
+    fn freq_components_f32<'py>(
         py: Python<'py>,
         Nx: usize,
         Ny: usize,
         Nz: usize,
-        Lx: f64,
-        Ly: f64,
-        Lz: f64,
-    ) -> (&'py PyArray1<f64>, &'py PyArray1<f64>, &'py PyArray1<f64>) {
-        let (f_x, f_y, f_z): (Array1<f64>, Array1<f64>, Array1<f64>) =
+        Lx: f32,
+        Ly: f32,
+        Lz: f32,
+    ) -> (&'py PyArray1<f32>, &'py PyArray1<f32>, &'py PyArray1<f32>) {
+        let (f_x, f_y, f_z): (Array1<f32>, Array1<f32>, Array1<f32>) =
             freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
         (f_x.to_pyarray(py), f_y.to_pyarray(py), f_z.to_pyarray(py))
     }
 
     #[pyfn(module)]
-    fn isotropic_f64<'py>(
+    fn isotropic_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-    ) -> &'py PyArray2<f64> {
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+    ) -> &'py PyArray2<f32> {
         Isotropic::from_params(ae, L)
             .tensor(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
 
     #[pyfn(module)]
-    fn isotropic_sqrt_f64<'py>(
+    fn isotropic_sqrt_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-    ) -> &'py PyArray2<f64> {
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+    ) -> &'py PyArray2<f32> {
         Isotropic::from_params(ae, L)
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
     #[pyfn(module)]
-    fn sheared_f64<'py>(
+    fn sheared_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-        gamma: f64,
-    ) -> &'py PyArray2<f64> {
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+        gamma: f32,
+    ) -> &'py PyArray2<f32> {
         Sheared::from_params(ae, L, gamma)
             .tensor(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
 
     #[pyfn(module)]
-    fn sheared_sqrt_f64<'py>(
+    fn sheared_sqrt_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-        gamma: f64,
-    ) -> &'py PyArray2<f64> {
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+        gamma: f32,
+    ) -> &'py PyArray2<f32> {
         Sheared::from_params(ae, L, gamma)
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
     #[pyfn(module)]
-    fn sheared_sinc_f64<'py>(
+    fn sheared_sinc_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-        gamma: f64,
-        Ly: f64,
-        Lz: f64,
-        tol: f64,
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+        gamma: f32,
+        Ly: f32,
+        Lz: f32,
+        tol: f32,
         min_depth: u64,
-    ) -> &'py PyArray2<f64> {
+    ) -> &'py PyArray2<f32> {
         ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
             .tensor(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
     #[pyfn(module)]
-    fn sheared_sinc_info_f64<'py>(
+    fn sheared_sinc_info_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-        gamma: f64,
-        Ly: f64,
-        Lz: f64,
-        tol: f64,
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+        gamma: f32,
+        Ly: f32,
+        Lz: f32,
+        tol: f32,
         min_depth: u64,
-    ) -> (&'py PyArray2<f64>, u64) {
+    ) -> (&'py PyArray2<f32>, u64) {
         let (out, neval) = ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
             .tensor_info(&K.as_slice().unwrap());
 
@@ -235,17 +235,17 @@ pub fn RustMann(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
     }
 
     #[pyfn(module)]
-    fn sheared_sinc_sqrt_f64<'py>(
+    fn sheared_sinc_sqrt_f32<'py>(
         py: Python<'py>,
-        K: PyReadonlyArray1<'py, f64>,
-        ae: f64,
-        L: f64,
-        gamma: f64,
-        Ly: f64,
-        Lz: f64,
-        tol: f64,
+        K: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        L: f32,
+        gamma: f32,
+        Ly: f32,
+        Lz: f32,
+        tol: f32,
         min_depth: u64,
-    ) -> &'py PyArray2<f64> {
+    ) -> &'py PyArray2<f32> {
         ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)

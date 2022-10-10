@@ -4,7 +4,7 @@
 mod tests {
     use crate::tensors::Tensors::*;
     use crate::*;
-    static TOL: f64 = 1e-7;
+    static TOL: f32 = 1e-5;
 
     #[test]
     fn test_vonkarman_spectrum() {
@@ -30,8 +30,8 @@ mod tests {
 
     #[test]
     fn test_isotropic_tensor() {
-        let ae: f64 = 1.0;
-        let L: f64 = 1.0;
+        let ae: f32 = 1.0;
+        let L: f32 = 1.0;
         let K = &[1.0, 2.0, 3.0];
 
         let correct = [
@@ -39,15 +39,15 @@ mod tests {
             [-7.40562240e-05, 3.70281120e-04, -2.22168672e-04],
             [-1.11084336e-04, -2.22168672e-04, 1.85140560e-04],
         ];
-        let ans: Array2<f64> = Tensors::Isotropic::from_params(ae, L).tensor(K);
+        let ans: Array2<f32> = Tensors::Isotropic::from_params(ae, L).tensor(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
     }
     #[test]
     fn test_sqrt_isotropic_tensor() {
-        let ae: f64 = 1.0;
-        let L: f64 = 1.0;
+        let ae: f32 = 1.0;
+        let L: f32 = 1.0;
         let K = &[1.0, 2.0, 3.0];
 
         let correct = [
@@ -55,7 +55,7 @@ mod tests {
             [-0.01825522, 0., 0.00608507],
             [0.01217015, -0.00608507, 0.],
         ];
-        let ans: Array2<f64> = Tensors::Isotropic::from_params(ae, L).decomp(K);
+        let ans: Array2<f32> = Tensors::Isotropic::from_params(ae, L).decomp(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -63,8 +63,8 @@ mod tests {
     #[test]
     fn test_sheared_transform() {
         let gamma = 1.0;
-        let ae: f64 = 1.0;
-        let L: f64 = 1.0;
+        let ae: f32 = 1.0;
+        let L: f32 = 1.0;
         let K = &[1.0, 2.0, 3.0];
 
         let correct = [
@@ -72,7 +72,7 @@ mod tests {
             [0., 1., 0.12190881],
             [0., 0., 1.195048],
         ];
-        let ans: Array2<f64> = Tensors::Sheared::from_params(ae, L, gamma).sheared_transform(K);
+        let ans: Array2<f32> = Tensors::Sheared::from_params(ae, L, gamma).sheared_transform(K);
 
         ans.into_iter()
             .zip(correct.iter().flatten())
@@ -81,8 +81,8 @@ mod tests {
     #[test]
     fn test_sheared_sqrt() {
         let gamma = 1.0;
-        let ae: f64 = 1.0;
-        let L: f64 = 1.0;
+        let ae: f32 = 1.0;
+        let L: f32 = 1.0;
         let K = &[1.0, 2.0, 3.0];
 
         let correct = [
@@ -90,7 +90,7 @@ mod tests {
             [-0.01527416, -0.00058533, 0.0048014],
             [0.0114758, -0.0057379, 0.],
         ];
-        let ans: Array2<f64> = Tensors::Sheared::from_params(ae, L, gamma).decomp(K);
+        let ans: Array2<f32> = Tensors::Sheared::from_params(ae, L, gamma).decomp(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -98,8 +98,8 @@ mod tests {
     #[test]
     fn test_sheared() {
         let gamma = 1.0;
-        let ae: f64 = 1.0;
-        let L: f64 = 1.0;
+        let ae: f32 = 1.0;
+        let L: f32 = 1.0;
         let K = &[1.0, 2.0, 3.0];
 
         let correct = [
@@ -107,7 +107,7 @@ mod tests {
             [2.38208492e-06, 2.56695868e-04, -1.71924607e-04],
             [-1.50003417e-04, -1.71924607e-04, 1.64617544e-04],
         ];
-        let ans: Array2<f64> = Tensors::Sheared::from_params(ae, L, gamma).tensor(K);
+        let ans: Array2<f32> = Tensors::Sheared::from_params(ae, L, gamma).tensor(K);
         ans.into_iter()
             .zip(correct.iter().flatten())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
@@ -117,7 +117,7 @@ mod tests {
     fn test_freq_components_even() {
         let (Lx, Ly, Lz) = (10.0, 20.0, 30.0);
         let (Nx, Ny, Nz) = (10, 10, 10);
-        let (Kx, Ky, Kz): (Array1<f64>, Array1<f64>, Array1<f64>) =
+        let (Kx, Ky, Kz): (Array1<f32>, Array1<f32>, Array1<f32>) =
             Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
         println!("{:?}", Kx);
         let ans_Kx = [
@@ -160,8 +160,8 @@ mod tests {
     // #[test]
     // fn test_stencilate() {
     //     let gamma = 1.0;
-    //     let ae: f64 = 1.0;
-    //     let L: f64 = 1.0;
+    //     let ae: f32 = 1.0;
+    //     let L: f32 = 1.0;
     //     let (Nx, Ny, Nz) = (8192, 32, 32);
     //     let (Lx, Ly, Lz) = (10.0, 10.0, 10.0);
     //     stencilate(ae, L, gamma, Lx, Ly, Lz, Nx, Ny, Nz);
