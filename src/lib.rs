@@ -21,6 +21,7 @@ use ndrustfft::Complex;
 use numpy::c32;
 use std::f32::consts::PI;
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
+use std::mem::drop;
 
 pub fn stencilate_par(
     L: f32,
@@ -148,8 +149,11 @@ pub fn turbulate_par(
         partial_turbulate_par(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f32> = Utilities::irfft3d_par(&mut U_f);
+    drop(U_f);
     let V: Array3<f32> = Utilities::irfft3d_par(&mut V_f);
+    drop(V_f);
     let W: Array3<f32> = Utilities::irfft3d_par(&mut W_f);
+    drop(W_f);
     (U, V, W)
 }
 
@@ -279,8 +283,11 @@ pub fn turbulate(
         partial_turbulate(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f32> = Utilities::irfft3d(&mut U_f);
+    drop(U_f);
     let V: Array3<f32> = Utilities::irfft3d(&mut V_f);
+    drop(V_f);
     let W: Array3<f32> = Utilities::irfft3d(&mut W_f);
+    drop(W_f);
     (U, V, W)
 }
 
