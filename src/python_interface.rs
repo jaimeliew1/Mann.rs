@@ -6,9 +6,10 @@ use numpy::{
 use pyo3::prelude::*;
 
 use crate::{
-    partial_turbulate, partial_turbulate_par, stencilate_sinc, stencilate_sinc_par, turbulate,
-    turbulate_par, turbulate_unit, Tensors::*, Utilities::complex_random_gaussian,
-    Utilities::freq_components,
+    forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
+    partial_forgetful_turbulate_par, partial_turbulate, partial_turbulate_par, stencilate_sinc,
+    stencilate_sinc_par, turbulate, turbulate_par, turbulate_unit, Tensors::*,
+    Utilities::complex_random_gaussian, Utilities::freq_components,
 };
 
 #[pyclass]
@@ -22,6 +23,18 @@ struct RustStencil {
     Ny: usize,
     Nz: usize,
     _stencil: Array5<f32>,
+}
+
+#[pyclass]
+struct RustForgetfulStencil {
+    L: f32,
+    gamma: f32,
+    Lx: f32,
+    Ly: f32,
+    Lz: f32,
+    Nx: usize,
+    Ny: usize,
+    Nz: usize,
 }
 
 #[pymethods]
@@ -133,9 +146,72 @@ impl RustStencil {
     }
 }
 
+#[pymethods]
+impl RustForgetfulStencil {
+    #[new]
+    fn __new__(
+        L: f32,
+        gamma: f32,
+        Lx: f32,
+        Ly: f32,
+        Lz: f32,
+        Nx: usize,
+        Ny: usize,
+        Nz: usize,
+    ) -> Self {
+        RustForgetfulStencil {
+            L: L,
+            gamma: gamma,
+            Lx: Lx,
+            Ly: Ly,
+            Lz: Lz,
+            Nx: Nx,
+            Ny: Ny,
+            Nz: Nz,
+        }
+    }
+
+    fn turbulence<'py>(
+        &self,
+        py: Python<'py>,
+        ae: f32,
+        seed: u64,
+        parallel: bool,
+    ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
+        let (U_f, V_f, W_f): (Array3<f32>, Array3<f32>, Array3<f32>) = match parallel {
+            true => forgetful_turbulate_par(
+                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
+            ),
+            false => forgetful_turbulate(
+                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
+            ),
+        };
+        (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
+    }
+
+    fn partial_turbulence<'py>(
+        &self,
+        py: Python<'py>,
+        ae: f32,
+        seed: u64,
+        parallel: bool,
+    ) -> (&'py PyArray3<c32>, &'py PyArray3<c32>, &'py PyArray3<c32>) {
+        let (U_f, V_f, W_f): (Array3<c32>, Array3<c32>, Array3<c32>) = match parallel {
+            true => partial_forgetful_turbulate_par(
+                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
+            ),
+            false => partial_forgetful_turbulate(
+                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
+            ),
+        };
+        (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
+    }
+}
+
 #[pymodule]
 pub fn RustMann(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
     module.add_class::<RustStencil>()?;
+    module.add_class::<RustForgetfulStencil>()?;
 
     #[pyfn(module)]
     fn freq_components_f32<'py>(

@@ -64,6 +64,65 @@ class Stencil(BaseModel):
         return U, V, W
 
 
+class ForgetfulStencil(BaseModel):
+    L: PositiveFloat
+    gamma: NonNegativeFloat
+    Lx: PositiveFloat
+    Ly: PositiveFloat
+    Lz: PositiveFloat
+    Nx: PositiveInt
+    Ny: PositiveInt
+    Nz: PositiveInt
+
+    def __init__(self, parallel=False, **kwargs):
+        """
+        Generate a Mann turbulence stencil.
+        args:
+            parallel: Use parallel operations (default: False)
+        """
+        super().__init__(**kwargs)
+        self.stencil = RustMann.RustForgetfulStencil(
+            self.L,
+            self.gamma,
+            self.Lx,
+            self.Ly,
+            self.Lz,
+            self.Nx,
+            self.Ny,
+            self.Nz,
+        )
+
+    class Config:
+        extra = Extra.allow
+
+    def turbulence(self, ae: float, seed: int, domain="space", parallel=False):
+        """
+        Generate a Mann turbulence from a stencil.
+        args:
+            ae (float): scaling factor.
+            seed (int): random seed.
+            domain: return domain type. Either `space` (default) or `frequency`
+            parallel: Use parallel operations (default: False)
+        """
+        if domain == "space":
+            U, V, W = self.stencil.turbulence(
+                ae,
+                seed,
+                parallel,
+            )
+        elif domain == "frequency":
+            U, V, W = self.stencil.partial_turbulence(
+                ae,
+                seed,
+                parallel,
+            )
+
+        else:
+            raise ValueError
+
+        return U, V, W
+
+
 def save_box(filename, box):
     filename = Path(filename)
     filename.parent.mkdir(exist_ok=True, parents=True)
