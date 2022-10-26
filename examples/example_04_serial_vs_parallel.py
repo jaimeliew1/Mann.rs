@@ -1,8 +1,8 @@
 """
 Compares the computational time of serial and parallel turbulence generation
-using RustMann.
+using Mannrs.
 """
-import RustMann
+import mannrs
 import time
 
 ae = 1
@@ -21,13 +21,13 @@ params = {
 if __name__ == "__main__":
     print("Generating stencil (serial)...", end=" ")
     tstart = time.time()
-    stencil_serial = RustMann.Stencil(**params)
+    stencil_serial = mannrs.Stencil(**params)
     t_stencil_serial = time.time() - tstart
     print(f"{t_stencil_serial:2.1f}s")
 
     print("Generating stencil (parallel)...", end="")
     tstart = time.time()
-    stencil_par = RustMann.Stencil(**params, parallel=True)
+    stencil_par = mannrs.Stencil(**params, parallel=True)
     t_stencil_par = time.time() - tstart
     print(f"{t_stencil_par:2.1f}s")
 

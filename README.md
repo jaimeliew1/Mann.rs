@@ -1,5 +1,5 @@
-# RustMann
-A Mann turbulence generator for Python written in Rust. RustMann can generate 3D coherent turbulence boxes for wind turbine simulations as described in *Mann, J. (1998). Wind field simulation. Probabilistic engineering mechanics, 13(4), 269-282.*
+# Mann.rs
+A Mann turbulence generator for Python written in Rust. Mannrs can generate 3D coherent turbulence boxes for wind turbine simulations as described in *Mann, J. (1998). Wind field simulation. Probabilistic engineering mechanics, 13(4), 269-282.*
 
 Features include:
 - **Parallelized computations:** Just set `parallel=True`
@@ -8,11 +8,11 @@ Features include:
 - **Arbitrary box sizing:** Box discretization is not limited to powers of 2.
 
 # Usage
-RustMann separates the process of generating turbulence into two steps: **stencil generation** and **turbulence generation**. The stencil is a 5D matrix containing the spectral tensors needed to generate turbulence for a given set of parameters. A stencil can be reused to generate multiple random instances of turbulence. Implementations are provided in Python and Rust.
+Mannrs separates the process of generating turbulence into two steps: **stencil generation** and **turbulence generation**. The stencil is a 5D matrix containing the spectral tensors needed to generate turbulence for a given set of parameters. A stencil can be reused to generate multiple random instances of turbulence. Implementations are provided in Python and Rust.
 
 ## Python
 ```python
-import RustMann
+import mannrs
 
 params = {
     "L": 30.0,
@@ -27,13 +27,13 @@ params = {
 ae = 0.2
 seed = 1234
 
-stencil = RustMann.Stencil(**params)
+stencil = mannrs.Stencil(**params)
 U, V, W = stencil.turbulence(ae, seed)
 ```
 
 ## Rust
 ```rust
-use RustMann::Stencil;
+use mannrs::Stencil;
 
 let (L, gamma) = (30.0, 3.2);
 let (Lx, Ly, Lz) = (6000.0, 200.0, 200.0);
@@ -48,12 +48,12 @@ let (U, V, W) = stencil.turbulence(ae, seed);
 # Installation
 ## Python (Linux and MacOS only)
 ```bash
-pip install RustMann
+pip install mannrs
 ```
 
 ## Rust
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-rustmann = "0.1.0"
+mannrs = "0.1.0"
 ```

@@ -1,4 +1,4 @@
-from . import RustMann
+from . import mannrs
 from pydantic import BaseModel, Extra, PositiveInt, NonNegativeFloat, PositiveFloat
 import numpy as np
 from pathlib import Path
@@ -21,7 +21,7 @@ class Stencil(BaseModel):
             parallel: Use parallel operations (default: False)
         """
         super().__init__(**kwargs)
-        self.stencil = RustMann.RustStencil(
+        self.stencil = mannrs.RustStencil(
             self.L,
             self.gamma,
             self.Lx,
@@ -81,7 +81,7 @@ class ForgetfulStencil(BaseModel):
             parallel: Use parallel operations (default: False)
         """
         super().__init__(**kwargs)
-        self.stencil = RustMann.RustForgetfulStencil(
+        self.stencil = mannrs.RustForgetfulStencil(
             self.L,
             self.gamma,
             self.Lx,

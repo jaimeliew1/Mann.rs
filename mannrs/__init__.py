@@ -1,3 +1,3 @@
 from .Mann import Stencil, ForgetfulStencil, save_box, load_mann_binary
 
-__doc__ = RustMann.__doc__
+__doc__ = mannrs.__doc__

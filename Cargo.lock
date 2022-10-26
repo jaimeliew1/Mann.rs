@@ -3,19 +3,6 @@
 version = 3
 
 [[package]]
-name = "RustMann"
-version = "0.2.0"
-dependencies = [
- "ndarray",
- "ndarray-linalg",
- "ndarray-rand",
- "ndrustfft",
- "num",
- "numpy",
- "pyo3",
-]
-
-[[package]]
 name = "approx"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -249,6 +236,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712a4d093c9976e24e7dbca41db895dabcbac38eb5f4045393d17a95bdfb1109"
 dependencies = [
  "scopeguard",
+]
+
+[[package]]
+name = "mannrs"
+version = "0.2.0"
+dependencies = [
+ "ndarray",
+ "ndarray-linalg",
+ "ndarray-rand",
+ "ndrustfft",
+ "num",
+ "numpy",
+ "pyo3",
 ]
 
 [[package]]

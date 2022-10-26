@@ -4,7 +4,7 @@ theoretical spectra.
 """
 from itertools import product
 import numpy as np
-from RustMann import Tensor, Stencil
+from mannrs import Tensor, Stencil
 from tqdm import tqdm, trange
 import matplotlib.pyplot as plt
 

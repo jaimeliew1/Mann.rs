@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 //! Coherence turbulence box generation using the Mann turbulence model.
 //!
-//! `Rustmann` provides a computationally efficient module for generating Mann
-//! turbulence boxes for wind turbine simulations. `Rustmann` is designed to be
+//! `Mannrs` provides a computationally efficient module for generating Mann
+//! turbulence boxes for wind turbine simulations. `Mannrs` is designed to be
 //! called from Python, however the underlying functions are also available in
 //! rust.
 mod python_interface;

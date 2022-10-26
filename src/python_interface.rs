@@ -209,7 +209,7 @@ impl RustForgetfulStencil {
 }
 
 #[pymodule]
-pub fn RustMann(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
+pub fn mannrs(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
     module.add_class::<RustStencil>()?;
     module.add_class::<RustForgetfulStencil>()?;
 

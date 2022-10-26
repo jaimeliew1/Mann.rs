@@ -1,4 +1,4 @@
-from RustMann import RustMann
+from mannrs import mannrs
 import numpy as np
 
 
@@ -11,10 +11,10 @@ class Isotropic:
         return f"Tensor.Isotropic(ae={self.ae}, L={self.L})"
 
     def tensor(self, k):
-        return RustMann.isotropic_f32(np.array(k, dtype=np.single), self.ae, self.L)
+        return mannrs.isotropic_f32(np.array(k, dtype=np.single), self.ae, self.L)
 
     def decomp(self, k):
-        return RustMann.isotropic_sqrt_f32(np.array(k, dtype=np.single), self.ae, self.L)
+        return mannrs.isotropic_sqrt_f32(np.array(k, dtype=np.single), self.ae, self.L)
 
 
 class Sheared:
@@ -27,12 +27,12 @@ class Sheared:
         return f"Tensor.Sheared(ae={self.ae}, L={self.L}, gamma={self.gamma})"
 
     def tensor(self, k):
-        return RustMann.sheared_f32(
+        return mannrs.sheared_f32(
             np.array(k, dtype=np.single), self.ae, self.L, self.gamma
         )
 
     def decomp(self, k):
-        return RustMann.sheared_sqrt_f32(
+        return mannrs.sheared_sqrt_f32(
             np.array(k, dtype=np.single), self.ae, self.L, self.gamma
         )
 
@@ -51,7 +51,7 @@ class ShearedSinc:
         return f"Tensor.ShearedSinc(ae={self.ae}, L={self.L}, gamma={self.gamma})"
 
     def tensor_info(self, k):
-        return RustMann.sheared_sinc_info_f32(
+        return mannrs.sheared_sinc_info_f32(
             np.array(k, dtype=np.single),
             self.ae,
             self.L,
@@ -63,7 +63,7 @@ class ShearedSinc:
         )
 
     def tensor(self, k):
-        return RustMann.sheared_sinc_f32(
+        return mannrs.sheared_sinc_f32(
             np.array(k, dtype=np.single),
             self.ae,
             self.L,
@@ -75,7 +75,7 @@ class ShearedSinc:
         )
 
     def decomp(self, k):
-        return RustMann.sheared_sinc_sqrt_f32(
+        return mannrs.sheared_sinc_sqrt_f32(
             np.array(k, dtype=np.single),
             self.ae,
             self.L,

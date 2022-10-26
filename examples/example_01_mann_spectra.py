@@ -2,7 +2,7 @@
 Plots the Mann frequency spectrum for given values of ae, L, and Gamma.
 """
 import numpy as np
-from RustMann import Tensor
+from mannrs import Tensor
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
