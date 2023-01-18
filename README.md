@@ -44,7 +44,7 @@ let seed = 1234;
 let stencil = Stencil::from_params(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz);
 let (U, V, W) = stencil.turbulence(ae, seed);
 ```
-
+<!---
 # Installation
 ## Python (Linux and MacOS only)
 ```bash
@@ -57,3 +57,4 @@ Add this to your `Cargo.toml`:
 [dependencies]
 mannrs = "0.1.0"
 ```
+--->
