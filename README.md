@@ -44,17 +44,23 @@ let seed = 1234;
 let stencil = Stencil::from_params(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz);
 let (U, V, W) = stencil.turbulence(ae, seed);
 ```
-<!---
+
 # Installation
+Installation for both Python and Rust versions requires the Rust compiler to be installed (see [here](https://www.rust-lang.org/tools/install) for installation instructions).
 ## Python (Linux and MacOS only)
+
+
+Clone this repository and pip install:
 ```bash
-pip install mannrs
+git clone git@github.com:jaimeliew1/Mann.rs.git
+cd Mann.rs
+pip install .
 ```
 
 ## Rust
-Add this to your `Cargo.toml`:
-```toml
-[dependencies]
-mannrs = "0.1.0"
+```bash
+cargo install --git https://github.com/jaimeliew1/Mann.rs mannrs
 ```
---->
+
+# Contributions
+If you have suggestions or issues with Mann.rs, feel free to contact me at `jaimeliew1@gmail.com`. Pull requests are welcome.
