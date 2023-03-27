@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/450532624.svg)](https://zenodo.org/badge/latestdoi/450532624)
+
 # Mann.rs
 A Mann turbulence generator for Python written in Rust. Mannrs can generate 3D coherent turbulence boxes for wind turbine simulations as described in *Mann, J. (1998). Wind field simulation. Probabilistic engineering mechanics, 13(4), 269-282.*
 
@@ -64,3 +66,9 @@ cargo install --git https://github.com/jaimeliew1/Mann.rs mannrs
 
 # Contributions
 If you have suggestions or issues with Mann.rs, feel free to contact me at `jaimeliew1@gmail.com`. Pull requests are welcome.
+
+# Citation
+If you want to cite Mann.rs, please use this citation:
+```
+Jaime Liew. (2022). jaimeliew1/Mann.rs: Publish Mann.rs (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.7254149
+```
