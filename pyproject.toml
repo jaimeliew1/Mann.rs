@@ -8,9 +8,10 @@ mannrs = 'mannrs.CLI:CLI'
 
 [project]
 name = "mannrs"
-authors = ["Jaime Liew <jaimeliew1@gmail.com>"]
+authors =  [{email = "jaimeliew1@gmail.com"},
+			{name = "Jaime Liew"}]
 readme = "README.md"
-license = "license.md"
+license = {file = "license.md"}
 requires-python = ">=3.6"
 classifiers = [
     "Programming Language :: Rust",
