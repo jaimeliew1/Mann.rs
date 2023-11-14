@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/450532624.svg)](https://zenodo.org/badge/latestdoi/450532624)
 
 # Mann.rs
-A Mann turbulence generator for Python written in Rust. Mannrs can generate 3D coherent turbulence boxes for wind turbine simulations as described in *Mann, J. (1998). Wind field simulation. Probabilistic engineering mechanics, 13(4), 269-282.*
+A Mann turbulence generator for Python written in Rust. Mannrs can generate 3D coherent turbulence boxes for wind turbine simulations. The numerical innovations used in this package are described in [Liew, J., Riva, R., & Göçmen, T. (2023) *Efficient Mann turbulence generation for offshore wind farms with applications in fatigue load surrogate modelling*](https://doi.org/10.1088/1742-6596/2626/1/012050). The underlying Mann turbulence model is originially described in [Mann, J. (1998). *Wind field simulation*](https://doi.org/10.1016/S0266-8920(97)00036-2).
 
 Features include:
 - **Parallelized computations:** Just set `parallel=True`
