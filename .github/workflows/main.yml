@@ -37,24 +37,24 @@ jobs:
         path: target/wheels/*.whl
         
   
-  macos:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
+  # macos:
+  #   runs-on: macos-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
     
-    - name: install rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable  
-    - name: install maturin
-      run: |
-        pipx install maturin
+  #   - name: install rust toolchain
+  #     uses: actions-rs/toolchain@v1
+  #     with:
+  #       toolchain: stable  
+  #   - name: install maturin
+  #     run: |
+  #       pipx install maturin
         
         
-    - name: Build wheel
-      run: maturin build --release
+  #   - name: Build wheel
+  #     run: maturin build --release
     
-    - uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: target/wheels/*.whl  
+  #   - uses: actions/upload-artifact@v2
+  #     with:
+  #       name: wheels
+  #       path: target/wheels/*.whl  
