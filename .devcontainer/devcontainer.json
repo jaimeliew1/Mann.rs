@@ -1,8 +1,16 @@
 {
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
-    "ghcr.io/devcontainers/features/rust:1": {},
-    "ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {"packages": ["gfortran"]},
-    "ghcr.io/devcontainers-contrib/features/bash-command:1": {"command": "echo hellooo!"}
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
+      "clean_ppas": true,
+      "preserve_apt_list": true,
+      "packages": "htop"
+    },
+    "ghcr.io/devcontainers-contrib/features/bash-command:1": {
+      "command": ["echo hi!", "hllooo"]
+    }
   }
 }
