@@ -31,7 +31,9 @@ jobs:
         pipx install maturin
 
     - name: Run Cargo tests
-      run: cargo test --release
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
 
     - name: Build wheel
       run: maturin build --release --manylinux 2014 -i python3.7 python3.8 python3.9
