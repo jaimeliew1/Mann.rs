@@ -25,13 +25,13 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        
+
     - name: install maturin
       run: |
         pipx install maturin
 
     - name: Run Cargo tests
-      run: cargo test
+      run: cargo test --release
 
     - name: Build wheel
       run: maturin build --release --manylinux 2014 -i python3.7 python3.8 python3.9
