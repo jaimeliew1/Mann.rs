@@ -255,7 +255,7 @@ pub mod Tensors {
 
             for i in 0..3 {
                 for j in 0..=i {
-                    let mut sum = if i == j {
+                    let sum = if i == j {
                         let mut s = 0.0;
                         for k in 0..j {
                             s += l[[j, k]] * l[[j, k]];
