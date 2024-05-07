@@ -16,7 +16,6 @@ pub use self::utilities::Utilities;
 use ndarray::parallel::prelude::*;
 use ndarray::prelude::*;
 use ndarray::Zip;
-use ndarray_linalg::Norm;
 use ndrustfft::Complex;
 use numpy::c32;
 use std::f32::consts::PI;
@@ -76,7 +75,8 @@ pub fn stencilate_sinc_par(
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
-                    if arr1(K).norm_l2() < 3.0 / L {
+                    let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
+                    if norm < 3.0 / L {
                         component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
                         component.assign(&tensor_gen.decomp(K));
@@ -210,7 +210,8 @@ pub fn stencilate_sinc(
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
-                    if arr1(K).norm_l2() < 3.0 / L {
+                    let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
+                    if norm < 3.0 / L {
                         component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
                         component.assign(&tensor_gen.decomp(K));
@@ -390,7 +391,9 @@ pub fn partial_forgetful_turbulate_par(
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
-                    let invol: bool = arr1(K).norm_l2() < 3.0 / L;
+                    let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
+
+                    let invol: bool = norm < 3.0 / L;
 
                     let coef: Array2<f32> = match invol {
                         true => tensor_gen_sinc.decomp(K),
@@ -470,7 +473,9 @@ pub fn partial_forgetful_turbulate(
             for (j, mut column) in slice.outer_iter_mut().enumerate() {
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
-                    let invol: bool = arr1(K).norm_l2() < 3.0 / L;
+                    let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
+
+                    let invol: bool = norm < 3.0 / L;
 
                     let coef: Array2<f32> = match invol {
                         true => tensor_gen_sinc.decomp(K),

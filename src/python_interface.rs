@@ -1,15 +1,11 @@
 use ndarray::{Array1, Array3, Array5};
-use numpy::{
-    c32, PyArray1, PyArray2, PyArray3, PyArray4, PyArray5, PyReadonlyArray1, PyReadonlyArray5,
-    ToPyArray,
-};
+use numpy::{c32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, ToPyArray};
 use pyo3::prelude::*;
 
 use crate::{
     forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
     partial_forgetful_turbulate_par, partial_turbulate, partial_turbulate_par, stencilate_sinc,
-    stencilate_sinc_par, turbulate, turbulate_par, turbulate_unit, Tensors::*,
-    Utilities::complex_random_gaussian, Utilities::freq_components,
+    stencilate_sinc_par, turbulate, turbulate_par, Tensors::*, Utilities::freq_components,
 };
 
 #[pyclass]
