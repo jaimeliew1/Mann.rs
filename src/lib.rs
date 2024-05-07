@@ -17,7 +17,7 @@ use ndarray::parallel::prelude::*;
 use ndarray::prelude::*;
 use ndarray::Zip;
 use ndrustfft::Complex;
-use numpy::c32;
+use numpy::Complex32;
 use std::f32::consts::PI;
 use std::mem::drop;
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
@@ -97,14 +97,14 @@ pub fn partial_turbulate_par(
     Lx: f32,
     Ly: f32,
     Lz: f32,
-) -> (Array3<c32>, Array3<c32>, Array3<c32>) {
-    let KVolScaleFac: c32 = Complex::new(
+) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
+    let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
-    let random: Array4<c32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
+    let random: Array4<Complex32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
 
-    let mut UVW_f: Array4<c32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
+    let mut UVW_f: Array4<Complex32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
 
     Zip::from(UVW_f.outer_iter_mut())
         .and(stencil.outer_iter())
@@ -118,7 +118,7 @@ pub fn partial_turbulate_par(
                         .and(stencil_col.outer_iter())
                         .and(random_col.outer_iter())
                         .for_each(|mut freq_comp, tensor, n| {
-                            let _tensor = tensor.mapv(|elem| c32::new(elem, 0.0));
+                            let _tensor = tensor.mapv(|elem| Complex32::new(elem, 0.0));
                             freq_comp.assign(&_tensor.dot(&n));
                             freq_comp *= KVolScaleFac;
                         })
@@ -145,7 +145,7 @@ pub fn turbulate_par(
     Ly: f32,
     Lz: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-    let (mut U_f, mut V_f, mut W_f): (Array3<c32>, Array3<c32>, Array3<c32>) =
+    let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
         partial_turbulate_par(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f32> = Utilities::irfft3d_par(&mut U_f);
@@ -232,14 +232,14 @@ pub fn partial_turbulate(
     Lx: f32,
     Ly: f32,
     Lz: f32,
-) -> (Array3<c32>, Array3<c32>, Array3<c32>) {
-    let KVolScaleFac: c32 = Complex::new(
+) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
+    let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
-    let random: Array4<c32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
+    let random: Array4<Complex32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
 
-    let mut UVW_f: Array4<c32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
+    let mut UVW_f: Array4<Complex32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
 
     Zip::from(UVW_f.outer_iter_mut())
         .and(stencil.outer_iter())
@@ -253,7 +253,7 @@ pub fn partial_turbulate(
                         .and(stencil_col.outer_iter())
                         .and(random_col.outer_iter())
                         .for_each(|mut freq_comp, tensor, n| {
-                            let _tensor = tensor.mapv(|elem| c32::new(elem, 0.0));
+                            let _tensor = tensor.mapv(|elem| Complex32::new(elem, 0.0));
                             freq_comp.assign(&_tensor.dot(&n));
                             freq_comp *= KVolScaleFac;
                         })
@@ -280,7 +280,7 @@ pub fn turbulate(
     Ly: f32,
     Lz: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-    let (mut U_f, mut V_f, mut W_f): (Array3<c32>, Array3<c32>, Array3<c32>) =
+    let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
         partial_turbulate(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f32> = Utilities::irfft3d(&mut U_f);
@@ -302,14 +302,14 @@ pub fn partial_turbulate_unit(
     Lx: f32,
     Ly: f32,
     Lz: f32,
-) -> (Array3<c32>, Array3<c32>, Array3<c32>) {
-    let KVolScaleFac: c32 = Complex::new(
+) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
+    let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
-    let random: Array4<c32> = Utilities::complex_random_unit(seed, Nx, Ny, Nz / 2 + 1);
+    let random: Array4<Complex32> = Utilities::complex_random_unit(seed, Nx, Ny, Nz / 2 + 1);
 
-    let mut UVW_f: Array4<c32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
+    let mut UVW_f: Array4<Complex32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
 
     Zip::from(UVW_f.outer_iter_mut())
         .and(stencil.outer_iter())
@@ -323,7 +323,7 @@ pub fn partial_turbulate_unit(
                         .and(stencil_col.outer_iter())
                         .and(random_col.outer_iter())
                         .for_each(|mut freq_comp, tensor, n| {
-                            let _tensor = tensor.mapv(|elem| c32::new(elem, 0.0));
+                            let _tensor = tensor.mapv(|elem| Complex32::new(elem, 0.0));
                             freq_comp.assign(&_tensor.dot(&n));
                             freq_comp *= KVolScaleFac;
                         })
@@ -350,7 +350,7 @@ pub fn turbulate_unit(
     Ly: f32,
     Lz: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-    let (mut U_f, mut V_f, mut W_f): (Array3<c32>, Array3<c32>, Array3<c32>) =
+    let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
         partial_turbulate_unit(stencil, ae, seed, Nx, Ny, Nz, Lx, Ly, Lz);
 
     let U: Array3<f32> = Utilities::irfft3d(&mut U_f);
@@ -370,15 +370,15 @@ pub fn partial_forgetful_turbulate_par(
     Lz: f32,
     L: f32,
     gamma: f32,
-) -> (Array3<c32>, Array3<c32>, Array3<c32>) {
-    let KVolScaleFac: c32 = Complex::new(
+) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
+    let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
-    let random: Array4<c32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
+    let random: Array4<Complex32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
     let (Kx, Ky, Kz): (Array1<f32>, Array1<f32>, Array1<f32>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let mut UVW_f: Array4<c32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
+    let mut UVW_f: Array4<Complex32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
 
     let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz, 1.0, 2);
     let tensor_gen = Sheared::from_params(1.0, L, gamma);
@@ -399,7 +399,7 @@ pub fn partial_forgetful_turbulate_par(
                         true => tensor_gen_sinc.decomp(K),
                         false => tensor_gen.decomp(K),
                     };
-                    let coef = coef.mapv(|elem| c32::new(elem, 0.0));
+                    let coef = coef.mapv(|elem| Complex32::new(elem, 0.0));
                     let n = random.slice(s![i, j, k, ..]);
                     component.assign(&coef.dot(&n));
                     component *= KVolScaleFac;
@@ -429,7 +429,7 @@ pub fn forgetful_turbulate_par(
     L: f32,
     gamma: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-    let (mut U_f, mut V_f, mut W_f): (Array3<c32>, Array3<c32>, Array3<c32>) =
+    let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
         partial_forgetful_turbulate_par(ae, seed, Nx, Ny, Nz, Lx, Ly, Lz, L, gamma);
 
     let U: Array3<f32> = Utilities::irfft3d_par(&mut U_f);
@@ -452,15 +452,15 @@ pub fn partial_forgetful_turbulate(
     Lz: f32,
     L: f32,
     gamma: f32,
-) -> (Array3<c32>, Array3<c32>, Array3<c32>) {
-    let KVolScaleFac: c32 = Complex::new(
+) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
+    let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
         0.0,
     );
-    let random: Array4<c32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
+    let random: Array4<Complex32> = Utilities::complex_random_gaussian(seed, Nx, Ny, Nz / 2 + 1);
     let (Kx, Ky, Kz): (Array1<f32>, Array1<f32>, Array1<f32>) =
         Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
-    let mut UVW_f: Array4<c32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
+    let mut UVW_f: Array4<Complex32> = Array4::zeros((Nx, Ny, (Nz / 2 + 1), 3));
 
     let tensor_gen_sinc = ShearedSinc::from_params(1.0, L, gamma, Ly, Lz, 1.0, 2);
     let tensor_gen = Sheared::from_params(1.0, L, gamma);
@@ -481,7 +481,7 @@ pub fn partial_forgetful_turbulate(
                         true => tensor_gen_sinc.decomp(K),
                         false => tensor_gen.decomp(K),
                     };
-                    let coef = coef.mapv(|elem| c32::new(elem, 0.0));
+                    let coef = coef.mapv(|elem| Complex32::new(elem, 0.0));
                     let n = random.slice(s![i, j, k, ..]);
                     component.assign(&coef.dot(&n));
                     component *= KVolScaleFac;
@@ -511,7 +511,7 @@ pub fn forgetful_turbulate(
     L: f32,
     gamma: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-    let (mut U_f, mut V_f, mut W_f): (Array3<c32>, Array3<c32>, Array3<c32>) =
+    let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
         partial_forgetful_turbulate(ae, seed, Nx, Ny, Nz, Lx, Ly, Lz, L, gamma);
 
     let U: Array3<f32> = Utilities::irfft3d(&mut U_f);

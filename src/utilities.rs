@@ -10,7 +10,7 @@ use ndrustfft::{
 };
 use std::f32::consts::{PI, SQRT_2};
 
-use numpy::c32;
+use numpy::Complex32;
 
 /// Various mathematical function implementations.
 pub mod Utilities {
@@ -35,35 +35,35 @@ pub mod Utilities {
         df * concatenate![Axis(0), f1, f2]
     }
 
-    pub fn rfft3d_par(input: &mut Array3<f32>) -> Array3<c32> {
+    pub fn rfft3d_par(input: &mut Array3<f32>) -> Array3<Complex32> {
         let (nx, ny, nz) = input.dim();
-        let mut vhat: Array3<c32> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut vhat: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
 
         let mut handler: FftHandler<f32> = FftHandler::new(nz);
         ndfft_r2c_par(input, &mut vhat, &mut handler, 2);
 
-        let mut vhat2: Array3<c32> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut vhat2: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
         let mut handler: FftHandler<f32> = FftHandler::new(nx);
 
         ndfft_par(&mut vhat, &mut vhat2, &mut handler, 0);
 
-        let mut vhat3: Array3<c32> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut vhat3: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
         let mut handler: FftHandler<f32> = FftHandler::new(ny);
 
         ndfft_par(&mut vhat2, &mut vhat3, &mut handler, 1);
 
         vhat3
     }
-    pub fn irfft3d_par(input: &mut Array3<c32>) -> Array3<f32> {
+    pub fn irfft3d_par(input: &mut Array3<Complex32>) -> Array3<f32> {
         let (nx, ny, _nz) = input.dim();
         let nz = (_nz - 1) * 2;
 
         let mut handler: FftHandler<f32> = FftHandler::new(nx);
-        let mut vhat2: Array3<c32> = Array3::zeros((nx, ny, _nz));
+        let mut vhat2: Array3<Complex32> = Array3::zeros((nx, ny, _nz));
         ndifft_par(input, &mut vhat2, &mut handler, 0);
 
         let mut handler: FftHandler<f32> = FftHandler::new(ny);
-        let mut vhat: Array3<c32> = Array3::zeros((nx, ny, _nz));
+        let mut vhat: Array3<Complex32> = Array3::zeros((nx, ny, _nz));
         ndifft_par(&mut vhat2, &mut vhat, &mut handler, 1);
 
         let mut output: Array3<f32> = Array3::zeros((nx, ny, nz));
@@ -72,35 +72,35 @@ pub mod Utilities {
 
         output
     }
-    pub fn rfft3d(input: &mut Array3<f32>) -> Array3<c32> {
+    pub fn rfft3d(input: &mut Array3<f32>) -> Array3<Complex32> {
         let (nx, ny, nz) = input.dim();
-        let mut vhat: Array3<c32> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut vhat: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
 
         let mut handler: FftHandler<f32> = FftHandler::new(nz);
         ndfft_r2c(input, &mut vhat, &mut handler, 2);
 
-        let mut vhat2: Array3<c32> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut vhat2: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
         let mut handler: FftHandler<f32> = FftHandler::new(nx);
 
         ndfft(&mut vhat, &mut vhat2, &mut handler, 0);
 
-        let mut vhat3: Array3<c32> = Array3::zeros((nx, ny, nz / 2 + 1));
+        let mut vhat3: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
         let mut handler: FftHandler<f32> = FftHandler::new(ny);
 
         ndfft(&mut vhat2, &mut vhat3, &mut handler, 1);
 
         vhat3
     }
-    pub fn irfft3d(input: &mut Array3<c32>) -> Array3<f32> {
+    pub fn irfft3d(input: &mut Array3<Complex32>) -> Array3<f32> {
         let (nx, ny, _nz) = input.dim();
         let nz = (_nz - 1) * 2;
 
         let mut handler: FftHandler<f32> = FftHandler::new(nx);
-        let mut vhat2: Array3<c32> = Array3::zeros((nx, ny, _nz));
+        let mut vhat2: Array3<Complex32> = Array3::zeros((nx, ny, _nz));
         ndifft(input, &mut vhat2, &mut handler, 0);
 
         let mut handler: FftHandler<f32> = FftHandler::new(ny);
-        let mut vhat: Array3<c32> = Array3::zeros((nx, ny, _nz));
+        let mut vhat: Array3<Complex32> = Array3::zeros((nx, ny, _nz));
         ndifft(&mut vhat2, &mut vhat, &mut handler, 1);
 
         let mut output: Array3<f32> = Array3::zeros((nx, ny, nz));
@@ -137,23 +137,28 @@ pub mod Utilities {
 
     /// Returns Array3 of of complex, gaussian distributed random numbers with
     /// unit variance.
-    pub fn complex_random_gaussian(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<c32> {
+    pub fn complex_random_gaussian(
+        seed: u64,
+        Nx: usize,
+        Ny: usize,
+        Nz: usize,
+    ) -> Array4<Complex32> {
         let mut rng = ndarray_rand::rand::rngs::SmallRng::seed_from_u64(seed);
         let dist = Normal::new(0.0, SQRT_2.recip()).unwrap();
-        let real: Array4<c32> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
+        let real: Array4<Complex32> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
             .mapv(|elem| Complex::new(elem, 0.0));
-        let imag: Array4<c32> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
+        let imag: Array4<Complex32> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng)
             .mapv(|elem| Complex::new(0.0, elem));
 
         real + imag
     }
 
     /// Returns Array3 of of complex, random numbers with unit length.
-    pub fn complex_random_unit(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<c32> {
+    pub fn complex_random_unit(seed: u64, Nx: usize, Ny: usize, Nz: usize) -> Array4<Complex32> {
         let mut rng = ndarray_rand::rand::rngs::SmallRng::seed_from_u64(seed);
         let dist = Uniform::new(0.0, 2.0 * PI);
         let phase: Array4<f32> = Array4::random_using((Nx, Ny, Nz, 3), dist, &mut rng);
-        let out: Array4<c32> = phase.mapv(|elem| Complex::new(elem.cos(), elem.sin()));
+        let out: Array4<Complex32> = phase.mapv(|elem| Complex::new(elem.cos(), elem.sin()));
         out
     }
 

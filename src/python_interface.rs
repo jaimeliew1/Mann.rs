@@ -1,5 +1,5 @@
 use ndarray::{Array1, Array3, Array5};
-use numpy::{c32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, ToPyArray};
+use numpy::{Complex32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, ToPyArray};
 use pyo3::prelude::*;
 
 use crate::{
@@ -113,8 +113,8 @@ impl RustStencil {
         ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<c32>, &'py PyArray3<c32>, &'py PyArray3<c32>) {
-        let (U_f, V_f, W_f): (Array3<c32>, Array3<c32>, Array3<c32>) = match parallel {
+    ) -> (&'py PyArray3<Complex32>, &'py PyArray3<Complex32>, &'py PyArray3<Complex32>) {
+        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) = match parallel {
             true => partial_turbulate_par(
                 &self._stencil.view(),
                 ae,
@@ -191,8 +191,8 @@ impl RustForgetfulStencil {
         ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<c32>, &'py PyArray3<c32>, &'py PyArray3<c32>) {
-        let (U_f, V_f, W_f): (Array3<c32>, Array3<c32>, Array3<c32>) = match parallel {
+    ) -> (&'py PyArray3<Complex32>, &'py PyArray3<Complex32>, &'py PyArray3<Complex32>) {
+        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) = match parallel {
             true => partial_forgetful_turbulate_par(
                 ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
             ),
