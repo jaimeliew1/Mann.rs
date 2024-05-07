@@ -157,7 +157,7 @@ dependencies = [
 
 [[package]]
 name = "mannrs"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "ndarray",
  "ndarray-rand",
