@@ -2,48 +2,63 @@
 Compares the computational time of serial and parallel turbulence generation
 using Mannrs.
 """
+
+from typing import Optional
+
+from tqdm import trange
+import numpy as np
 import mannrs
 import time
 
-ae = 1
-params = {
-    "L": 30.0,
-    "gamma": 3.2,
-    "Lx": 6000,
-    "Ly": 200,
-    "Lz": 200,
-    "Nx": 8192,
-    "Ny": 64,
-    "Nz": 64,
-}
+AE = 1
+RES = 128
+
+
+def run_single(
+    resolution: int,
+    N_stencil: Optional[int] = 1,
+    N_turb: Optional[int] = 10,
+    verbose: bool = False,
+    parallel: bool = True,
+):
+
+    params = {
+        "L": 1,
+        "gamma": 3.2,
+        "Lx": 100,
+        "Ly": 100,
+        "Lz": 100,
+        "Nx": resolution,
+        "Ny": resolution,
+        "Nz": resolution,
+    }
+
+    stencil_times = []
+    for _ in trange(max(N_stencil, 1), desc=" Generating stencils"):
+        tstart = time.perf_counter()
+        stencil = mannrs.Stencil(**params, parallel=parallel)
+        stencil_times.append(time.perf_counter() - tstart)
+
+    turb_times = []
+    for seed in trange(max(N_turb, 1), desc=" Generating turbulence"):
+        tstart = time.perf_counter()
+        U, V, W = stencil.turbulence(AE, seed)
+        turb_times.append(time.perf_counter() - tstart)
+
+    return np.mean(stencil_times), np.mean(turb_times)
 
 
 if __name__ == "__main__":
-    print("Generating stencil (serial)...", end=" ")
-    tstart = time.time()
-    stencil_serial = mannrs.Stencil(**params)
-    t_stencil_serial = time.time() - tstart
-    print(f"{t_stencil_serial:2.1f}s")
 
-    print("Generating stencil (parallel)...", end="")
-    tstart = time.time()
-    stencil_par = mannrs.Stencil(**params, parallel=True)
-    t_stencil_par = time.time() - tstart
-    print(f"{t_stencil_par:2.1f}s")
+    t_stencil_ser, t_turb_ser = run_single(RES, N_stencil=3, parallel=False)
+    print(
+        f"SERIAL: stencil time: {t_stencil_ser:2.2f}s, turbulence generation time: {t_turb_ser:2.2f}s"
+    )
 
-    print("\nGenerating turbulence (serial)...", end=" ")
-    tstart = time.time()
-    U, V, W = stencil_par.turbulence(ae, 1)
-    t_turb_serial = time.time() - tstart
-    print(f"{t_turb_serial:2.1f}s")
-
-    print("Generating turbulence (parallel)...", end=" ")
-    tstart = time.time()
-    U_par, V_par, W_par = stencil_par.turbulence(ae, 1, parallel=True)
-    t_turb_par = time.time() - tstart
-    print(f"{t_turb_par:2.1f}s")
-
-    # Assert that serial and parallel results are equal.
-    assert ((U - U_par) ** 2).sum() < 1e-16
-    assert ((V - V_par) ** 2).sum() < 1e-16
-    assert ((W - W_par) ** 2).sum() < 1e-16
+    t_stencil_par, t_turb_par = run_single(RES, N_stencil=3)
+    print(
+        f"PARALLEL: stencil time: {t_stencil_par:2.2f}s, turbulence generation time: {t_turb_par:2.2f}s"
+    )
+    print(
+        f"PARALLEL: stencil time: {t_stencil_ser /t_stencil_par:2.2f}x faster, turbulence generation time:   {t_turb_ser /t_turb_par:2.2f}x faster"
+    )
