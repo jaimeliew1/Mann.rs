@@ -1,6 +1,5 @@
 pub use crate::utilities::Utilities;
 use ndarray::prelude::*;
-use ndarray_linalg::cholesky::*;
 use std::f32::consts::PI;
 
 pub fn lifetime_approx(mut kL: f32) -> f32 {
@@ -249,9 +248,42 @@ pub mod Tensors {
             out
         }
 
-        /// Decomposition of sheared spectral tensor with sinc correction
+        /// Decomposition of sheared spectral tensor with sinc correction using a Cholesky decomposition.
         fn decomp(&self, K: &[f32]) -> Array2<f32> {
-            self.tensor(K).cholesky(UPLO::Lower).unwrap()
+            let mut l: Array2<f32> = Array2::<f32>::zeros((3, 3));
+            let tensor: Array2<f32> = self.tensor(K);
+
+            for i in 0..3 {
+                for j in 0..=i {
+                    let mut sum = if i == j {
+                        let mut s = 0.0;
+                        for k in 0..j {
+                            s += l[[j, k]] * l[[j, k]];
+                        }
+                        (tensor[[j, j]] - s).sqrt()
+                    } else {
+                        let mut s = 0.0;
+                        for k in 0..j {
+                            s += l[[i, k]] * l[[j, k]];
+                        }
+                        (1.0 / l[[j, j]]) * (tensor[[i, j]] - s)
+                    };
+
+                    if i == j {
+                        if sum <= 0.0 {
+                            panic!(); // Matrix is not positive definite
+                        }
+                    } else {
+                        if l[[j, j]] <= 0.0 {
+                            panic!(); // Matrix is not positive definite
+                        }
+                    }
+
+                    l[[i, j]] = sum;
+                }
+            }
+
+            l
         }
     }
 }

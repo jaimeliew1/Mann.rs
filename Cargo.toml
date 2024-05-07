@@ -17,7 +17,6 @@ numpy = "0.15.0"
 ndarray-rand = "0.14.0"
 num = "0.4.0"
 ndrustfft = "0.1.6"
-ndarray-linalg = { version = "0.14.1", features = ["openblas-system"] }
 
 
 [package.metadata.docs.rs]
