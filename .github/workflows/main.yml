@@ -32,7 +32,11 @@ jobs:
           args: --release --out dist -i ${{ matrix.python-version }}
       
       - name: install wheel and test
-        run: python --version
+        run: |
+          python --version
+          pip install mannrs --no-index --find-links dist --force-reinstall
+          pip install pytest
+          cd tests && pytest
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -41,7 +45,7 @@ jobs:
           path: dist
 
   macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
@@ -63,7 +67,11 @@ jobs:
           args: --release --out dist -i ${{ matrix.python-version }}
       
       - name: install wheel and test
-        run: python --version
+        run: |
+          python --version
+          pip install mannrs --no-index --find-links dist --force-reinstall
+          pip install pytest
+          cd tests && pytest
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -99,7 +107,11 @@ jobs:
           args: --release --out dist -i ${{ matrix.python-version }}
       
       - name: install wheel and test
-        run: python --version
+        run: |
+          python --version
+          pip install mannrs --no-index --find-links dist --force-reinstall
+          pip install pytest
+          cd tests && pytest
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
