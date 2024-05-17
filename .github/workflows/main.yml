@@ -30,11 +30,11 @@ jobs:
           target: ${{ matrix.target }}
           command: build
           args: --release --out dist -i ${{ matrix.python-version }}
-      
+
       - name: install wheel and test
         run: |
           python --version
-          pip install mannrs --no-index --find-links dist --force-reinstall
+          pip install mannrs --find-links dist --force-reinstall
           pip install pytest
           cd tests && pytest
 
@@ -65,11 +65,11 @@ jobs:
           target: x86_64
           command: build
           args: --release --out dist -i ${{ matrix.python-version }}
-      
+
       - name: install wheel and test
         run: |
           python --version
-          pip install mannrs --no-index --find-links dist --force-reinstall
+          pip install mannrs --find-links dist --force-reinstall
           pip install pytest
           cd tests && pytest
 
@@ -105,11 +105,11 @@ jobs:
           rust-toolchain: stable
           target: ${{ matrix.target }}
           args: --release --out dist -i ${{ matrix.python-version }}
-      
+
       - name: install wheel and test
         run: |
           python --version
-          pip install mannrs --no-index --find-links dist --force-reinstall
+          pip install mannrs --find-links dist --force-reinstall
           pip install pytest
           cd tests && pytest
 
