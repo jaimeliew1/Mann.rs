@@ -12,23 +12,30 @@ jobs:
 
   linux:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [aarch64, armv7, s390x, ppc64le, ppc64]
     needs: [test]
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      # - uses: dtolnay/rust-toolchain@stable
+      #   with:
+      #     target: ${{ matrix.target }}
       - uses: actions/setup-python@v5
         with:
           python-version: |
-            3.7
-            3.8
-            3.9
-            3.10
-            3.11
             3.12
+          # 3.7
+          # 3.8
+          # 3.9
+          # 3.10
+          # 3.11
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
+          rust-toolchain: stable
+          target: ${{ matrix.target }}
           command: build
           args: --release --out dist
 
@@ -49,20 +56,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: |
-            3.7
-            3.8
-            3.9
-            3.10
-            3.11
             3.12
+          # 3.7
+          # 3.8
+          # 3.9
+          # 3.10
+          # 3.11
           architecture: ${{ matrix.target }}
-      - uses: dtolnay/rust-toolchain@stable
+      # - uses: dtolnay/rust-toolchain@stable
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
         with:
+          rust-toolchain: stable
           target: ${{ matrix.target }}
           args: --release --out dist
+
+      - run: ls
+      - run: ls dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
