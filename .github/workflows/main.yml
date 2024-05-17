@@ -1,10 +1,9 @@
-name: test suite
+name: Build
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    # runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -31,6 +30,38 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: build
+          args: --release --out dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    needs: [test]
+    strategy:
+      matrix:
+        target: [x64, x86]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.7
+            3.8
+            3.9
+            3.10
+            3.11
+            3.12
+          architecture: ${{ matrix.target }}
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
           args: --release --out dist
 
       - name: Upload artifacts
