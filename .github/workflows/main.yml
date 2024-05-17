@@ -14,19 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [x86_64, i686]
+        target: [x86_64]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
     needs: [test]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: |
-            3.12
-          # 3.7
-          # 3.8
-          # 3.9
-          # 3.10
-          # 3.11
+          python-version: ${{ matrix.python-version }}
 
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -34,7 +29,10 @@ jobs:
           rust-toolchain: stable
           target: ${{ matrix.target }}
           command: build
-          args: --release --out dist
+          args: --release --out dist -i ${{ matrix.python-version }}
+      
+      - name: install wheel and test
+        run: python --version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -44,18 +42,16 @@ jobs:
 
   macos:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+
     needs: [test]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: |
-            3.12
-          # 3.7
-          # 3.8
-          # 3.9
-          # 3.10
-          # 3.11
+          python-version: ${{ matrix.python-version }}
           architecture: x64
 
       - name: Build wheels
@@ -64,7 +60,10 @@ jobs:
           rust-toolchain: stable
           target: x86_64
           command: build
-          args: --release --out dist
+          args: --release --out dist -i ${{ matrix.python-version }}
+      
+      - name: install wheel and test
+        run: python --version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -78,6 +77,7 @@ jobs:
     strategy:
       matrix:
         target: [x86]
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -96,10 +96,10 @@ jobs:
         with:
           rust-toolchain: stable
           target: ${{ matrix.target }}
-          args: --release --out dist
-
-      - run: ls
-      - run: ls dist
+          args: --release --out dist -i ${{ matrix.python-version }}
+      
+      - name: install wheel and test
+        run: python --version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
