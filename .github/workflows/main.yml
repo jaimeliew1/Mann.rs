@@ -17,13 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.7
+            3.8
+            3.9
+            3.10
+            3.11
 
       - name: Build
         run: cargo build --release
-
-      # - name: install maturin
-      #   run: |
-      #     pipx install maturin
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
@@ -32,66 +36,7 @@ jobs:
           args: --release --out dist
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist
-# name: Build and Release
-
-# on:
-#   push:
-#   pull_request:
-
-# # concurrency:
-# #   group: ${{ github.workflow }}-${{ github.ref }}
-# #   cancel-in-progress: true
-
-# # env:
-# #   PYTHON_VERSION: "3.7" # to build abi3 wheels
-
-# jobs:
-#   linux:
-#     runs-on: ubuntu-22.04
-#     container:
-#       image: quay.io/pypa/manylinux2014_x86_64
-#     steps:
-#     - uses: actions/checkout@v2
-
-#     - name: install rust toolchain
-#       uses: dtolnay/rust-toolchain@stable
-
-#     - name: install maturin
-#       run: |
-#         pipx install maturin
-
-#     - name: Run Cargo tests
-#       run: cargo test
-
-#     - name: Build wheel
-#       run: maturin build --release --manylinux 2014 -i python3.7 python3.8 python3.9
-
-#     - uses: actions/upload-artifact@v2
-#       with:
-#         name: wheels
-#         path: target/wheels/*.whl
-
-#   # macos:
-#   #   runs-on: macos-latest
-#   #   steps:
-#   #   - uses: actions/checkout@v2
-
-#   #   - name: install rust toolchain
-#   #     uses: actions-rs/toolchain@v1
-#   #     with:
-#   #       toolchain: stable
-#   #   - name: install maturin
-#   #     run: |
-#   #       pipx install maturin
-
-#   #   - name: Build wheel
-#   #     run: maturin build --release
-
-#   #   - uses: actions/upload-artifact@v2
-#   #     with:
-#   #       name: wheels
-#   #       path: target/wheels/*.whl
