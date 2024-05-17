@@ -19,21 +19,17 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     
     - name: install rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-
+      uses: dtolnay/rust-toolchain@stable
+      
     - name: install maturin
       run: |
         pipx install maturin
-
+      
     - name: Run Cargo tests
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
+      run: cargo test
 
     - name: Build wheel
       run: maturin build --release --manylinux 2014 -i python3.7 python3.8 python3.9
