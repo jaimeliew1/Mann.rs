@@ -4,12 +4,12 @@ on:
   push:
   pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
-env:
-  PYTHON_VERSION: "3.7" # to build abi3 wheels
+# env:
+#   PYTHON_VERSION: "3.7" # to build abi3 wheels
 
 
 
@@ -19,7 +19,7 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v2
     
     - name: install rust toolchain
       uses: dtolnay/rust-toolchain@stable
