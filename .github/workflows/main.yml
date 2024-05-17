@@ -14,13 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [aarch64, armv7, s390x, ppc64le, ppc64]
+        target: [x86_64, i686]
     needs: [test]
     steps:
       - uses: actions/checkout@v4
-      # - uses: dtolnay/rust-toolchain@stable
-      #   with:
-      #     target: ${{ matrix.target }}
       - uses: actions/setup-python@v5
         with:
           python-version: |
@@ -31,11 +28,41 @@ jobs:
           # 3.10
           # 3.11
 
-      - name: Build wheel
+      - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           rust-toolchain: stable
           target: ${{ matrix.target }}
+          command: build
+          args: --release --out dist
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: dist
+
+  macos:
+    runs-on: macos-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: |
+            3.12
+          # 3.7
+          # 3.8
+          # 3.9
+          # 3.10
+          # 3.11
+          architecture: x64
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          rust-toolchain: stable
+          target: x86_64
           command: build
           args: --release --out dist
 
@@ -50,7 +77,7 @@ jobs:
     needs: [test]
     strategy:
       matrix:
-        target: [x64, x86]
+        target: [x86]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -63,9 +90,8 @@ jobs:
           # 3.10
           # 3.11
           architecture: ${{ matrix.target }}
-      # - uses: dtolnay/rust-toolchain@stable
 
-      - name: Build wheel
+      - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
           rust-toolchain: stable
