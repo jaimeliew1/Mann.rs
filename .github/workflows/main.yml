@@ -5,6 +5,9 @@ jobs:
   test:
     name: cargo test
     runs-on: ubuntu-latest
+    # runs-on: ubuntu-22.04
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
