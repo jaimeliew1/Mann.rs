@@ -10,6 +10,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --all-features
 
+      - name: Build
+        run: cargo build --release
+
 # name: Build and Release
 
 # on:
