@@ -21,6 +21,7 @@ classifiers = [
 dependencies = [
     "numpy>=1.19.2",
     # "matplotlib>=3",
+    "scipy",
     "tqdm>=4",
     "pydantic>=1.9.0",
     "click>=6",
