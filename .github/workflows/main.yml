@@ -19,9 +19,7 @@ jobs:
     needs: [test]
     steps:
       - uses: actions/checkout@v4
-      # - uses: actions/setup-python@v5
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
@@ -30,13 +28,6 @@ jobs:
       - name: Build wheels
         run: |
           uv build --python ${{ matrix.python-version }}
-      # - name: Build wheels
-        # uses: PyO3/maturin-action@v1
-        # with:
-        #   rust-toolchain: stable
-        #   target: ${{ matrix.target }}
-        #   command: build
-        #   args: --release --out dist -i ${{ matrix.python-version }}
 
       - name: install wheel and test
         run: |
@@ -46,7 +37,7 @@ jobs:
           cd tests && pytest
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist
@@ -60,32 +51,28 @@ jobs:
     needs: [test]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: x64
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          rust-toolchain: stable
-          target: x86_64
-          command: build
-          args: --release --out dist -i ${{ matrix.python-version }}
+        run: |
+          uv build --python ${{ matrix.python-version }}
 
       - name: install wheel and test
         run: |
-          python --version
-          pip install mannrs --find-links dist --force-reinstall
-          pip install pytest
+          uv run python --version
+          uv pip install mannrs --find-links dist --force-reinstall
+          uv pip install pytest
           cd tests && pytest
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist
-
   windows:
     runs-on: windows-2022
     needs: [test]
@@ -95,27 +82,25 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          architecture: ${{ matrix.target }}
 
       - name: Build wheels
-        uses: PyO3/maturin-action@v1
-        with:
-          rust-toolchain: stable
-          target: ${{ matrix.target }}
-          args: --release --out dist -i ${{ matrix.python-version }}
+        run: |
+          uv build --python ${{ matrix.python-version }}
 
       - name: install wheel and test
         run: |
-          python --version
-          pip install mannrs --find-links dist --force-reinstall
-          pip install pytest
+          uv run python --version
+          uv pip install mannrs --find-links dist --force-reinstall
+          uv pip install pytest
           cd tests && pytest
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: dist
