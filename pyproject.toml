@@ -1,28 +1,27 @@
+[project]
+name = "mannrs"
+version = "0.1.0"
+description = "A Mann turbulence generator for Python written in Rust"
+readme = "README.md"
+authors = [
+    { name = "Jaime Liew", email = "jaimeliew1@gmail.com" }
+]
+requires-python = ">=3.6"
+dependencies = [
+    "click>=8.0.4",
+    "numpy>=1.19.5",
+    "pydantic>=1.7.4",
+    "toml>=0.10.2",
+    "tqdm>=4.64.1",
+]
+
+[project.scripts]
+mannrs = "mannrs.CLI:CLI"
+
+[tool.maturin]
+python-packages = ["mannrs"]
+
+
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
-
-[project.scripts]
-mannrs = 'mannrs.CLI:CLI'
-
-
-[project]
-name = "mannrs"
-authors =  [{email = "jaimeliew1@gmail.com"},
-			{name = "Jaime Liew"}]
-readme = "README.md"
-license = {file = "license.md"}
-requires-python = ">=3.6"
-classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-]
-dependencies = [
-    "numpy>=1.19.2",
-    # "matplotlib>=3",
-    "tqdm>=4",
-    "pydantic>=1.9.0",
-    "click>=6",
-    "toml>=0.10.2",
-]
