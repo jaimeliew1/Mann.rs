@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -11,7 +11,7 @@ jobs:
         run: cargo test --all-features
 
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target: [x86_64]
@@ -80,7 +80,7 @@ jobs:
           path: dist
 
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     needs: [test]
     strategy:
       matrix:
