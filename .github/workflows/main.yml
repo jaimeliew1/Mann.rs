@@ -39,9 +39,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: dist
-          pattern: wheel-*
-          merge-multiple: true
+          path: dist-${{ matrix.python-version }}
+          name: wheel-${{ matrix.python-version }}
 
   macos:
     runs-on: macos-13
@@ -72,10 +71,9 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: dist
-          pattern: wheel-*
-          merge-multiple: true
-          
+          path: dist-${{ matrix.python-version }}
+          name: wheel-${{ matrix.python-version }}
+
   windows:
     runs-on: windows-2022
     needs: [test]
@@ -105,6 +103,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: dist
-          pattern: wheel-*
-          merge-multiple: true
+          path: dist-${{ matrix.python-version }}-${{ matrix.target }}
+          name: wheel-${{ matrix.python-version }}-${{ matrix.target }}
