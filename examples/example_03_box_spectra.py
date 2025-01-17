@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 # Parameters from mann 1998 paper example
 params = {
-    "ae": 1,
     "L": 1,
     "gamma": 3.2,
     "Lx": 32,
@@ -105,7 +104,7 @@ if __name__ == "__main__":
         Suw_list.append(Suw)
 
     f_a, Suu_a, Svv_a, Sww_a, Suw_a = get_spectra_anal(
-        params["ae"], params["L"], params["gamma"]
+        ae, params["L"], params["gamma"]
     )
 
     plt.figure()
