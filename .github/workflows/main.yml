@@ -37,10 +37,11 @@ jobs:
           cd tests && pytest
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
           path: dist
+          pattern: wheel-*
+          merge-multiple: true
 
   macos:
     runs-on: macos-13
@@ -69,10 +70,12 @@ jobs:
           cd tests && pytest
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
           path: dist
+          pattern: wheel-*
+          merge-multiple: true
+          
   windows:
     runs-on: windows-2022
     needs: [test]
@@ -100,7 +103,8 @@ jobs:
           cd tests && pytest
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: wheels
           path: dist
+          pattern: wheel-*
+          merge-multiple: true
