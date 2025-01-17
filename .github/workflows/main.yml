@@ -125,3 +125,4 @@ jobs:
         with:
           name: all-wheels
           pattern: wheel-*
+          delete-merged: true
