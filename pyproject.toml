@@ -10,7 +10,6 @@ requires-python = ">=3.6"
 dependencies = [
     "click>=8.0.4",
     "numpy>=1.19.5",
-    "pydantic>=1.7.4",
     "toml>=0.10.2",
     "tqdm>=4.64.1",
 ]
