@@ -3,10 +3,11 @@ from typing import Optional
 
 
 import numpy as np
-from mannrs import Tensor, Stencil
+from mannrs import Stencil
 from scipy import spatial
 from scipy.interpolate import RegularGridInterpolator
 from tqdm import tqdm
+
 
 @dataclass
 class FastNearestNeighbor3DEquidistantInputMultiOutputInterpolator:
@@ -57,55 +58,36 @@ class ConstrainedStencil:
     Lx: float
     Ly: float
     Lz: float
+    aperiodic_x: bool = True
+    aperiodic_y: bool = True
+    aperiodic_z: bool = True
     parallel: bool = False
 
     def __post_init__(self):
-        kxs = (
-            np.pi
-            / self.Lx
-            * ((np.arange(0, 2 * self.Nx) + self.Nx) % (2 * self.Nx) - self.Nx)
+
+        print("generating stencil...")
+        self.stencil = Stencil(
+            self.L,
+            self.gamma,
+            self.Lx,
+            self.Ly,
+            self.Lz,
+            self.Nx,
+            self.Ny,
+            self.Nz,
+            self.aperiodic_x,
+            self.aperiodic_y,
+            self.aperiodic_z,
+            self.parallel,
         )
-        kys = (
-            np.pi
-            / self.Ly
-            * ((np.arange(0, 2 * self.Ny) + self.Ny) % (2 * self.Ny) - self.Ny)
-        )
-        kzs = np.pi / self.Lz * np.arange(0, (self.Nz + 1))
 
-     
-
-        UU = np.zeros((2 * self.Nx, 2 * self.Ny, (self.Nz + 1)))
-        VV = np.zeros((2 * self.Nx, 2 * self.Ny, (self.Nz + 1)))
-        WW = np.zeros((2 * self.Nx, 2 * self.Ny, (self.Nz + 1)))
-        UW = np.zeros((2 * self.Nx, 2 * self.Ny, (self.Nz + 1)))
-
-        tensor_gen = Tensor.Sheared(self.ae, self.L, self.gamma)
-        for i, kx in enumerate(kxs):
-            for j, ky in enumerate(kys):
-                for k, kz in enumerate(kzs):
-                    tensor = tensor_gen.tensor([kx, ky, kz])
-                    UU[i, j, k] = tensor[0, 0]
-                    VV[i, j, k] = tensor[1, 1]
-                    WW[i, j, k] = tensor[2, 2]
-                    UW[i, j, k] = tensor[0, 2]
-
-        RUU = np.fft.irfftn(UU)
-        RVV = np.fft.irfftn(VV)
-        RWW = np.fft.irfftn(WW)
-        RUW = np.fft.irfftn(UW)
-
-        # Normalize correlations
-        RUW /= np.sqrt(RUU[0, 0, 0] * RWW[0, 0, 0])
-        RUU /= RUU[0, 0, 0]
-        RVV /= RVV[0, 0, 0]
-        RWW /= RWW[0, 0, 0]
+        RUU, RVV, RWW, RUW = self.stencil.stencil.correlation_grids()
 
         # Clip correlation data
         RUW = RUW[: self.Nx, : self.Ny, : self.Nz]
         RUU = RUU[: self.Nx, : self.Ny, : self.Nz]
         RVV = RVV[: self.Nx, : self.Ny, : self.Nz]
         RWW = RWW[: self.Nx, : self.Ny, : self.Nz]
-
 
         self.Rall_func = FastNearestNeighbor3DEquidistantInputMultiOutputInterpolator(
             [RUU, RVV, RWW, RUW],
@@ -139,21 +121,9 @@ class ConstrainedStencil:
 
         self.corr = corr
 
-
-        print("generating stencil...")
-        self.stencil = Stencil(
-            Nx=self.Nx,
-            Ny=self.Ny,
-            Nz=self.Nz,
-            Lx=self.Lx,
-            Ly=self.Ly,
-            Lz=self.Lz,
-            gamma=self.gamma,
-            L=self.L,
-            parallel=self.parallel,
-        )
-
-    def turbulence(self, seed: int, parallel: bool=False) -> tuple[np.array, np.array, np.array]:
+    def turbulence(
+        self, seed: int, parallel: bool = False
+    ) -> tuple[np.array, np.array, np.array]:
         U, V, W = self.stencil.turbulence(self.ae, seed, parallel=parallel)
 
         grid_points = (
@@ -192,17 +162,37 @@ class ConstrainedStencil:
 
         xmesh, ymesh, zmesh = np.meshgrid(*grid_points, indexing="ij")
 
+        RUU_f, RVV_f, RWW_f, RUW_f = self.stencil.stencil.spectral_component_grids()
 
+
+        kxs = np.fft.fftfreq(2*self.Nx, self.Lx / self.Nx)
+        kys = np.fft.fftfreq(2*self.Ny, self.Ly / self.Ny)
+        kzs = np.fft.rfftfreq( 2*self.Nz, self.Lz / self.Nz)
+
+        U_f, V_f, W_f = (
+            np.zeros_like(RUU_f, dtype=complex),
+            np.zeros_like(RUU_f, dtype=complex),
+            np.zeros_like(RUU_f, dtype=complex),
+        )
+        kx_mesh, ky_mesh, kz_mesh = np.meshgrid(kxs, kys, kzs, indexing="ij")
         for i, c in enumerate(tqdm(self.constraints)):
-            _dx = np.abs(xmesh - c.x)
-            _dy = np.abs(ymesh - c.y)
-            _dz = np.abs(zmesh - c.z)
-            UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(_dx, _dy, _dz)
+            phase = np.exp(
+                -2j * np.pi * (kx_mesh * c.x + ky_mesh * c.y + kz_mesh * c.z)
+            )
+            U_f += phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
+            V_f += phase * (RVV_f * CConstV[i])
+            W_f += phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
 
-            Ures += UUcorr * CConstU[i] + UWcorr * CConstW[i]
-            Vres += VVcorr * CConstV[i]
-            Wres += UWcorr * CConstU[i] + WWcorr * CConstW[i]
+        Ures += np.fft.irfftn(U_f)[: self.Nx, : self.Ny, : self.Nz]
+
+        # for i, c in enumerate(tqdm(self.constraints)):
+        #     _dx = np.abs(xmesh - c.x)
+        #     _dy = np.abs(ymesh - c.y)
+        #     _dz = np.abs(zmesh - c.z)
+        #     UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(_dx, _dy, _dz)
+
+        #     Ures += UUcorr * CConstU[i] + UWcorr * CConstW[i]
+        #     Vres += VVcorr * CConstV[i]
+        #     Wres += UWcorr * CConstU[i] + WWcorr * CConstW[i]
 
         return Ures, Vres, Wres
-
-

@@ -1,11 +1,12 @@
-use ndarray::{Array1, Array3, Array5};
+use ndarray::{s, Array1, Array3, Array5};
 use numpy::{Complex32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, ToPyArray};
 use pyo3::prelude::*;
 
 use crate::{
     forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
     partial_forgetful_turbulate_par, partial_turbulate, partial_turbulate_par, stencilate_sinc,
-    stencilate_sinc_par, turbulate, turbulate_par, Tensors::*, Utilities::freq_components,
+    stencilate_sinc_par, turbulate, turbulate_par, Tensors::*, Utilities,
+    Utilities::freq_components,
 };
 
 #[pyclass]
@@ -113,32 +114,120 @@ impl RustStencil {
         ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<Complex32>, &'py PyArray3<Complex32>, &'py PyArray3<Complex32>) {
-        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) = match parallel {
-            true => partial_turbulate_par(
-                &self._stencil.view(),
-                ae,
-                seed,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-                self.Lx,
-                self.Ly,
-                self.Lz,
-            ),
-            false => partial_turbulate(
-                &self._stencil.view(),
-                ae,
-                seed,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-                self.Lx,
-                self.Ly,
-                self.Lz,
-            ),
-        };
+    ) -> (
+        &'py PyArray3<Complex32>,
+        &'py PyArray3<Complex32>,
+        &'py PyArray3<Complex32>,
+    ) {
+        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
+            match parallel {
+                true => partial_turbulate_par(
+                    &self._stencil.view(),
+                    ae,
+                    seed,
+                    self.Nx,
+                    self.Ny,
+                    self.Nz,
+                    self.Lx,
+                    self.Ly,
+                    self.Lz,
+                ),
+                false => partial_turbulate(
+                    &self._stencil.view(),
+                    ae,
+                    seed,
+                    self.Nx,
+                    self.Ny,
+                    self.Nz,
+                    self.Lx,
+                    self.Ly,
+                    self.Lz,
+                ),
+            };
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
+    }
+
+    fn spectral_component_grids<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (
+        &'py PyArray3<f32>,
+        &'py PyArray3<f32>,
+        &'py PyArray3<f32>,
+        &'py PyArray3<f32>,
+    ) {
+        let mut Ruu_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 0, 0])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Rvv_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 1, 1])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Rww_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 2, 2])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Ruw_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 0, 2])
+            .mapv(|x| Complex32::new(x, 0.0));
+
+        let Ruu: Array3<f32> = Utilities::irfft3d(&mut Ruu_f);
+        let Rvv: Array3<f32> = Utilities::irfft3d(&mut Rvv_f);
+        let Rww: Array3<f32> = Utilities::irfft3d(&mut Rww_f);
+        let Ruw: Array3<f32> = Utilities::irfft3d(&mut Ruw_f);
+        (
+            Ruu_f.mapv(|x| 2.0 * x.re / Ruu[[0, 0, 0]]).to_pyarray(py),
+            Rvv_f.mapv(|x| 2.0 * x.re / Rvv[[0, 0, 0]]).to_pyarray(py),
+            Rww_f.mapv(|x| 2.0 * x.re / Rww[[0, 0, 0]]).to_pyarray(py),
+            Ruw_f
+                .mapv(|x| 2.0 * x.re / (Ruu[[0, 0, 0]] * Rww[[0, 0, 0]]).sqrt())
+                .to_pyarray(py),
+        )
+    }
+    fn correlation_grids<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (
+        &'py PyArray3<f32>,
+        &'py PyArray3<f32>,
+        &'py PyArray3<f32>,
+        &'py PyArray3<f32>,
+    ) {
+        let mut Ruu_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 0, 0])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Rvv_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 1, 1])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Rww_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 2, 2])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Ruw_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 0, 2])
+            .mapv(|x| Complex32::new(x, 0.0));
+
+        let Ruu: Array3<f32> = Utilities::irfft3d(&mut Ruu_f);
+        drop(Ruu_f);
+        let Rvv: Array3<f32> = Utilities::irfft3d(&mut Rvv_f);
+        drop(Rvv_f);
+        let Rww: Array3<f32> = Utilities::irfft3d(&mut Rww_f);
+        drop(Rww_f);
+        let Ruw: Array3<f32> = Utilities::irfft3d(&mut Ruw_f);
+        drop(Ruw_f);
+
+        (
+            Ruu.mapv(|x| x / Ruu[[0, 0, 0]]).to_pyarray(py),
+            Rvv.mapv(|x| x / Rvv[[0, 0, 0]]).to_pyarray(py),
+            Rww.mapv(|x| x / Rww[[0, 0, 0]]).to_pyarray(py),
+            Ruw.mapv(|x| x / (Ruu[[0, 0, 0]] * Rww[[0, 0, 0]]).sqrt())
+                .to_pyarray(py),
+        )
     }
 }
 
@@ -191,15 +280,22 @@ impl RustForgetfulStencil {
         ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<Complex32>, &'py PyArray3<Complex32>, &'py PyArray3<Complex32>) {
-        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) = match parallel {
-            true => partial_forgetful_turbulate_par(
-                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
-            ),
-            false => partial_forgetful_turbulate(
-                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
-            ),
-        };
+    ) -> (
+        &'py PyArray3<Complex32>,
+        &'py PyArray3<Complex32>,
+        &'py PyArray3<Complex32>,
+    ) {
+        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
+            match parallel {
+                true => partial_forgetful_turbulate_par(
+                    ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L,
+                    self.gamma,
+                ),
+                false => partial_forgetful_turbulate(
+                    ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L,
+                    self.gamma,
+                ),
+            };
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
 }
