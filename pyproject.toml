@@ -6,10 +6,11 @@ readme = "README.md"
 authors = [
     { name = "Jaime Liew", email = "jaimeliew1@gmail.com" }
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 dependencies = [
     "click>=8.0.4",
-    "numpy>=1.19.5",
+    "numpy>=1.21.6",
+    "scipy>=1.5.4",
     "toml>=0.10.2",
     "tqdm>=4.64.1",
 ]

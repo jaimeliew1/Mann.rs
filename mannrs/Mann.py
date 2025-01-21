@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -23,18 +24,21 @@ class Stencil:
     Nx: int
     Ny: int
     Nz: int
+    aperiodic_x: bool = False
+    aperiodic_y: bool = True
+    aperiodic_z: bool = True
     parallel: bool = False
 
     def __post_init__(self):
         self.stencil = mannrs.RustStencil(
             self.L,
             self.gamma,
-            self.Lx,
-            self.Ly,
-            self.Lz,
-            self.Nx,
-            self.Ny,
-            self.Nz,
+            self.Lx * 2 if self.aperiodic_x else self.Lx,
+            self.Ly * 2 if self.aperiodic_y else self.Ly,
+            self.Lz * 2 if self.aperiodic_z else self.Lz,
+            self.Nx * 2 if self.aperiodic_x else self.Nx,
+            self.Ny * 2 if self.aperiodic_y else self.Ny,
+            self.Nz * 2 if self.aperiodic_z else self.Nz,
             self.parallel,
         )
 
@@ -65,7 +69,11 @@ class Stencil:
         else:
             raise ValueError
 
-        return U, V, W
+        return (
+            U[: self.Nx, : self.Ny, : self.Nz],
+            V[: self.Nx, : self.Ny, : self.Nz],
+            W[: self.Nx, : self.Ny, : self.Nz],
+        )
 
 
 @dataclass
@@ -147,17 +155,16 @@ def load_mann_binary(filename: Path, N=(32, 32)) -> ArrayLike:
     if len(N) == 2:
         ny, nz = N
         nx = len(data) / (ny * nz)
-        assert (
-            nx == int(nx)
+        assert nx == int(
+            nx
         ), f"Size of turbulence box ({len(data)}) does not match ny x nz ({ny*nx}), nx={nx}"
         nx = int(nx)
     else:
         nx, ny, nz = N
-        assert len(data) == nx * ny * nz, (
-            "Size of turbulence box (%d) does not match nx x ny x nz (%d)"
-            % (
-                len(data),
-                nx * ny * nz,
-            )
+        assert (
+            len(data) == nx * ny * nz
+        ), "Size of turbulence box (%d) does not match nx x ny x nz (%d)" % (
+            len(data),
+            nx * ny * nz,
         )
     return data.reshape(nx, ny, nz)
