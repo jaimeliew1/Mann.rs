@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -40,7 +41,7 @@ class Stencil:
 
     def turbulence(
         self, ae: float, seed: int, domain="space", parallel=False
-    ) -> tuple[ArrayLike, ...]:
+    ) -> Tuple[ArrayLike, ...]:
         """
         Generate a Mann turbulence from a stencil.
         args:
@@ -98,7 +99,7 @@ class ForgetfulStencil:
 
     def turbulence(
         self, ae: float, seed: int, domain="space", parallel=False
-    ) -> tuple[ArrayLike, ...]:
+    ) -> Tuple[ArrayLike, ...]:
         """
         Generate a Mann turbulence from a stencil.
         args:
