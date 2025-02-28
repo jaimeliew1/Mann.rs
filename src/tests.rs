@@ -157,6 +157,39 @@ mod tests {
             .zip(ans_Kz.iter())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
     }
+
+    #[test]
+    fn test_one_comp_spec() {
+        let kx = array![0.0, 1.0, 10.0]; // Example kx values
+        let ae = 1.0;
+        let l = 33.6;
+        let gamma = 3.9;
+
+        let (suu, svv, sww, suw) = spectra::spectra::mann_spectra(&kx, ae, l, gamma);
+
+        let ans_suu: [f32; 3] = [6.1924139e+02, 1.6436884e-01, 3.5424693e-03];
+        let ans_svv: [f32; 3] = [2.8763264e+01, 2.1917929e-01, 4.7233040e-03];
+        let ans_sww: [f32; 3] = [2.8763268e+01, 2.1325482e-01, 4.7172448e-03];
+        let ans_suw: [f32; 3] = [-1.0185785e+02, -7.4106185e-03, -3.3391341e-05];
+
+        println!("UU values: {:?}", suu);
+        println!("VV values: {:?}", svv);
+        println!("WW values: {:?}", sww);
+        println!("UW values: {:?}", suw);
+        suu.into_iter()
+            .zip(ans_suu.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+        svv.into_iter()
+            .zip(ans_svv.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+        sww.into_iter()
+            .zip(ans_sww.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+        suw.into_iter()
+            .zip(ans_suw.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+    }
+
     // #[test]
     // fn test_stencilate() {
     //     let gamma = 1.0;

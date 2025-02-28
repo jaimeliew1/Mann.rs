@@ -126,6 +126,11 @@ class ForgetfulStencil:
         return U, V, W
 
 
+def spectra(kxs: np.ndarray, ae: float, L: float, gamma: float) -> np.ndarray:
+    Suu, Svv, Sww, Suv = mannrs.mann_spectra(np.array(kxs, dtype=np.single), ae, L, gamma)
+    return Suu, Svv, Sww, Suv
+
+
 def save_box(filename: Path, box: ArrayLike):
     filename = Path(filename)
     filename.parent.mkdir(exist_ok=True, parents=True)

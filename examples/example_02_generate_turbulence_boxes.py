@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     print(f"Generating {N} turbulence boxes to turb/...")
     for seed in trange(N, desc="turbulence"):
-        U, V, W = stencil.turbulence(ae, seed, domain="space")
+        U, V, W = stencil.turbulence(ae, seed, parallel=True, domain="space")
 
 
 
