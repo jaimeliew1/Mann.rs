@@ -28,6 +28,10 @@ jobs:
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
+      - name: Install required libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libstdc++6 libstdc++-7-dev
       - uses: actions/checkout@v4
       - name: Install uv
         uses: astral-sh/setup-uv@v5
