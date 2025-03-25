@@ -22,6 +22,109 @@ use std::f32::consts::PI;
 use std::mem::drop;
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
 
+/// Returns the normalized spectral component from a stencil of shape `(Nx, Ny,
+/// Nz, 3, 3)`.
+///
+/// This function extracts the `Ruu`, `Rvv`, `Rww`, and `Ruw` components from
+/// the stencil. These components are normalized such that their inverse fourier
+/// transform as a maximum value of 1.
+///
+/// - `Ruu_f`: Normalized spectral energy of the `u` component
+/// - `Rvv_f`: Normalized spectral energy of the `v` component
+/// - `Rww_f`: Normalized spectral energy of the `w` component
+/// - `Ruw_f`: Normalized spectral cross-component `uw`
+///
+/// # Arguments
+///
+/// * `stencil` - A 5D array containing the velocity correlation tensor across a
+///   3D grid.
+///
+/// # Returns
+///
+/// A tuple of 3D arrays `(Ruu_f, Rvv_f, Rww_f, Ruw_f)` where each is the real
+/// part of the normalized spectral component for the corresponding correlation
+/// tensor entry.
+pub fn spectral_component_grids(
+    stencil: &ArrayView5<f32>,
+) -> (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) {
+    let mut Ruu_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 0, 0])
+        .mapv(|x| Complex32::new(x, 0.0));
+    let mut Rvv_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 1, 1])
+        .mapv(|x| Complex32::new(x, 0.0));
+    let mut Rww_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 2, 2])
+        .mapv(|x| Complex32::new(x, 0.0));
+    let Ruw_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 0, 2])
+        .mapv(|x| Complex32::new(x, 0.0));
+
+    let Ruu: Array3<f32> = Utilities::irfft3d(&mut Ruu_f);
+    let Rvv: Array3<f32> = Utilities::irfft3d(&mut Rvv_f);
+    let Rww: Array3<f32> = Utilities::irfft3d(&mut Rww_f);
+
+    // Normalize frequency components
+    (
+        Ruu_f.mapv(|x| x.re / Ruu[[0, 0, 0]]),
+        Rvv_f.mapv(|x| x.re / Rvv[[0, 0, 0]]),
+        Rww_f.mapv(|x| x.re / Rww[[0, 0, 0]]),
+        Ruw_f.mapv(|x| x.re / (Ruu[[0, 0, 0]] * Rww[[0, 0, 0]]).sqrt()),
+    )
+}
+
+
+/// Returns the normalized correlation matrices from a stencil of shape `(Nx,
+/// Ny, Nz, 3, 3)`.
+///
+/// This function extracts the `Ruu`, `Rvv`, `Rww`, and `Ruw` components from
+/// the stencil and performs an inverse fourier transform to arrive at the
+/// spatial correlation. These components are normalized such that their inverse
+/// fourier transform as a maximum value of 1.
+///
+/// # Arguments
+///
+/// * `stencil` - A 5D array containing the velocity correlation tensor across a
+///   3D grid.
+///
+/// # Returns
+///
+/// A tuple of 3D arrays `(Ruu, Rvv, Rww, Ruw)` where each is the spatial
+/// correlation matrix for the U, V and W wind components as well as the cross
+/// correlation between U and W.
+pub fn correlation_grids(
+    stencil: &ArrayView5<f32>,
+) -> (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) {
+    let mut Ruu_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 0, 0])
+        .mapv(|x| Complex32::new(x, 0.0));
+    let mut Rvv_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 1, 1])
+        .mapv(|x| Complex32::new(x, 0.0));
+    let mut Rww_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 2, 2])
+        .mapv(|x| Complex32::new(x, 0.0));
+    let mut Ruw_f: Array3<Complex32> = stencil
+        .slice(s![.., .., .., 0, 2])
+        .mapv(|x| Complex32::new(x, 0.0));
+
+    let Ruu: Array3<f32> = Utilities::irfft3d(&mut Ruu_f);
+    drop(Ruu_f);
+    let Rvv: Array3<f32> = Utilities::irfft3d(&mut Rvv_f);
+    drop(Rvv_f);
+    let Rww: Array3<f32> = Utilities::irfft3d(&mut Rww_f);
+    drop(Rww_f);
+    let Ruw: Array3<f32> = Utilities::irfft3d(&mut Ruw_f);
+    drop(Ruw_f);
+
+    (
+        Ruu.mapv(|x| x / Ruu[[0, 0, 0]]),
+        Rvv.mapv(|x| x / Rvv[[0, 0, 0]]),
+        Rww.mapv(|x| x / Rww[[0, 0, 0]]),
+        Ruw.mapv(|x| x / (Ruu[[0, 0, 0]] * Rww[[0, 0, 0]]).sqrt()),
+    )
+}
+
 pub fn stencilate_par(
     L: f32,
     gamma: f32,
