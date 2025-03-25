@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from rich import print
 
 from mannrs import ConstrainedStencil, Constraint
 
@@ -7,7 +8,7 @@ params = {}
 Lx = 1000
 Nx = 300
 N_periods = 3
-N_constraints = 1500
+N_constraints = 600
 
 
 def random_walk(n_steps, std_dev, seed=None):
@@ -60,10 +61,11 @@ if __name__ == "__main__":
         U, V, W = stencil.turbulence(i, parallel=True)
         ys.append(U[:, 16, 16])
         axes[i].imshow(U[:, :, 16])
+    plt.savefig("constraint_slice.png", dpi=300, bbox_inches="tight")
 
     plt.figure()
 
     for y in ys:
         plt.plot(x, y)
     plt.plot(x_constraint, y_constraint, ".k")
-    plt.show()
+    plt.savefig("constraint_timeseries.png", dpi=300, bbox_inches="tight")
