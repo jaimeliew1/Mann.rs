@@ -1,12 +1,15 @@
 use ndarray::{s, Array1, Array3, Array5};
-use numpy::{Complex32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, ToPyArray};
+use numpy::{
+    Complex32, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
+    ToPyArray,
+};
 use pyo3::prelude::*;
 
 use crate::{
     forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
     partial_forgetful_turbulate_par, partial_turbulate, partial_turbulate_par, stencilate_sinc,
-    stencilate_sinc_par, turbulate, turbulate_par, Tensors::*, Utilities,
-    Utilities::freq_components,
+    stencilate_sinc_par, turbulate, turbulate_par, Constraint, Tensors::*, Utilities,
+    Utilities::fftfreq, Utilities::freq_components, Utilities::rfftfreq,
 };
 
 #[pyclass]
@@ -228,6 +231,93 @@ impl RustStencil {
             Ruw.mapv(|x| x / (Ruu[[0, 0, 0]] * Rww[[0, 0, 0]]).sqrt())
                 .to_pyarray(py),
         )
+    }
+
+    fn constrain<'py>(
+        &self,
+        py: Python<'py>,
+        constraints: PyReadonlyArray2<'py, f32>,
+        CConstU: PyReadonlyArray1<'py, f32>,
+        CConstV: PyReadonlyArray1<'py, f32>,
+        CConstW: PyReadonlyArray1<'py, f32>,
+    ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
+        let CConstU: Array1<Complex32> = CConstU.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
+        let CConstV: Array1<Complex32> = CConstV.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
+        let CConstW: Array1<Complex32> = CConstW.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
+
+        // Calculate normalized spectral component grids
+        let mut Ruu_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 0, 0])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Rvv_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 1, 1])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Rww_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 2, 2])
+            .mapv(|x| Complex32::new(x, 0.0));
+        let mut Ruw_f: Array3<Complex32> = self
+            ._stencil
+            .slice(s![.., .., .., 0, 2])
+            .mapv(|x| Complex32::new(x, 0.0));
+
+        let Ruu: Array3<f32> = Utilities::irfft3d(&mut Ruu_f);
+        let Rvv: Array3<f32> = Utilities::irfft3d(&mut Rvv_f);
+        let Rww: Array3<f32> = Utilities::irfft3d(&mut Rww_f);
+        let Ruw: Array3<f32> = Utilities::irfft3d(&mut Ruw_f);
+
+        let Ruu_f: Array3<Complex32> =
+            Ruu_f.mapv(|x| Complex32::new(2.0 * x.re / Ruu[[0, 0, 0]], 0.0));
+        let Rvv_f: Array3<Complex32> =
+            Rvv_f.mapv(|x| Complex32::new(2.0 * x.re / Rvv[[0, 0, 0]], 0.0));
+        let Rww_f: Array3<Complex32> =
+            Rww_f.mapv(|x| Complex32::new(2.0 * x.re / Rww[[0, 0, 0]], 0.0));
+        let Ruw_f: Array3<Complex32> = Ruw_f
+            .mapv(|x| Complex32::new(2.0 * x.re / (Ruu[[0, 0, 0]] * Rww[[0, 0, 0]]).sqrt(), 0.0));
+
+        // Calculate 3d meshgrid of linear wave numbers.
+        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / (self.Nx as f32));
+        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / (self.Ny as f32));
+        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / (self.Nz as f32));
+
+        let (nx, ny, nz) = (kxs.len(), kys.len(), kzs.len());
+        let mut kx_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let mut ky_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let mut kz_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        for i in 0..nx {
+            for j in 0..ny {
+                for k in 0..nz {
+                    kx_mesh[[i, j, k]] = Complex32::new(kxs[i], 0.0);
+                    ky_mesh[[i, j, k]] = Complex32::new(kys[j], 0.0);
+                    kz_mesh[[i, j, k]] = Complex32::new(kzs[k], 0.0);
+                }
+            }
+        }
+
+        let mut U_f: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let mut V_f: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let mut W_f: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+
+        for (i, c) in constraints.as_array().outer_iter().enumerate() {
+            let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
+                * (&kx_mesh * c[0] + &ky_mesh * c[1] + &kz_mesh * c[2]))
+                .mapv(|x| x.exp());
+
+            U_f = &U_f
+                + Complex32::new(0.5, 0.0) * &phase * (&Ruu_f * CConstU[i] + &Ruw_f * CConstW[i]);
+            V_f = &V_f + Complex32::new(0.5, 0.0) * &phase * (&Rvv_f * CConstV[i]);
+            W_f = &W_f
+                + Complex32::new(0.5, 0.0) * &phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]);
+        }
+
+        let U: Array3<f32> = Utilities::irfft3d(&mut U_f);
+        let V: Array3<f32> = Utilities::irfft3d(&mut V_f);
+        let W: Array3<f32> = Utilities::irfft3d(&mut W_f);
+
+        (U.to_pyarray(py), V.to_pyarray(py), W.to_pyarray(py))
+
     }
 }
 

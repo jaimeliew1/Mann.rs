@@ -359,6 +359,17 @@ pub fn turbulate_unit(
     (U, V, W)
 }
 
+struct Constraint {
+    x: f32,
+    y: f32,
+    z: f32,
+    u: f32,
+    v: f32,
+    w: f32,
+}
+
+pub fn constrain(constraints: Vec<Constraint>) {}
+
 pub fn partial_forgetful_turbulate_par(
     ae: f32,
     seed: u64,

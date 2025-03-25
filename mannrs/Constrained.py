@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Optional
 
 
@@ -64,7 +65,6 @@ class ConstrainedStencil:
     parallel: bool = False
 
     def __post_init__(self):
-
         print("generating stencil...")
         self.stencil = Stencil(
             self.L,
@@ -160,30 +160,53 @@ class ConstrainedStencil:
 
         Ures, Vres, Wres = np.array(U), np.array(V), np.array(W)
 
-        xmesh, ymesh, zmesh = np.meshgrid(*grid_points, indexing="ij")
+        print("begin superimposing constraints...")
+        tstart = perf_counter()
+        
 
-        RUU_f, RVV_f, RWW_f, RUW_f = self.stencil.stencil.spectral_component_grids()
-
-
-        kxs = np.fft.fftfreq(2*self.Nx, self.Lx / self.Nx)
-        kys = np.fft.fftfreq(2*self.Ny, self.Ly / self.Ny)
-        kzs = np.fft.rfftfreq( 2*self.Nz, self.Lz / self.Nz)
-
-        U_f, V_f, W_f = (
-            np.zeros_like(RUU_f, dtype=complex),
-            np.zeros_like(RUU_f, dtype=complex),
-            np.zeros_like(RUU_f, dtype=complex),
+        # spectral superposition (rust)
+        _constraints = np.array(
+            [[p.x, p.y, p.z] for p in self.constraints], dtype=np.single
         )
-        kx_mesh, ky_mesh, kz_mesh = np.meshgrid(kxs, kys, kzs, indexing="ij")
-        for i, c in enumerate(tqdm(self.constraints)):
-            phase = np.exp(
-                -2j * np.pi * (kx_mesh * c.x + ky_mesh * c.y + kz_mesh * c.z)
-            )
-            U_f += phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
-            V_f += phase * (RVV_f * CConstV[i])
-            W_f += phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
+        Uconst, Vconst, Wconst = self.stencil.stencil.constrain(
+            _constraints,
+            np.array(CConstU, dtype=np.single),
+            np.array(CConstV, dtype=np.single),
+            np.array(CConstW, dtype=np.single),
+        )
+        Ures += Uconst[: self.Nx, : self.Ny, : self.Nz]
+        Vres += Vconst[: self.Nx, : self.Ny, : self.Nz]
+        Wres += Wconst[: self.Nx, : self.Ny, : self.Nz]
 
-        Ures += np.fft.irfftn(U_f)[: self.Nx, : self.Ny, : self.Nz]
+
+
+
+        # spectral superposition (python)
+        # RUU_f, RVV_f, RWW_f, RUW_f = self.stencil.stencil.spectral_component_grids()
+
+        # kxs = np.fft.fftfreq(2 * self.Nx, self.Lx / self.Nx)
+        # kys = np.fft.fftfreq(2 * self.Ny, self.Ly / self.Ny)
+        # kzs = np.fft.rfftfreq(2 * self.Nz, self.Lz / self.Nz)
+
+
+        # U_f, V_f, W_f = (
+        #     np.zeros_like(RUU_f, dtype=complex),
+        #     np.zeros_like(RUU_f, dtype=complex),
+        #     np.zeros_like(RUU_f, dtype=complex),
+        # )
+        # kx_mesh, ky_mesh, kz_mesh = np.meshgrid(kxs, kys, kzs, indexing="ij")
+        # for i, c in enumerate(tqdm(self.constraints)):
+        #     phase = np.exp(
+        #         -2j * np.pi * (kx_mesh * c.x + ky_mesh * c.y + kz_mesh * c.z)
+        #     )
+        #     U_f += 0.5 * phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
+        #     V_f += 0.5 * phase * (RVV_f * CConstV[i])
+        #     W_f += 0.5 * phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
+
+        # Ures += np.fft.irfftn(U_f)[: self.Nx, : self.Ny, : self.Nz]
+
+        # fast interp (python)
+        # xmesh, ymesh, zmesh = np.meshgrid(*grid_points, indexing="ij")
 
         # for i, c in enumerate(tqdm(self.constraints)):
         #     _dx = np.abs(xmesh - c.x)
@@ -194,5 +217,5 @@ class ConstrainedStencil:
         #     Ures += UUcorr * CConstU[i] + UWcorr * CConstW[i]
         #     Vres += VVcorr * CConstV[i]
         #     Wres += UWcorr * CConstU[i] + WWcorr * CConstW[i]
-
+        print(f"constraints superimposed {perf_counter() - tstart}s")
         return Ures, Vres, Wres
