@@ -7,7 +7,7 @@ params = {}
 Lx = 1000
 Nx = 300
 N_periods = 3
-N_constraints = 150
+N_constraints = 1500
 
 
 def random_walk(n_steps, std_dev, seed=None):

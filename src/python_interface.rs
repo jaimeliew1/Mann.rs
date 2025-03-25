@@ -1,16 +1,17 @@
-use ndarray::{s, Array1, Array3, Array5};
-use numpy::{
-    Complex32, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
-    ToPyArray,
-};
-use pyo3::prelude::*;
-
 use crate::{
     forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
     partial_forgetful_turbulate_par, partial_turbulate, partial_turbulate_par, stencilate_sinc,
     stencilate_sinc_par, turbulate, turbulate_par, Constraint, Tensors::*, Utilities,
     Utilities::fftfreq, Utilities::freq_components, Utilities::rfftfreq,
 };
+use ndarray::parallel::prelude::*;
+use ndarray::{s, Array1, Array3, Array5, Zip};
+use numpy::{
+    Complex32, PyArray1, PyArray2, PyArray3, PyArrayMethods, PyReadonlyArray1, PyReadonlyArray2,
+    ToPyArray,
+};
+use pyo3::prelude::*;
+use std::sync::{Arc, Mutex};
 
 #[pyclass]
 struct RustStencil {
@@ -296,28 +297,55 @@ impl RustStencil {
             }
         }
 
-        let mut U_f: Array3<Complex32> = Array3::zeros((nx, ny, nz));
-        let mut V_f: Array3<Complex32> = Array3::zeros((nx, ny, nz));
-        let mut W_f: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let U_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
+        let mut V_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
+        let mut W_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
 
-        for (i, c) in constraints.as_array().outer_iter().enumerate() {
-            let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
-                * (&kx_mesh * c[0] + &ky_mesh * c[1] + &kz_mesh * c[2]))
-                .mapv(|x| x.exp());
+        // for (i, c) in constraints.as_array().outer_iter().enumerate() {
+        //     let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
+        //         * (&kx_mesh * c[0] + &ky_mesh * c[1] + &kz_mesh * c[2]))
+        //         .mapv(|x| x.exp());
 
-            U_f = &U_f
-                + Complex32::new(0.5, 0.0) * &phase * (&Ruu_f * CConstU[i] + &Ruw_f * CConstW[i]);
-            V_f = &V_f + Complex32::new(0.5, 0.0) * &phase * (&Rvv_f * CConstV[i]);
-            W_f = &W_f
-                + Complex32::new(0.5, 0.0) * &phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]);
-        }
+        //     U_f = &U_f
+        //         + Complex32::new(0.5, 0.0) * &phase * (&Ruu_f * CConstU[i] + &Ruw_f * CConstW[i]);
+        //     V_f = &V_f + Complex32::new(0.5, 0.0) * &phase * (&Rvv_f * CConstV[i]);
+        //     W_f = &W_f
+        //         + Complex32::new(0.5, 0.0) * &phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]);
+        // }
+        constraints
+            .as_array()
+            .outer_iter()
+            .into_par_iter()
+            .enumerate()
+            .for_each(|(i, c)| {
+                let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
+                    * (&kx_mesh * c[0] + &ky_mesh * c[1] + &kz_mesh * c[2]))
+                    .mapv(|x| x.exp());
 
-        let U: Array3<f32> = Utilities::irfft3d(&mut U_f);
-        let V: Array3<f32> = Utilities::irfft3d(&mut V_f);
-        let W: Array3<f32> = Utilities::irfft3d(&mut W_f);
+                let to_add =
+                    Complex32::new(0.5, 0.0) * &phase * (&Ruu_f * CConstU[i] + &Ruw_f * CConstW[i]);
+                {
+                    let mut U_f = U_f.lock().unwrap();
+                    Zip::from(&mut *U_f).and(&to_add).apply(|a, &b| *a += b);
+                }
+                let to_add = Complex32::new(0.5, 0.0) * &phase * (&Rvv_f * CConstV[i]);
+                {
+                    let mut V_f = V_f.lock().unwrap();
+                    Zip::from(&mut *V_f).and(&to_add).apply(|a, &b| *a += b);
+                }
+                let to_add =
+                    Complex32::new(0.5, 0.0) * &phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]);
+                {
+                    let mut W_f = W_f.lock().unwrap();
+                    Zip::from(&mut *W_f).and(&to_add).apply(|a, &b| *a += b);
+                }
+            });
+
+        let U: Array3<f32> = Utilities::irfft3d(&mut U_f.lock().unwrap());
+        let V: Array3<f32> = Utilities::irfft3d(&mut V_f.lock().unwrap());
+        let W: Array3<f32> = Utilities::irfft3d(&mut W_f.lock().unwrap());
 
         (U.to_pyarray(py), V.to_pyarray(py), W.to_pyarray(py))
-
     }
 }
 
