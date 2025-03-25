@@ -25,3 +25,11 @@ python-packages = ["mannrs"]
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
+
+[dependency-groups]
+dev = [
+    "ipython>=7.34.0",
+    "matplotlib>=3.5.3",
+    "pytest>=7.4.4",
+    "rich>=13.8.1",
+]
