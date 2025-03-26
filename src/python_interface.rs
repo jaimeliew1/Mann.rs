@@ -306,9 +306,8 @@ impl RustStencil {
             let mut _U_f = Array3::<Complex32>::zeros((nx, ny, nz));
             let mut _V_f = Array3::<Complex32>::zeros((nx, ny, nz));
             let mut _W_f = Array3::<Complex32>::zeros((nx, ny, nz));
-            println!("Uf shape: {:?}", _U_f.shape());
-            println!("kx_mesh shape: {:?}", kx_mesh.shape());
-            println!("Ruu_f shape: {:?}", Ruu_f.shape());
+
+            
             for (i, c) in constraints.as_array().outer_iter().enumerate() {
                 let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
                     * (&kx_mesh * c[0] + &ky_mesh * c[1] + &kz_mesh * c[2]))
