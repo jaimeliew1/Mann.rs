@@ -124,21 +124,21 @@ class ConstrainedStencil:
 
         UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(xdist, ydist, zdist)
 
-        UUcorr, cuu = threshold_and_sparse(UUcorr, 0.0001)
-        VVcorr, cvv = threshold_and_sparse(VVcorr, 0.0001)
-        WWcorr, cww = threshold_and_sparse(WWcorr, 0.0001)
-        UWcorr, cuw = threshold_and_sparse(UWcorr, 0.0001)
+        UUcorr, cuu = threshold_and_sparse(UUcorr, 0.0005)
+        VVcorr, cvv = threshold_and_sparse(VVcorr, 0.0005)
+        WWcorr, cww = threshold_and_sparse(WWcorr, 0.0005)
+        UWcorr, cuw = threshold_and_sparse(UWcorr, 0.0005)
         print("zero count:", cuu, cvv, cww, cuw)
-        corr = sparse.block_array(
+        self.Auw = sparse.block_array(
             [
-                [UUcorr, None, UWcorr],
-                [None, VVcorr, None],
-                [UWcorr, None, WWcorr],
+                [UUcorr, UWcorr],
+                [UWcorr, WWcorr],
             ],
             dtype=np.float32,
             format="csc",
         )
-        self.corr = corr
+        self.Av = VVcorr
+        # self.corr = corr
 
     def turbulence(
         self, seed: int, parallel: bool = False, method="rust", thres=0.0001
@@ -159,33 +159,47 @@ class ConstrainedStencil:
         U_contemp = U_interp([(p.x, p.y, p.z) for p in self.constraints])
         V_contemp = V_interp([(p.x, p.y, p.z) for p in self.constraints])
         W_contemp = W_interp([(p.x, p.y, p.z) for p in self.constraints])
+        UW_contemp = np.concatenate([U_contemp, W_contemp])
 
-        UVW_contemp = np.concatenate([U_contemp, V_contemp, W_contemp])
-
-        UVW_constraint = np.concatenate(
+        UW_constraint = np.concatenate(
             [
                 [p.u for p in self.constraints],
-                [p.v for p in self.constraints],
                 [p.w for p in self.constraints],
             ]
         )
-        UVW_constraint = np.array([x or y for x, y in zip(UVW_constraint, UVW_contemp)])
+        V_constraint = np.array([p.v for p in self.constraints])
 
-        print("Solving linear system...")
-        b = sparse.csr_matrix(
-            (UVW_constraint - UVW_contemp), dtype=np.float32
-        ).transpose()
+        # Set absent constraints to contemporaneous value
+        UW_constraint = np.array([x or y for x, y in zip(UW_constraint, UW_contemp)])
+        V_constraint = np.array([x or y for x, y in zip(V_constraint, V_contemp)])
 
+        # b = sparse.csr_matrix(
+        #     (UVW_constraint - UVW_contemp), dtype=np.float32
+        # ).transpose()
         # Solve the sparse linear system
-        x_sparse = spsolve(self.corr, b)
+        # x_sparse = spsolve(self.corr, b)
+        # x_sparse, info = gmres(self.corr, b)
+        # solve = factorized(self.corr)
+        print("Solving linear system for UW...")
+        buw = np.array((UW_constraint - UW_contemp), dtype=np.float32)
+        CConstUW = spsolve(self.Auw, buw)
+        # CConstUW, info = cg(self.Auw, buw)
+        # print(info)
 
+
+        print("Solving linear systemfor V...")
+        bv = np.array((V_constraint - V_contemp), dtype=np.float32)
+        CConstV = spsolve(self.Av, bv)
+        # CConstUVW = solve(b)
         # Convert the solution back to dense format
-        CConstUVW = np.array(x_sparse, dtype=np.float32)
+        # CConstUVW = np.array(x_sparse, dtype=np.float32)
 
         Nc = len(self.constraints)
-        CConstU = CConstUVW[:Nc]
-        CConstV = CConstUVW[Nc : 2 * Nc]
-        CConstW = CConstUVW[2 * Nc :]
+        CConstU = CConstUW[:Nc]
+        CConstW = CConstUW[Nc:]
+        # CConstU = CConstUVW[:Nc]
+        # CConstV = CConstUVW[Nc : 2 * Nc]
+        # CConstW = CConstUVW[2 * Nc :]
 
         Ures, Vres, Wres = np.array(U), np.array(V), np.array(W)
 
