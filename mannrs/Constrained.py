@@ -7,6 +7,7 @@ import numpy as np
 from mannrs import Stencil
 from scipy import spatial
 from scipy.interpolate import RegularGridInterpolator
+from scipy import linalg
 from tqdm import tqdm
 
 
@@ -122,7 +123,7 @@ class ConstrainedStencil:
         self.corr = corr
 
     def turbulence(
-        self, seed: int, parallel: bool = False
+        self, seed: int, parallel: bool = False, method="rust", thres=0.0001
     ) -> tuple[np.array, np.array, np.array]:
         U, V, W = self.stencil.turbulence(self.ae, seed, parallel=parallel)
 
@@ -136,6 +137,7 @@ class ConstrainedStencil:
         V_interp = RegularGridInterpolator(grid_points, V)
         W_interp = RegularGridInterpolator(grid_points, W)
 
+        print("interpolating contemporaneous values...")
         U_contemp = U_interp([(p.x, p.y, p.z) for p in self.constraints])
         V_contemp = V_interp([(p.x, p.y, p.z) for p in self.constraints])
         W_contemp = W_interp([(p.x, p.y, p.z) for p in self.constraints])
@@ -151,7 +153,8 @@ class ConstrainedStencil:
         )
         UVW_constraint = np.array([x or y for x, y in zip(UVW_constraint, UVW_contemp)])
 
-        CConstUVW = np.linalg.solve(self.corr, (UVW_constraint - UVW_contemp))
+        print("Solving linear system...")
+        CConstUVW = linalg.solve(self.corr, (UVW_constraint - UVW_contemp))
 
         Nc = len(self.constraints)
         CConstU = CConstUVW[:Nc]
@@ -162,60 +165,145 @@ class ConstrainedStencil:
 
         print("begin superimposing constraints...")
         tstart = perf_counter()
-        
 
         # spectral superposition (rust)
-        _constraints = np.array(
-            [[p.x, p.y, p.z] for p in self.constraints], dtype=np.single
-        )
-        Uconst, Vconst, Wconst = self.stencil.stencil.constrain(
-            _constraints,
-            np.array(CConstU, dtype=np.single),
-            np.array(CConstV, dtype=np.single),
-            np.array(CConstW, dtype=np.single),
-        )
-        Ures += Uconst[: self.Nx, : self.Ny, : self.Nz]
-        Vres += Vconst[: self.Nx, : self.Ny, : self.Nz]
-        Wres += Wconst[: self.Nx, : self.Ny, : self.Nz]
+        if method == "rust":
+            _constraints = np.array(
+                [[p.x, p.y, p.z] for p in self.constraints], dtype=np.single
+            )
+            Uconst, Vconst, Wconst = self.stencil.stencil.constrain(
+                _constraints,
+                np.array(CConstU, dtype=np.single),
+                np.array(CConstV, dtype=np.single),
+                np.array(CConstW, dtype=np.single),
+                float(thres),
+                parallel,
+            )
+            Ures += Uconst[: self.Nx, : self.Ny, : self.Nz]
+            Vres += Vconst[: self.Nx, : self.Ny, : self.Nz]
+            Wres += Wconst[: self.Nx, : self.Ny, : self.Nz]
+
+        elif method == "python":
+            RUU_f, RVV_f, RWW_f, RUW_f = self.stencil.stencil.spectral_component_grids()
+
+            kxs = np.fft.fftfreq(2 * self.Nx, self.Lx / self.Nx)
+            kys = np.fft.fftfreq(2 * self.Ny, self.Ly / self.Ny)
+            kzs = np.fft.rfftfreq(2 * self.Nz, self.Lz / self.Nz)
+
+            U_f, V_f, W_f = (
+                np.zeros_like(RUU_f, dtype=complex),
+                np.zeros_like(RUU_f, dtype=complex),
+                np.zeros_like(RUU_f, dtype=complex),
+            )
+            kx_mesh, ky_mesh, kz_mesh = np.meshgrid(kxs, kys, kzs, indexing="ij")
+            for i, c in enumerate(tqdm(self.constraints)):
+                phase = np.exp(
+                    -2j * np.pi * (kx_mesh * c.x + ky_mesh * c.y + kz_mesh * c.z)
+                )
+                U_f += 0.5 * phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
+                V_f += 0.5 * phase * (RVV_f * CConstV[i])
+                W_f += 0.5 * phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
+
+            Ures += np.fft.irfftn(U_f)[: self.Nx, : self.Ny, : self.Nz]
+
+        elif method == "python_reduced":
+            RUU_f, RVV_f, RWW_f, RUW_f = self.stencil.stencil.spectral_component_grids()
+
+            kxs = np.fft.fftfreq(2 * self.Nx, self.Lx / self.Nx)
+            kys = np.fft.fftfreq(2 * self.Ny, self.Ly / self.Ny)
+            kzs = np.fft.rfftfreq(2 * self.Nz, self.Lz / self.Nz)
+
+            Nx_exp, Ny_exp, Nz_exp = len(kxs), len(kys), len(kzs)
+
+            # Roll spectral components
+            xroll, yroll, zroll = len(kxs) // 2, len(kys) // 2, 0
+            kxs = np.roll(kxs, xroll, axis=0)
+            kys = np.roll(kys, yroll, axis=0)
+            kzs = np.roll(kzs, zroll, axis=0)
+
+            RUU_f = np.roll(RUU_f, (xroll, yroll, zroll), (0, 1, 2))
+            RVV_f = np.roll(RVV_f, (xroll, yroll, zroll), (0, 1, 2))
+            RWW_f = np.roll(RWW_f, (xroll, yroll, zroll), (0, 1, 2))
+            RUW_f = np.roll(RUW_f, (xroll, yroll, zroll), (0, 1, 2))
+            # reduce spectral components TODO
+            RUU_f_max, RVV_f_max, RWW_f_max = RUU_f.max(), RVV_f.max(), RWW_f.max()
+            ind_x_min = np.where(RUU_f[:, yroll, zroll] >= thres * RUU_f_max)[0][0]
+            ind_x_max = (
+                len(kxs)
+                - np.where(RUU_f[:, yroll, zroll][::-1] >= thres * RUU_f_max)[0][0]
+            )
+
+            ind_y_min = np.where(RVV_f[xroll, :, zroll] >= thres * RVV_f_max)[0][0]
+            ind_y_max = (
+                len(kys)
+                - np.where(RVV_f[xroll, :, zroll][::-1] >= thres * RVV_f_max)[0][0]
+            )
+
+            ind_z_max = np.where(RWW_f[xroll, yroll, :] < thres * RWW_f_max)[0][0]
+            print(f"ind_x_min: {ind_x_min}/{len(kxs)}")
+            print(f"ind_x_max: {ind_x_max}/{len(kxs)}")
+            print(f"ind_y_min: {ind_y_min}/{len(kys)}")
+            print(f"ind_y_max: {ind_y_max}/{len(kys)}")
+            print(f"ind_z_max: {ind_z_max}/{len(kzs)}")
+
+            RUU_f = RUU_f[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max]
+            RVV_f = RVV_f[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max]
+            RWW_f = RWW_f[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max]
+            RUW_f = RUW_f[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max]
+
+            U_f, V_f, W_f = (
+                np.zeros_like(RUU_f, dtype=complex),
+                np.zeros_like(RUU_f, dtype=complex),
+                np.zeros_like(RUU_f, dtype=complex),
+            )
+            kx_mesh, ky_mesh, kz_mesh = np.meshgrid(
+                kxs[ind_x_min:ind_x_max],
+                kys[ind_y_min:ind_y_max],
+                kzs[:ind_z_max],
+                indexing="ij",
+            )
+            for i, c in enumerate(tqdm(self.constraints)):
+                phase = np.exp(
+                    -2j * np.pi * (kx_mesh * c.x + ky_mesh * c.y + kz_mesh * c.z)
+                )
+                U_f += 0.5 * phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
+                V_f += 0.5 * phase * (RVV_f * CConstV[i])
+                W_f += 0.5 * phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
 
 
+            # expand spectral components
+            U_f_exp, V_f_exp, W_f_exp = (
+                np.zeros((Nx_exp, Ny_exp, Nz_exp), dtype=complex),
+                np.zeros((Nx_exp, Ny_exp, Nz_exp), dtype=complex),
+                np.zeros((Nx_exp, Ny_exp, Nz_exp), dtype=complex),
+            )
+            U_f_exp[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max] = U_f
+            V_f_exp[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max] = V_f
+            W_f_exp[ind_x_min:ind_x_max, ind_y_min:ind_y_max, :ind_z_max] = W_f
 
+            # Unroll spectral components TODO
+            U_f_exp = np.roll(U_f_exp, (-xroll, -yroll, -zroll), (0, 1, 2))
+            V_f_exp = np.roll(V_f_exp, (-xroll, -yroll, -zroll), (0, 1, 2))
+            W_f_exp = np.roll(W_f_exp, (-xroll, -yroll, -zroll), (0, 1, 2))
 
-        # spectral superposition (python)
-        # RUU_f, RVV_f, RWW_f, RUW_f = self.stencil.stencil.spectral_component_grids()
+            Ures += np.fft.irfftn(U_f_exp)[: self.Nx, : self.Ny, : self.Nz]
 
-        # kxs = np.fft.fftfreq(2 * self.Nx, self.Lx / self.Nx)
-        # kys = np.fft.fftfreq(2 * self.Ny, self.Ly / self.Ny)
-        # kzs = np.fft.rfftfreq(2 * self.Nz, self.Lz / self.Nz)
+        elif method == "fastinterp":
+            # fast interp (python)
+            xmesh, ymesh, zmesh = np.meshgrid(*grid_points, indexing="ij")
 
+            for i, c in enumerate(tqdm(self.constraints)):
+                _dx = np.abs(xmesh - c.x)
+                _dy = np.abs(ymesh - c.y)
+                _dz = np.abs(zmesh - c.z)
+                UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(_dx, _dy, _dz)
 
-        # U_f, V_f, W_f = (
-        #     np.zeros_like(RUU_f, dtype=complex),
-        #     np.zeros_like(RUU_f, dtype=complex),
-        #     np.zeros_like(RUU_f, dtype=complex),
-        # )
-        # kx_mesh, ky_mesh, kz_mesh = np.meshgrid(kxs, kys, kzs, indexing="ij")
-        # for i, c in enumerate(tqdm(self.constraints)):
-        #     phase = np.exp(
-        #         -2j * np.pi * (kx_mesh * c.x + ky_mesh * c.y + kz_mesh * c.z)
-        #     )
-        #     U_f += 0.5 * phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
-        #     V_f += 0.5 * phase * (RVV_f * CConstV[i])
-        #     W_f += 0.5 * phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
+                Ures += UUcorr * CConstU[i] + UWcorr * CConstW[i]
+                Vres += VVcorr * CConstV[i]
+                Wres += UWcorr * CConstU[i] + WWcorr * CConstW[i]
 
-        # Ures += np.fft.irfftn(U_f)[: self.Nx, : self.Ny, : self.Nz]
+        else:
+            raise ValueError(f"method {method} not found.")
 
-        # fast interp (python)
-        # xmesh, ymesh, zmesh = np.meshgrid(*grid_points, indexing="ij")
-
-        # for i, c in enumerate(tqdm(self.constraints)):
-        #     _dx = np.abs(xmesh - c.x)
-        #     _dy = np.abs(ymesh - c.y)
-        #     _dz = np.abs(zmesh - c.z)
-        #     UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(_dx, _dy, _dz)
-
-        #     Ures += UUcorr * CConstU[i] + UWcorr * CConstW[i]
-        #     Vres += VVcorr * CConstV[i]
-        #     Wres += UWcorr * CConstU[i] + WWcorr * CConstW[i]
         print(f"constraints superimposed {perf_counter() - tstart}s")
         return Ures, Vres, Wres

@@ -8,8 +8,12 @@ params = {}
 Lx = 1000
 Nx = 300
 N_periods = 3
-N_constraints = 600
-
+N_constraints = 1000
+N_constraints = 100
+METHOD = "python"
+METHOD = "python_reduced"
+# METHOD = "fastinterp"
+METHOD = "rust"
 
 def random_walk(n_steps, std_dev, seed=None):
     if seed:
@@ -52,13 +56,14 @@ if __name__ == "__main__":
         parallel=True,
     )
     print(stencil.stencil)
+    print(f"method: {METHOD}")
     N_boxes = 1
     fig, axes = plt.subplots(1, N_boxes)
     x = np.linspace(0, Lx, Nx)
     axes = np.atleast_1d(axes)
     ys = []
     for i in range(N_boxes):
-        U, V, W = stencil.turbulence(i, parallel=True)
+        U, V, W = stencil.turbulence(i, parallel=True, method=METHOD)
         ys.append(U[:, 16, 16])
         axes[i].imshow(U[:, :, 16])
     plt.savefig("constraint_slice.png", dpi=300, bbox_inches="tight")

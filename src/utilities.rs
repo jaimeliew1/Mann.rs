@@ -8,9 +8,9 @@ use ndrustfft::{
     ndfft, ndfft_par, ndfft_r2c, ndfft_r2c_par, ndifft, ndifft_par, ndifft_r2c, ndifft_r2c_par,
     Complex, FftHandler,
 };
-use std::f32::consts::{PI, SQRT_2};
-
+use num::traits::Float;
 use numpy::Complex32;
+use std::f32::consts::{PI, SQRT_2};
 
 /// Various mathematical function implementations.
 pub mod Utilities {
@@ -266,5 +266,51 @@ pub mod Utilities {
         };
         let (I, _): (Array2<f32>, u64) = adaptive_quadrature(g, x0, x1, tol, min_depth);
         (I, neval)
+    }
+    pub fn roll_1d_array(arr: &Array1<f32>, roll: &isize) -> Array1<f32> {
+        let n = arr.len() as isize;
+        let roll = (roll % n + n) % n;
+
+        let mut rolled = arr.clone();
+
+        for i in 0..n {
+            let new_i = (i + roll) % n;
+            rolled[new_i as usize] = arr[i as usize].clone();
+        }
+
+        rolled
+    }
+
+    pub fn roll_3d_array<T>(
+        arr: &Array3<T>,
+        xroll: &isize,
+        yroll: &isize,
+        zroll: &isize,
+    ) -> Array3<T>
+    where
+        T: Clone + Copy,
+    {
+        let shape = arr.shape();
+        let (nx, ny, nz) = (shape[0] as isize, shape[1] as isize, shape[2] as isize);
+
+        let xroll = (xroll % nx + nx) % nx;
+        let yroll = (yroll % ny + ny) % ny;
+        let zroll = (zroll % nz + nz) % nz;
+
+        let mut rolled = arr.clone();
+
+        for i in 0..nx {
+            for j in 0..ny {
+                for k in 0..nz {
+                    let new_i = (i + xroll) % nx;
+                    let new_j = (j + yroll) % ny;
+                    let new_k = (k + zroll) % nz;
+                    rolled[[new_i as usize, new_j as usize, new_k as usize]] =
+                        arr[[i as usize, j as usize, k as usize]];
+                }
+            }
+        }
+
+        rolled
     }
 }
