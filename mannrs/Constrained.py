@@ -7,8 +7,22 @@ import numpy as np
 from mannrs import Stencil
 from scipy import spatial
 from scipy.interpolate import RegularGridInterpolator
-from scipy import linalg
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
 from tqdm import tqdm
+
+
+def threshold_and_sparse(matrix, threshold):
+    # Count the number of values less than the threshold
+    count_below_threshold = np.sum(matrix < threshold)
+
+    # Set all values less than the threshold to zero
+    matrix[matrix < threshold] = 0
+
+    # Convert the matrix to a sparse matrix
+    sparse_matrix = sparse.csr_matrix(matrix)
+
+    return sparse_matrix, count_below_threshold
 
 
 @dataclass
@@ -110,16 +124,20 @@ class ConstrainedStencil:
 
         UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(xdist, ydist, zdist)
 
-        _zeros = np.zeros_like(UUcorr)
-
-        corr = np.block(
+        UUcorr, cuu = threshold_and_sparse(UUcorr, 0.0001)
+        VVcorr, cvv = threshold_and_sparse(VVcorr, 0.0001)
+        WWcorr, cww = threshold_and_sparse(WWcorr, 0.0001)
+        UWcorr, cuw = threshold_and_sparse(UWcorr, 0.0001)
+        print("zero count:", cuu, cvv, cww, cuw)
+        corr = sparse.block_array(
             [
-                [UUcorr, _zeros, UWcorr],
-                [_zeros, VVcorr, _zeros],
-                [UWcorr, _zeros, WWcorr],
-            ]
+                [UUcorr, None, UWcorr],
+                [None, VVcorr, None],
+                [UWcorr, None, WWcorr],
+            ],
+            dtype=np.float32,
+            format="csc",
         )
-
         self.corr = corr
 
     def turbulence(
@@ -154,7 +172,15 @@ class ConstrainedStencil:
         UVW_constraint = np.array([x or y for x, y in zip(UVW_constraint, UVW_contemp)])
 
         print("Solving linear system...")
-        CConstUVW = linalg.solve(self.corr, (UVW_constraint - UVW_contemp))
+        b = sparse.csr_matrix(
+            (UVW_constraint - UVW_contemp), dtype=np.float32
+        ).transpose()
+
+        # Solve the sparse linear system
+        x_sparse = spsolve(self.corr, b)
+
+        # Convert the solution back to dense format
+        CConstUVW = np.array(x_sparse, dtype=np.float32)
 
         Nc = len(self.constraints)
         CConstU = CConstUVW[:Nc]
@@ -269,7 +295,6 @@ class ConstrainedStencil:
                 U_f += 0.5 * phase * (RUU_f * CConstU[i] + RUW_f * CConstW[i])
                 V_f += 0.5 * phase * (RVV_f * CConstV[i])
                 W_f += 0.5 * phase * (RUW_f * CConstU[i] + RWW_f * CConstW[i])
-
 
             # expand spectral components
             U_f_exp, V_f_exp, W_f_exp = (
