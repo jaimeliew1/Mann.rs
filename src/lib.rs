@@ -179,7 +179,7 @@ pub fn stencilate_sinc_par(
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
-                    if norm < 3.0 / L {
+                    if norm < 6.0 / L {
                         component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
                         component.assign(&tensor_gen.decomp(K));
@@ -314,7 +314,7 @@ pub fn stencilate_sinc(
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
-                    if norm < 3.0 / L {
+                    if norm < 6.0 / L {
                         component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
                         component.assign(&tensor_gen.decomp(K));
@@ -507,7 +507,7 @@ pub fn partial_forgetful_turbulate_par(
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
 
-                    let invol: bool = norm < 3.0 / L;
+                    let invol: bool = norm < 6.0 / L;
 
                     let coef: Array2<f32> = match invol {
                         true => tensor_gen_sinc.decomp(K),
@@ -589,7 +589,7 @@ pub fn partial_forgetful_turbulate(
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
 
-                    let invol: bool = norm < 3.0 / L;
+                    let invol: bool = norm < 6.0 / L;
 
                     let coef: Array2<f32> = match invol {
                         true => tensor_gen_sinc.decomp(K),
