@@ -20,6 +20,7 @@ ae, L, gamma = 0.05, 30, 3.9
 Lx, Ly, Lz = 1000, 1000, 1000
 Nx, Ny, Nz = 128, 64, 64
 RES = 60
+sinc_thres=3.0
 if __name__ == "__main__":
     # Load mona lisa image as an array zero-mean array.
     img = Image.open(IMAGE_FN).resize((RES, RES)).convert("L")
@@ -47,6 +48,7 @@ if __name__ == "__main__":
         Lz,
         parallel=PARALLEL,
         aperiodic_x=False,
+        sinc_thres=sinc_thres,
     )
     print(stencil.stencil)
     U, V, W = stencil.turbulence(1234, method=METHOD, parallel=PARALLEL, thres=0.0005)

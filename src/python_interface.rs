@@ -37,6 +37,7 @@ struct RustForgetfulStencil {
     Nx: usize,
     Ny: usize,
     Nz: usize,
+    sinc_thres: f32,
 }
 
 #[pymethods]
@@ -52,6 +53,7 @@ impl RustStencil {
         Ny: usize,
         Nz: usize,
         parallel: bool,
+        sinc_thres: f32,
     ) -> Self {
         match parallel {
             true => RustStencil {
@@ -63,7 +65,7 @@ impl RustStencil {
                 Nx: Nx,
                 Ny: Ny,
                 Nz: Nz,
-                _stencil: stencilate_sinc_par(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz),
+                _stencil: stencilate_sinc_par(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz,sinc_thres),
             },
             false => RustStencil {
                 L: L,
@@ -74,7 +76,7 @@ impl RustStencil {
                 Nx: Nx,
                 Ny: Ny,
                 Nz: Nz,
-                _stencil: stencilate_sinc(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz),
+                _stencil: stencilate_sinc(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz,sinc_thres),
             },
         }
     }
@@ -403,6 +405,7 @@ impl RustForgetfulStencil {
         Nx: usize,
         Ny: usize,
         Nz: usize,
+        sinc_thres: f32,
     ) -> Self {
         RustForgetfulStencil {
             L: L,
@@ -413,6 +416,7 @@ impl RustForgetfulStencil {
             Nx: Nx,
             Ny: Ny,
             Nz: Nz,
+            sinc_thres: sinc_thres,
         }
     }
 
@@ -425,10 +429,10 @@ impl RustForgetfulStencil {
     ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
         let (U_f, V_f, W_f): (Array3<f32>, Array3<f32>, Array3<f32>) = match parallel {
             true => forgetful_turbulate_par(
-                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
+                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,self.sinc_thres,
             ),
             false => forgetful_turbulate(
-                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,
+                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,self.sinc_thres,
             ),
         };
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
@@ -449,11 +453,11 @@ impl RustForgetfulStencil {
             match parallel {
                 true => partial_forgetful_turbulate_par(
                     ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L,
-                    self.gamma,
+                    self.gamma,self.sinc_thres,
                 ),
                 false => partial_forgetful_turbulate(
                     ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L,
-                    self.gamma,
+                    self.gamma,self.sinc_thres,
                 ),
             };
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))

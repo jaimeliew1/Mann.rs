@@ -28,6 +28,7 @@ class Stencil:
     aperiodic_y: bool = True
     aperiodic_z: bool = True
     parallel: bool = False
+    sinc_thres: float = 3.0
 
     def __post_init__(self):
         self.stencil = mannrs.RustStencil(
@@ -40,6 +41,7 @@ class Stencil:
             self.Ny * 2 if self.aperiodic_y else self.Ny,
             self.Nz * 2 if self.aperiodic_z else self.Nz,
             self.parallel,
+            self.sinc_thres,
         )
 
     def turbulence(
@@ -91,6 +93,7 @@ class ForgetfulStencil:
     Nx: int
     Ny: int
     Nz: int
+    sinc_thres: float = 3.0
 
     def __post_init__(self):
         self.stencil = mannrs.RustForgetfulStencil(
@@ -102,6 +105,7 @@ class ForgetfulStencil:
             self.Nx,
             self.Ny,
             self.Nz,
+            self.sinc_thres,
         )
 
     def turbulence(

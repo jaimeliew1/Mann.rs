@@ -163,6 +163,7 @@ pub fn stencilate_sinc_par(
     Nx: usize,
     Ny: usize,
     Nz: usize,
+    sinc_thres: f32,
 ) -> Array5<f32> {
     let mut stencil: Array5<f32> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f32>, Array1<f32>, Array1<f32>) =
@@ -179,7 +180,7 @@ pub fn stencilate_sinc_par(
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
-                    if norm < 3.0 / L {
+                    if norm < sinc_thres / L {
                         component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
                         component.assign(&tensor_gen.decomp(K));
@@ -298,6 +299,7 @@ pub fn stencilate_sinc(
     Nx: usize,
     Ny: usize,
     Nz: usize,
+    sinc_thres: f32,
 ) -> Array5<f32> {
     let mut stencil: Array5<f32> = Array5::zeros((Nx, Ny, Nz / 2 + 1, 3, 3));
     let (Kx, Ky, Kz): (Array1<f32>, Array1<f32>, Array1<f32>) =
@@ -314,7 +316,7 @@ pub fn stencilate_sinc(
                 for (k, mut component) in column.outer_iter_mut().enumerate() {
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
-                    if norm < 3.0 / L {
+                    if norm < sinc_thres / L {
                         component.assign(&tensor_gen_sinc.decomp(K));
                     } else {
                         component.assign(&tensor_gen.decomp(K));
@@ -484,6 +486,7 @@ pub fn partial_forgetful_turbulate_par(
     Lz: f32,
     L: f32,
     gamma: f32,
+    sinc_thres: f32,
 ) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
     let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
@@ -507,7 +510,7 @@ pub fn partial_forgetful_turbulate_par(
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
 
-                    let invol: bool = norm < 3.0 / L;
+                    let invol: bool = norm < sinc_thres / L;
 
                     let coef: Array2<f32> = match invol {
                         true => tensor_gen_sinc.decomp(K),
@@ -542,9 +545,10 @@ pub fn forgetful_turbulate_par(
     Lz: f32,
     L: f32,
     gamma: f32,
+    sinc_thres: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
     let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
-        partial_forgetful_turbulate_par(ae, seed, Nx, Ny, Nz, Lx, Ly, Lz, L, gamma);
+        partial_forgetful_turbulate_par(ae, seed, Nx, Ny, Nz, Lx, Ly, Lz, L, gamma, sinc_thres);
 
     let U: Array3<f32> = Utilities::irfft3d_par(&mut U_f);
     drop(U_f);
@@ -566,6 +570,8 @@ pub fn partial_forgetful_turbulate(
     Lz: f32,
     L: f32,
     gamma: f32,
+    sinc_thres: f32,
+
 ) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
     let KVolScaleFac: Complex32 = Complex::new(
         2.0 * (Nx * Ny * (Nz / 2 + 1)) as f32 * ((8.0 * ae * PI.powi(3)) / (Lx * Ly * Lz)).sqrt(),
@@ -589,7 +595,7 @@ pub fn partial_forgetful_turbulate(
                     let K = &[Kx[i], Ky[j], Kz[k]];
                     let norm = K.iter().fold(0.0, |acc, &x| acc + x * x);
 
-                    let invol: bool = norm < 3.0 / L;
+                    let invol: bool = norm < sinc_thres / L;
 
                     let coef: Array2<f32> = match invol {
                         true => tensor_gen_sinc.decomp(K),
@@ -624,9 +630,10 @@ pub fn forgetful_turbulate(
     Lz: f32,
     L: f32,
     gamma: f32,
+    sinc_thres: f32,
 ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
     let (mut U_f, mut V_f, mut W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
-        partial_forgetful_turbulate(ae, seed, Nx, Ny, Nz, Lx, Ly, Lz, L, gamma);
+        partial_forgetful_turbulate(ae, seed, Nx, Ny, Nz, Lx, Ly, Lz, L, gamma, sinc_thres);
 
     let U: Array3<f32> = Utilities::irfft3d(&mut U_f);
     drop(U_f);

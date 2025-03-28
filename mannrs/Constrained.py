@@ -64,6 +64,7 @@ class ConstrainedStencil:
     aperiodic_y: bool = True
     aperiodic_z: bool = True
     parallel: bool = False
+    sinc_thres: float = 3.0
 
     def __post_init__(self):
         print("generating stencil...")
@@ -80,6 +81,7 @@ class ConstrainedStencil:
             self.aperiodic_y,
             self.aperiodic_z,
             self.parallel,
+            sinc_thres=self.sinc_thres,
         )
 
         RUU, RVV, RWW, RUW = self.stencil.stencil.correlation_grids()
