@@ -13,10 +13,13 @@ mod utilities;
 pub use self::tensors::Tensors;
 pub use self::utilities::Utilities;
 
+use itertools::izip;
+use ndarray::linspace;
 use ndarray::parallel::prelude::*;
 use ndarray::prelude::*;
-use ndarray::Zip;
+use ndarray::{stack, Axis, Zip};
 use ndrustfft::Complex;
+use ninterp::prelude::*;
 use numpy::Complex32;
 use std::f32::consts::PI;
 use std::mem::drop;
@@ -34,6 +37,16 @@ pub struct StencilParams {
     aperiodic_x: bool,
     aperiodic_y: bool,
     aperiodic_z: bool,
+}
+
+impl StencilParams {
+    pub fn get_axes(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
+        (
+            linspace(0.0, self.Lx, self.Nx).collect(),
+            linspace(0.0, self.Ly, self.Ny).collect(),
+            linspace(0.0, self.Lz, self.Nz).collect(),
+        )
+    }
 }
 pub struct Stencil {
     p: StencilParams,
@@ -246,26 +259,86 @@ impl ConstrainedStencil {
     pub fn new(stencil: Stencil, constraints: Vec<Constraint>) -> Self {
         // Parallel?
         // where is threshold set?
-        
+        let p: &StencilParams = &stencil.p;
+        let n: usize = constraints.len();
         println!("hello!!!! YOU MADE IT!!!");
         println!("extracting correlation grid...");
         let (Ruu, Rvv, Rww, Ruw): (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) =
-        stencil.correlation_grids();
-        
-        println!("clip correlation data (currently {:?})...", Ruu.shape());
-        println!("clipped to {:?}.", 0);
-        
-        
+            stencil.correlation_grids();
+
+        println!("clip correlation data (current shape {:?})...", Ruu.shape());
+        let Ruu: Array3<f32> = Ruu.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        let Rvv: Array3<f32> = Rvv.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        let Rww: Array3<f32> = Rww.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        let Ruw: Array3<f32> = Ruw.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        println!("clipped to {:?}.", Ruu.shape());
         println!("Calculating distance matrices...");
 
+        let x_dist =
+            Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.x)));
+        let y_dist =
+            Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.y)));
+        let z_dist =
+            Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.z)));
+        println!("x_dist {:?}.", x_dist);
         println!("building interpolator...");
-        
+
+        let (x, y, z) = p.get_axes();
+        let interp_uu = Interp3DOwned::new(
+            x.clone(),
+            y.clone(),
+            z.clone(),
+            Ruu,
+            strategy::Linear,
+            Extrapolate::Error,
+        )
+        .unwrap();
+        let interp_vv = Interp3DOwned::new(
+            x.clone(),
+            y.clone(),
+            z.clone(),
+            Rvv,
+            strategy::Linear,
+            Extrapolate::Error,
+        )
+        .unwrap();
+        let interp_ww = Interp3DOwned::new(
+            x.clone(),
+            y.clone(),
+            z.clone(),
+            Rww,
+            strategy::Linear,
+            Extrapolate::Error,
+        )
+        .unwrap();
+        let interp_uw =
+            Interp3DOwned::new(x, y, z, Ruw, strategy::Linear, Extrapolate::Error).unwrap();
+
         println!("Calculating correlation matrix...");
-        
+        // Add caching to each interpolator.
+        let mut UUcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        let mut VVcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        let mut WWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        let mut UWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        for (_x, _y, _z, u, v, w, uw) in izip!(
+            &x_dist,
+            &y_dist,
+            &z_dist,
+            &mut UUcorr,
+            &mut VVcorr,
+            &mut WWcorr,
+            &mut UWcorr
+        ) {
+            *u = interp_uu.interpolate(&[*_x, *_y, *_z]).unwrap();
+            *v = interp_vv.interpolate(&[*_x, *_y, *_z]).unwrap();
+            *w = interp_ww.interpolate(&[*_x, *_y, *_z]).unwrap();
+            *uw = interp_uw.interpolate(&[*_x, *_y, *_z]).unwrap();
+        }
+        println!("UUcorr {:?}.", UUcorr);
+
         println!("Applying hard threshold (print threshold) and converting to sparse matrix...");
         println!("factorizing...");
         println!("Done!");
-
 
         ConstrainedStencil {
             stencil: stencil,

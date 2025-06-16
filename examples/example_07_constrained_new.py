@@ -8,7 +8,7 @@ params = {}
 Lx = 1000
 Nx = 300
 N_periods = 3
-N_constraints = 100
+N_constraints = 18000
 
 
 def random_walk(n_steps, std_dev, seed=None):
@@ -51,4 +51,4 @@ if __name__ == "__main__":
         sinc_thres=12,
     )
     
-    print(stencil)
+    # print(stencil)
