@@ -34,12 +34,15 @@ class Stencil:
         self.stencil = mannrs.RustStencil(
             self.L,
             self.gamma,
-            self.Lx * 2 if self.aperiodic_x else self.Lx,
-            self.Ly * 2 if self.aperiodic_y else self.Ly,
-            self.Lz * 2 if self.aperiodic_z else self.Lz,
-            self.Nx * 2 if self.aperiodic_x else self.Nx,
-            self.Ny * 2 if self.aperiodic_y else self.Ny,
-            self.Nz * 2 if self.aperiodic_z else self.Nz,
+            self.Lx,
+            self.Ly,
+            self.Lz,
+            self.Nx,
+            self.Ny,
+            self.Nz,
+            self.aperiodic_x,
+            self.aperiodic_y,
+            self.aperiodic_z,
             self.parallel,
             self.sinc_thres,
         )
@@ -71,6 +74,7 @@ class Stencil:
         else:
             raise ValueError
 
+        # to do
         return (
             U[: self.Nx, : self.Ny, : self.Nz],
             V[: self.Nx, : self.Ny, : self.Nz],

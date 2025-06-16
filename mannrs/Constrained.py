@@ -58,8 +58,8 @@ class Constraint:
     y: float
     z: float
     u: Optional[float] = None
-    v: Optional[float] = None
-    w: Optional[float] = None
+    # v: Optional[float] = None
+    # w: Optional[float] = None
 
 
 @dataclass

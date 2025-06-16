@@ -157,14 +157,15 @@ mod tests {
             .zip(ans_Kz.iter())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));
     }
-    // #[test]
-    // fn test_stencilate() {
-    //     let gamma = 1.0;
-    //     let ae: f32 = 1.0;
-    //     let L: f32 = 1.0;
-    //     let (Nx, Ny, Nz) = (8192, 32, 32);
-    //     let (Lx, Ly, Lz) = (10.0, 10.0, 10.0);
-    //     stencilate(ae, L, gamma, Lx, Ly, Lz, Nx, Ny, Nz);
-    //     assert!(false);
-    // }
+
+    #[test]
+    fn test_distance_matrix() {
+        let x: Array1<f32> = array![1.0, 2.0, 4.0];
+
+        let expected: Array2<f32> = array![[0.0, 1.0, 3.0], [1.0, 0.0, 2.0], [3.0, 2.0, 0.0]];
+        let ans: Array2<f32> = Utilities::distance_matrix(&x);
+        ans.into_iter()
+            .zip(expected.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+    }
 }

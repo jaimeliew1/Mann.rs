@@ -313,4 +313,19 @@ pub mod Utilities {
 
         rolled
     }
+
+    /// Computes the pairwise distance matrix from a 1D array of x locations.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - A 1D ndarray of f64 values representing x coordinates.
+    ///
+    /// # Returns
+    ///
+    /// * A 2D ndarray where the element at (i, j) is the absolute distance between x[i] and x[j].
+    pub fn distance_matrix(x: &Array1<f32>) -> Array2<f32> {
+        let x_row: ArrayView2<f32> = x.view().insert_axis(ndarray::Axis(0)); // shape (1, n)
+        let x_col: ArrayView2<f32> = x.view().insert_axis(ndarray::Axis(1)); // shape (n, 1)
+        (&x_row - &x_col).mapv(f32::abs)
+    }
 }
