@@ -6,7 +6,7 @@ use ndarray_rand::{
 };
 use ndrustfft::{
     ndfft, ndfft_par, ndfft_r2c, ndfft_r2c_par, ndifft, ndifft_par, ndifft_r2c, ndifft_r2c_par,
-    Complex, FftHandler,
+    Complex, FftHandler, R2cFftHandler,
 };
 use num::traits::Float;
 use numpy::Complex32;
@@ -39,7 +39,7 @@ pub mod Utilities {
         let (nx, ny, nz) = input.dim();
         let mut vhat: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
 
-        let mut handler: FftHandler<f32> = FftHandler::new(nz);
+        let mut handler: R2cFftHandler<f32> = R2cFftHandler::new(nz);
         ndfft_r2c_par(input, &mut vhat, &mut handler, 2);
 
         let mut vhat2: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
@@ -67,7 +67,7 @@ pub mod Utilities {
         ndifft_par(&mut vhat2, &mut vhat, &mut handler, 1);
 
         let mut output: Array3<f32> = Array3::zeros((nx, ny, nz));
-        let mut handler: FftHandler<f32> = FftHandler::new(nz);
+        let mut handler: R2cFftHandler<f32> = R2cFftHandler::new(nz);
         ndifft_r2c_par(&mut vhat, &mut output, &mut handler, 2);
 
         output
@@ -76,7 +76,7 @@ pub mod Utilities {
         let (nx, ny, nz) = input.dim();
         let mut vhat: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
 
-        let mut handler: FftHandler<f32> = FftHandler::new(nz);
+        let mut handler: R2cFftHandler<f32> = R2cFftHandler::new(nz);
         ndfft_r2c(input, &mut vhat, &mut handler, 2);
 
         let mut vhat2: Array3<Complex32> = Array3::zeros((nx, ny, nz / 2 + 1));
@@ -104,7 +104,7 @@ pub mod Utilities {
         ndifft(&mut vhat2, &mut vhat, &mut handler, 1);
 
         let mut output: Array3<f32> = Array3::zeros((nx, ny, nz));
-        let mut handler: FftHandler<f32> = FftHandler::new(nz);
+        let mut handler: R2cFftHandler<f32> = R2cFftHandler::new(nz);
         ndifft_r2c(&mut vhat, &mut output, &mut handler, 2);
 
         output

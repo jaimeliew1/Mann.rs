@@ -2,8 +2,8 @@ use crate::{
     correlation_grids, forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
     partial_forgetful_turbulate_par, partial_turbulate, partial_turbulate_par,
     spectral_component_grids, stencilate_sinc, stencilate_sinc_par, turbulate, turbulate_par,
-    Tensors::*, Utilities, Utilities::fftfreq, Utilities::freq_components,
-    Utilities::rfftfreq, Utilities::roll_1d_array, Utilities::roll_3d_array,
+    Tensors::*, Utilities, Utilities::fftfreq, Utilities::freq_components, Utilities::rfftfreq,
+    Utilities::roll_1d_array, Utilities::roll_3d_array,
 };
 use ndarray::parallel::prelude::*;
 use ndarray::{s, Array1, Array3, Array5};
@@ -12,6 +12,7 @@ use numpy::{
     ToPyArray,
 };
 use pyo3::prelude::*;
+use pyo3::types::PyTuple;
 use std::sync::{Arc, Mutex};
 
 #[pyclass]
@@ -65,7 +66,7 @@ impl RustStencil {
                 Nx: Nx,
                 Ny: Ny,
                 Nz: Nz,
-                _stencil: stencilate_sinc_par(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz,sinc_thres),
+                _stencil: stencilate_sinc_par(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz, sinc_thres),
             },
             false => RustStencil {
                 L: L,
@@ -76,7 +77,7 @@ impl RustStencil {
                 Nx: Nx,
                 Ny: Ny,
                 Nz: Nz,
-                _stencil: stencilate_sinc(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz,sinc_thres),
+                _stencil: stencilate_sinc(L, gamma, Lx, Ly, Lz, Nx, Ny, Nz, sinc_thres),
             },
         }
     }
@@ -87,7 +88,12 @@ impl RustStencil {
         ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
+    ) -> (
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+    ) {
+        // (Bound<'py, PyArray3<f32>>, Bound<'py, PyArray3<f32>>, Bound<'py, PyArray3<f32>>)
         let (U_f, V_f, W_f): (Array3<f32>, Array3<f32>, Array3<f32>) = match parallel {
             true => turbulate_par(
                 &self._stencil.view(),
@@ -112,6 +118,7 @@ impl RustStencil {
                 self.Lz,
             ),
         };
+
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
 
@@ -122,9 +129,9 @@ impl RustStencil {
         seed: u64,
         parallel: bool,
     ) -> (
-        &'py PyArray3<Complex32>,
-        &'py PyArray3<Complex32>,
-        &'py PyArray3<Complex32>,
+        Bound<'py, PyArray3<Complex32>>,
+        Bound<'py, PyArray3<Complex32>>,
+        Bound<'py, PyArray3<Complex32>>,
     ) {
         let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
             match parallel {
@@ -158,10 +165,10 @@ impl RustStencil {
         &self,
         py: Python<'py>,
     ) -> (
-        &'py PyArray3<f32>,
-        &'py PyArray3<f32>,
-        &'py PyArray3<f32>,
-        &'py PyArray3<f32>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
     ) {
         let (Ruu_f, Rvv_f, Rww_f, Ruw_f) = spectral_component_grids(&self._stencil.view());
 
@@ -177,10 +184,10 @@ impl RustStencil {
         &self,
         py: Python<'py>,
     ) -> (
-        &'py PyArray3<f32>,
-        &'py PyArray3<f32>,
-        &'py PyArray3<f32>,
-        &'py PyArray3<f32>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
     ) {
         let (Ruu, Rvv, Rww, Ruw) = correlation_grids(&self._stencil.view());
 
@@ -201,7 +208,11 @@ impl RustStencil {
         CConstW: PyReadonlyArray1<'py, f32>,
         thres: f32,
         parallel: bool,
-    ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
+    ) -> (
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+    ) {
         let CConstU: Array1<Complex32> = CConstU.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
         let CConstV: Array1<Complex32> = CConstV.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
         let CConstW: Array1<Complex32> = CConstW.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
@@ -309,7 +320,6 @@ impl RustStencil {
             let mut _V_f = Array3::<Complex32>::zeros((nx, ny, nz));
             let mut _W_f = Array3::<Complex32>::zeros((nx, ny, nz));
 
-            
             for (i, c) in constraints.as_array().outer_iter().enumerate() {
                 let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
                     * (&kx_mesh * c[0] + &ky_mesh * c[1] + &kz_mesh * c[2]))
@@ -387,8 +397,6 @@ impl RustStencil {
         let V: Array3<f32> = Utilities::irfft3d(&mut V_f_exp);
         let W: Array3<f32> = Utilities::irfft3d(&mut W_f_exp);
 
-
-
         (U.to_pyarray(py), V.to_pyarray(py), W.to_pyarray(py))
     }
 }
@@ -426,13 +434,37 @@ impl RustForgetfulStencil {
         ae: f32,
         seed: u64,
         parallel: bool,
-    ) -> (&'py PyArray3<f32>, &'py PyArray3<f32>, &'py PyArray3<f32>) {
+    ) -> (
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+    ) {
         let (U_f, V_f, W_f): (Array3<f32>, Array3<f32>, Array3<f32>) = match parallel {
             true => forgetful_turbulate_par(
-                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,self.sinc_thres,
+                ae,
+                seed,
+                self.Nx,
+                self.Ny,
+                self.Nz,
+                self.Lx,
+                self.Ly,
+                self.Lz,
+                self.L,
+                self.gamma,
+                self.sinc_thres,
             ),
             false => forgetful_turbulate(
-                ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L, self.gamma,self.sinc_thres,
+                ae,
+                seed,
+                self.Nx,
+                self.Ny,
+                self.Nz,
+                self.Lx,
+                self.Ly,
+                self.Lz,
+                self.L,
+                self.gamma,
+                self.sinc_thres,
             ),
         };
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
@@ -445,19 +477,37 @@ impl RustForgetfulStencil {
         seed: u64,
         parallel: bool,
     ) -> (
-        &'py PyArray3<Complex32>,
-        &'py PyArray3<Complex32>,
-        &'py PyArray3<Complex32>,
+        Bound<'py, PyArray3<Complex32>>,
+        Bound<'py, PyArray3<Complex32>>,
+        Bound<'py, PyArray3<Complex32>>,
     ) {
         let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
             match parallel {
                 true => partial_forgetful_turbulate_par(
-                    ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L,
-                    self.gamma,self.sinc_thres,
+                    ae,
+                    seed,
+                    self.Nx,
+                    self.Ny,
+                    self.Nz,
+                    self.Lx,
+                    self.Ly,
+                    self.Lz,
+                    self.L,
+                    self.gamma,
+                    self.sinc_thres,
                 ),
                 false => partial_forgetful_turbulate(
-                    ae, seed, self.Nx, self.Ny, self.Nz, self.Lx, self.Ly, self.Lz, self.L,
-                    self.gamma,self.sinc_thres,
+                    ae,
+                    seed,
+                    self.Nx,
+                    self.Ny,
+                    self.Nz,
+                    self.Lx,
+                    self.Ly,
+                    self.Lz,
+                    self.L,
+                    self.gamma,
+                    self.sinc_thres,
                 ),
             };
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
@@ -465,11 +515,11 @@ impl RustForgetfulStencil {
 }
 
 #[pymodule]
-pub fn mannrs(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
-    module.add_class::<RustStencil>()?;
-    module.add_class::<RustForgetfulStencil>()?;
+pub fn mannrs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<RustStencil>()?;
+    m.add_class::<RustForgetfulStencil>()?;
 
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn freq_components_f32<'py>(
         py: Python<'py>,
         Nx: usize,
@@ -478,61 +528,65 @@ pub fn mannrs(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
         Lx: f32,
         Ly: f32,
         Lz: f32,
-    ) -> (&'py PyArray1<f32>, &'py PyArray1<f32>, &'py PyArray1<f32>) {
+    ) -> (
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+    ) {
         let (f_x, f_y, f_z): (Array1<f32>, Array1<f32>, Array1<f32>) =
             freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
         (f_x.to_pyarray(py), f_y.to_pyarray(py), f_z.to_pyarray(py))
     }
 
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn isotropic_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
         ae: f32,
         L: f32,
-    ) -> &'py PyArray2<f32> {
+    ) -> Bound<'py, PyArray2<f32>> {
         Isotropic::from_params(ae, L)
             .tensor(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
 
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn isotropic_sqrt_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
         ae: f32,
         L: f32,
-    ) -> &'py PyArray2<f32> {
+    ) -> Bound<'py, PyArray2<f32>> {
         Isotropic::from_params(ae, L)
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn sheared_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
         ae: f32,
         L: f32,
         gamma: f32,
-    ) -> &'py PyArray2<f32> {
+    ) -> Bound<'py, PyArray2<f32>> {
         Sheared::from_params(ae, L, gamma)
             .tensor(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
 
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn sheared_sqrt_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
         ae: f32,
         L: f32,
         gamma: f32,
-    ) -> &'py PyArray2<f32> {
+    ) -> Bound<'py, PyArray2<f32>> {
         Sheared::from_params(ae, L, gamma)
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn sheared_sinc_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
@@ -543,12 +597,12 @@ pub fn mannrs(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
         Lz: f32,
         tol: f32,
         min_depth: u64,
-    ) -> &'py PyArray2<f32> {
+    ) -> Bound<'py, PyArray2<f32>> {
         ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
             .tensor(&K.as_slice().unwrap())
             .to_pyarray(py)
     }
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn sheared_sinc_info_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
@@ -559,14 +613,14 @@ pub fn mannrs(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
         Lz: f32,
         tol: f32,
         min_depth: u64,
-    ) -> (&'py PyArray2<f32>, u64) {
+    ) -> (Bound<'py, PyArray2<f32>>, u64) {
         let (out, neval) = ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
             .tensor_info(&K.as_slice().unwrap());
 
         (out.to_pyarray(py), neval)
     }
 
-    #[pyfn(module)]
+    #[pyfn(m)]
     fn sheared_sinc_sqrt_f32<'py>(
         py: Python<'py>,
         K: PyReadonlyArray1<'py, f32>,
@@ -577,7 +631,7 @@ pub fn mannrs(_py: Python<'_>, module: &PyModule) -> PyResult<()> {
         Lz: f32,
         tol: f32,
         min_depth: u64,
-    ) -> &'py PyArray2<f32> {
+    ) -> Bound<'py, PyArray2<f32>> {
         ShearedSinc::from_params(ae, L, gamma, Ly, Lz, tol, min_depth)
             .decomp(&K.as_slice().unwrap())
             .to_pyarray(py)
