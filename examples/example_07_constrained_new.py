@@ -5,7 +5,7 @@ from rich import print
 from mannrs.Constrained2 import ConstrainedStencil, Constraint
 
 params = {}
-Lx = 1000
+Lx = 100000
 Nx = 300
 N_periods = 3
 N_constraints = 18000
@@ -42,12 +42,13 @@ if __name__ == "__main__":
         Ny=32,
         Nz=32,
         Lx=Lx,
-        Ly=200,
-        Lz=200,
+        Ly=1000,
+        Lz=1000,
         aperiodic_x=False,
         aperiodic_y=True,
         aperiodic_z=True,
         parallel=True,
+        corr_thres=0.0001,
         sinc_thres=12,
     )
     

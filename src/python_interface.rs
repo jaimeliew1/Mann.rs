@@ -161,14 +161,37 @@ impl RustStencil {
         Bound<'py, PyArray3<f32>>,
         Bound<'py, PyArray3<f32>>,
     ) {
+        let Nx: usize = if self.stencil.p.aperiodic_x {
+            2 * self.stencil.p.Nx
+        } else {
+            self.stencil.p.Nx
+        };
+        let Ny: usize = if self.stencil.p.aperiodic_y {
+            2 * self.stencil.p.Ny
+        } else {
+            self.stencil.p.Ny
+        };
+        let Nz: usize = if self.stencil.p.aperiodic_z {
+            2 * self.stencil.p.Nz
+        } else {
+            self.stencil.p.Nz
+        };
 
-        let Nx: usize = if self.stencil.p.aperiodic_x { 2 * self.stencil.p.Nx } else { self.stencil.p.Nx };
-        let Ny: usize = if self.stencil.p.aperiodic_y { 2 * self.stencil.p.Ny } else { self.stencil.p.Ny };
-        let Nz: usize = if self.stencil.p.aperiodic_z { 2 * self.stencil.p.Nz } else { self.stencil.p.Nz };
-
-        let Lx: f32 = if self.stencil.p.aperiodic_x { 2.0 * self.stencil.p.Lx } else { self.stencil.p.Lx };
-        let Ly: f32 = if self.stencil.p.aperiodic_y { 2.0 * self.stencil.p.Ly } else { self.stencil.p.Ly };
-        let Lz: f32 = if self.stencil.p.aperiodic_z { 2.0 * self.stencil.p.Lz } else { self.stencil.p.Lz };
+        let Lx: f32 = if self.stencil.p.aperiodic_x {
+            2.0 * self.stencil.p.Lx
+        } else {
+            self.stencil.p.Lx
+        };
+        let Ly: f32 = if self.stencil.p.aperiodic_y {
+            2.0 * self.stencil.p.Ly
+        } else {
+            self.stencil.p.Ly
+        };
+        let Lz: f32 = if self.stencil.p.aperiodic_z {
+            2.0 * self.stencil.p.Lz
+        } else {
+            self.stencil.p.Lz
+        };
 
         let CConstU: Array1<Complex32> = CConstU.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
         let CConstV: Array1<Complex32> = CConstV.to_owned_array().mapv(|x| Complex32::new(x, 0.0));
@@ -178,35 +201,26 @@ impl RustStencil {
         // Calculate normalized spectral component grids
         println!("hello1");
         let (Ruu_f, Rvv_f, Rww_f, Ruw_f) = self.stencil.spectral_component_grids();
-        
+
         // Calculate linear wave number arrays and record sizes.
-        let kxs: Array1<f32> = fftfreq(
-            Nx,
-            Lx / (Nx as f32),
-        );
-        let kys: Array1<f32> = fftfreq(
-            Ny,
-            Ly / (Ny as f32),
-        );
-        let kzs: Array1<f32> = rfftfreq(
-            Nz,
-            Lz / (Nz as f32),
-        );
+        let kxs: Array1<f32> = fftfreq(Nx, Lx / (Nx as f32));
+        let kys: Array1<f32> = fftfreq(Ny, Ly / (Ny as f32));
+        let kzs: Array1<f32> = rfftfreq(Nz, Lz / (Nz as f32));
         let (Nx_exp, Ny_exp, Nz_exp): (usize, usize, usize) = (kxs.len(), kys.len(), kzs.len());
         println!("hello2");
-        
+
         // Roll arrays
         let (xroll, yroll, zroll): (isize, isize, isize) =
             ((&Nx_exp / 2) as isize, (&Ny_exp / 2) as isize, 0);
-            
-            let kxs: Array1<f32> = roll_1d_array(&kxs, &xroll);
-            let kys: Array1<f32> = roll_1d_array(&kys, &yroll);
-            let kzs: Array1<f32> = roll_1d_array(&kzs, &zroll);
-            
-            let Ruu_f: Array3<f32> = roll_3d_array(&Ruu_f, &xroll, &yroll, &zroll);
-            let Rvv_f: Array3<f32> = roll_3d_array(&Rvv_f, &xroll, &yroll, &zroll);
-            let Rww_f: Array3<f32> = roll_3d_array(&Rww_f, &xroll, &yroll, &zroll);
-            let Ruw_f: Array3<f32> = roll_3d_array(&Ruw_f, &xroll, &yroll, &zroll);
+
+        let kxs: Array1<f32> = roll_1d_array(&kxs, &xroll);
+        let kys: Array1<f32> = roll_1d_array(&kys, &yroll);
+        let kzs: Array1<f32> = roll_1d_array(&kzs, &zroll);
+
+        let Ruu_f: Array3<f32> = roll_3d_array(&Ruu_f, &xroll, &yroll, &zroll);
+        let Rvv_f: Array3<f32> = roll_3d_array(&Rvv_f, &xroll, &yroll, &zroll);
+        let Rww_f: Array3<f32> = roll_3d_array(&Rww_f, &xroll, &yroll, &zroll);
+        let Ruw_f: Array3<f32> = roll_3d_array(&Ruw_f, &xroll, &yroll, &zroll);
         println!("hello2");
         // Reduce arrays TODO
         let (Ruu_f_max, Rvv_f_max, Rww_f_max): (f32, f32, f32) = (
@@ -389,6 +403,7 @@ impl RustConstrainedStencil {
         aperiodic_z: bool,
         constraints: PyReadonlyArray2<'py, f32>,
         parallel: bool,
+        corr_thres: f32,
         sinc_thres: f32,
     ) -> Self {
         let mut constraints_new: Vec<Constraint> = Vec::new();
@@ -418,8 +433,24 @@ impl RustConstrainedStencil {
                 sinc_thres,
                 parallel,
             )
-            .constrain(constraints_new),
+            .constrain(constraints_new, corr_thres),
         }
+    }
+
+    fn turbulate<'py>(
+        &self,
+        py: Python<'py>,
+        ae: f32,
+        seed: u64,
+        impulse_thres: f32,
+        parallel: bool,
+    ) -> (
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+        Bound<'py, PyArray3<f32>>,
+    ) {
+        let (U, V, W) = self.stencil.turbulate(ae, seed, impulse_thres, parallel);
+        (U.to_pyarray(py), V.to_pyarray(py), W.to_pyarray(py))
     }
 }
 

@@ -28,13 +28,6 @@ class RustStencil:
     def correlation_grids(
         self,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: ...
-    # def constrain(
-    #     self,
-    #     constraints: np.ndarray,
-    #     CConstU: np.ndarray,
-    #     CConstV: np.ndarray,
-    #     CConstW: np.ndarray,
-    # ) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 class RustConstrainedStencil:
     def __init__(
@@ -51,9 +44,13 @@ class RustConstrainedStencil:
         aperiodic_y: bool,
         aperiodic_z: bool,
         constraints: np.ndarray,
+        corr_thres: float,
         sinc_thres: float,
         parallel: bool,
     ): ...
+    def turbulate(
+        self, ae: float, seed: int, impulse_thres: float, parallel: bool
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 def distance_matrix(x: np.ndarray) -> np.ndarray: ...
 

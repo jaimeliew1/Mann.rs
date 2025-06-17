@@ -131,6 +131,8 @@ class ConstrainedStencil:
         WWcorr, cww = threshold_and_sparse(WWcorr, 0.0001)
         UWcorr, cuw = threshold_and_sparse(UWcorr, 0.0001)
         print("zero count:", cuu, cvv, cww, cuw)
+        sparsity =  cuu / (len(self.constraints) ** 2)
+        print(f"sparsity: {100 * sparsity}%")
         # self.Auw = sparse.block_array(
         #     [
         #         [UUcorr, UWcorr],

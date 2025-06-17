@@ -10,10 +10,21 @@ mod tensors;
 mod tests;
 mod utilities;
 
+use crate::Utilities::roll_1d_array;
+use crate::Utilities::roll_3d_array;
+
 pub use self::tensors::Tensors;
 pub use self::utilities::Utilities;
 
+use faer::col::generic::Col;
+use faer::col::Own;
+use faer::prelude::*;
+use faer::sparse::linalg::solvers::Llt;
+use faer::sparse::*;
+use faer::Side;
+use faer_ext::{IntoFaer, IntoNdarray};
 use itertools::izip;
+use itertools::Itertools;
 use ndarray::linspace;
 use ndarray::parallel::prelude::*;
 use ndarray::prelude::*;
@@ -21,10 +32,13 @@ use ndarray::{stack, Axis, Zip};
 use ndrustfft::Complex;
 use ninterp::prelude::*;
 use numpy::Complex32;
+use rayon::prelude::*;
 use std::f32::consts::PI;
+use std::iter::FromIterator;
 use std::mem::drop;
+use std::sync::Arc;
+use std::sync::Mutex;
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
-
 pub struct StencilParams {
     L: f32,
     gamma: f32,
@@ -46,6 +60,25 @@ impl StencilParams {
             linspace(0.0, self.Ly, self.Ny).collect(),
             linspace(0.0, self.Lz, self.Nz).collect(),
         )
+    }
+
+    pub fn linear_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
+        // Calculate linear wave number arrays.
+        let kxs: Array1<f32> = Utilities::fftfreq(self.Nx, self.Lx / ((self.Nx) as f32));
+        let kys: Array1<f32> = Utilities::fftfreq(self.Ny, self.Ly / ((self.Ny) as f32));
+        let kzs: Array1<f32> = Utilities::rfftfreq(self.Nz, self.Lz / ((self.Nz) as f32));
+        (kxs, kys, kzs)
+    }
+
+    pub fn angular_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
+        // Calculate linear wave number arrays.
+        let kxs: Array1<f32> =
+            Utilities::fftfreq(self.Nx, self.Lx / (2.0 * PI * (self.Nx) as f32));
+        let kys: Array1<f32> =
+            Utilities::fftfreq(self.Ny, self.Ly / (2.0 * PI * (self.Ny) as f32));
+        let kzs: Array1<f32> =
+            Utilities::rfftfreq(self.Nz, self.Lz / (2.0 * PI * (self.Nz) as f32));
+        (kxs, kys, kzs)
     }
 }
 pub struct Stencil {
@@ -235,8 +268,8 @@ impl Stencil {
         )
     }
 
-    pub fn constrain(self, constraints: Vec<Constraint>) -> ConstrainedStencil {
-        ConstrainedStencil::new(self, constraints)
+    pub fn constrain(self, constraints: Vec<Constraint>, corr_thres: f32) -> ConstrainedStencil {
+        ConstrainedStencil::new(self, constraints, corr_thres)
     }
 }
 
@@ -252,15 +285,14 @@ pub struct Constraint {
 pub struct ConstrainedStencil {
     stencil: Stencil,
     constraints: Vec<Constraint>,
-    A_factorized: Array2<f32>,
+    A_factorized: Llt<usize, f32>,
 }
 
 impl ConstrainedStencil {
-    pub fn new(stencil: Stencil, constraints: Vec<Constraint>) -> Self {
+    pub fn new(stencil: Stencil, constraints: Vec<Constraint>, corr_thres: f32) -> Self {
         // Parallel?
         // where is threshold set?
         let p: &StencilParams = &stencil.p;
-        let n: usize = constraints.len();
         println!("hello!!!! YOU MADE IT!!!");
         println!("extracting correlation grid...");
         let (Ruu, Rvv, Rww, Ruw): (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) =
@@ -268,9 +300,9 @@ impl ConstrainedStencil {
 
         println!("clip correlation data (current shape {:?})...", Ruu.shape());
         let Ruu: Array3<f32> = Ruu.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        let Rvv: Array3<f32> = Rvv.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        let Rww: Array3<f32> = Rww.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        let Ruw: Array3<f32> = Ruw.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        // let Rvv: Array3<f32> = Rvv.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        // let Rww: Array3<f32> = Rww.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        // let Ruw: Array3<f32> = Ruw.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
         println!("clipped to {:?}.", Ruu.shape());
         println!("Calculating distance matrices...");
 
@@ -293,58 +325,322 @@ impl ConstrainedStencil {
             Extrapolate::Error,
         )
         .unwrap();
-        let interp_vv = Interp3DOwned::new(
-            x.clone(),
-            y.clone(),
-            z.clone(),
-            Rvv,
-            strategy::Linear,
-            Extrapolate::Error,
-        )
-        .unwrap();
-        let interp_ww = Interp3DOwned::new(
-            x.clone(),
-            y.clone(),
-            z.clone(),
-            Rww,
-            strategy::Linear,
-            Extrapolate::Error,
-        )
-        .unwrap();
-        let interp_uw =
-            Interp3DOwned::new(x, y, z, Ruw, strategy::Linear, Extrapolate::Error).unwrap();
+        // let interp_vv = Interp3DOwned::new(
+        //     x.clone(),
+        //     y.clone(),
+        //     z.clone(),
+        //     Rvv,
+        //     strategy::Linear,
+        //     Extrapolate::Error,
+        // )
+        // .unwrap();
+        // let interp_ww = Interp3DOwned::new(
+        //     x.clone(),
+        //     y.clone(),
+        //     z.clone(),
+        //     Rww,
+        //     strategy::Linear,
+        //     Extrapolate::Error,
+        // )
+        // .unwrap();
+        // let interp_uw =
+        //     Interp3DOwned::new(x, y, z, Ruw, strategy::Linear, Extrapolate::Error).unwrap();
 
         println!("Calculating correlation matrix...");
         // Add caching to each interpolator.
         let mut UUcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
-        let mut VVcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
-        let mut WWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
-        let mut UWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
-        for (_x, _y, _z, u, v, w, uw) in izip!(
+        // let mut VVcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        // let mut WWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        // let mut UWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
+        for (_x, _y, _z, u) in izip!(
             &x_dist,
             &y_dist,
             &z_dist,
             &mut UUcorr,
-            &mut VVcorr,
-            &mut WWcorr,
-            &mut UWcorr
+            // &mut VVcorr,
+            // &mut WWcorr,
+            // &mut UWcorr
         ) {
             *u = interp_uu.interpolate(&[*_x, *_y, *_z]).unwrap();
-            *v = interp_vv.interpolate(&[*_x, *_y, *_z]).unwrap();
-            *w = interp_ww.interpolate(&[*_x, *_y, *_z]).unwrap();
-            *uw = interp_uw.interpolate(&[*_x, *_y, *_z]).unwrap();
+            // *v = interp_vv.interpolate(&[*_x, *_y, *_z]).unwrap();
+            // *w = interp_ww.interpolate(&[*_x, *_y, *_z]).unwrap();
+            // *uw = interp_uw.interpolate(&[*_x, *_y, *_z]).unwrap();
         }
         println!("UUcorr {:?}.", UUcorr);
 
-        println!("Applying hard threshold (print threshold) and converting to sparse matrix...");
+        println!(
+            "Applying hard threshold {} and converting to sparse matrix...",
+            corr_thres
+        );
+        // let mut triplets: Vec<Triplet<usize, usize, f32>> = Vec::new();
+        // for ((i, j), v) in UUcorr.indexed_iter() {
+        //     if *v > corr_thres {
+        //         triplets.push(Triplet::new(i, j, *v))
+        //     }
+        // }
+        let triplets: Vec<Triplet<usize, usize, f32>> = UUcorr
+            .indexed_iter()
+            // .par_bridge()
+            .filter(|(_, &v)| v > corr_thres)
+            .map(|((i, j), v)| Triplet::new(i, j, *v))
+            .collect();
+
+        println!("n_triplets: {:?}", triplets.len());
+        println!(
+            "sparsity: {:?}%",
+            100.0 - (triplets.len() as f64) / (constraints.len() as f64).powi(2) * 100.0
+        );
+        println!("creating sparse matrix...");
+        let A = SparseColMat::<usize, f32>::try_new_from_triplets(
+            constraints.len(),
+            constraints.len(),
+            &triplets,
+        )
+        .unwrap();
+
         println!("factorizing...");
+        let llt = A.sp_cholesky(Side::Lower).unwrap();
         println!("Done!");
 
         ConstrainedStencil {
             stencil: stencil,
             constraints: constraints,
-            A_factorized: Array2::zeros([2, 3]),
+            A_factorized: llt,
         }
+    }
+
+    pub fn turbulate(
+        &self,
+        ae: f32,
+        seed: u64,
+        impulse_thres: f32,
+        parallel: bool,
+    ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
+        println!(
+            "Generating unconstrained box with seed={}, ae={}.",
+            seed, ae
+        );
+        let (U, V, W) = self.stencil.turbulate(ae, seed, parallel);
+
+        let (x, y, z) = self.stencil.p.get_axes();
+        println!("making U interpolator...");
+        let interp_uu = Interp3DOwned::new(
+            x.clone(),
+            y.clone(),
+            z.clone(),
+            U.clone(),
+            strategy::Linear,
+            Extrapolate::Error,
+        )
+        .unwrap();
+        println!("interpolating contemporaneous wind speeds...");
+
+        let U_contemp: Vec<f32> = self
+            .constraints
+            .iter()
+            .map(|c| interp_uu.interpolate(&[c.x, c.y, c.z]).unwrap())
+            .collect();
+        println!("constructing b matrix...");
+        let b = faer::col::Col::from_iter(
+            U_contemp
+                .iter()
+                .zip(&self.constraints)
+                .map(|(&u, c)| c.u - u),
+        );
+
+        // println!("b: {:?}", b);
+
+        println!("solving linear system...");
+        let Uweight: Vec<f32> = self.A_factorized.solve(&b).iter().map(|&x| x).collect();
+
+        println!("performing spectral superposition...");
+
+        // Calculate normalized spectral component grids
+        let (Ruu_f, Rvv_f, Rww_f, Ruw_f) = self.stencil.spectral_component_grids();
+
+        // Calculate linear wave number arrays and record sizes.
+        let (kxs, kys, kzs) = self.stencil.p.linear_wave_numbers();
+        let (Nx_exp, Ny_exp, Nz_exp): (usize, usize, usize) = (kxs.len(), kys.len(), kzs.len());
+        // clip spectra
+        let Ruu_f: Array3<f32> = Ruu_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
+        let Rvv_f: Array3<f32> = Rvv_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
+        let Rww_f: Array3<f32> = Rww_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
+        let Ruw_f: Array3<f32> = Ruw_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
+        
+        println!("hello2");
+
+        // Roll arrays
+        let (xroll, yroll, zroll): (isize, isize, isize) =
+            ((&Nx_exp / 2) as isize, (&Ny_exp / 2) as isize, 0);
+
+        let kxs: Array1<f32> = roll_1d_array(&kxs, &xroll);
+        let kys: Array1<f32> = roll_1d_array(&kys, &yroll);
+        let kzs: Array1<f32> = roll_1d_array(&kzs, &zroll);
+
+        let Ruu_f: Array3<f32> = roll_3d_array(&Ruu_f, &xroll, &yroll, &zroll);
+        let Rvv_f: Array3<f32> = roll_3d_array(&Rvv_f, &xroll, &yroll, &zroll);
+        let Rww_f: Array3<f32> = roll_3d_array(&Rww_f, &xroll, &yroll, &zroll);
+        let Ruw_f: Array3<f32> = roll_3d_array(&Ruw_f, &xroll, &yroll, &zroll);
+        println!("hello2");
+        // Reduce arrays TODO
+        let (Ruu_f_max, Rvv_f_max, Rww_f_max): (f32, f32, f32) = (
+            Ruu_f.iter().copied().fold(f32::NAN, f32::max),
+            Rvv_f.iter().copied().fold(f32::NAN, f32::max),
+            Rww_f.iter().copied().fold(f32::NAN, f32::max),
+        );
+        let ixmin: usize = Ruu_f
+            .slice(s![.., yroll as usize, zroll as usize])
+            .iter()
+            .position(|&x| x >= impulse_thres * Ruu_f_max)
+            .unwrap_or(0);
+        let ixmax: usize = Ruu_f
+            .slice(s![.., yroll as usize, zroll as usize])
+            .iter()
+            .rposition(|&x| x >= impulse_thres * Ruu_f_max)
+            .unwrap_or(Nx_exp);
+
+        let iymin: usize = Rvv_f
+            .slice(s![xroll as usize, .., zroll as usize])
+            .iter()
+            .position(|&x| x >= impulse_thres * Rvv_f_max)
+            .unwrap_or(0);
+        let iymax: usize = Rvv_f
+            .slice(s![xroll as usize, .., zroll as usize])
+            .iter()
+            .rposition(|&x| x >= impulse_thres * Rvv_f_max)
+            .unwrap_or(Ny_exp);
+        let izmax: usize = Rww_f
+            .slice(s![xroll as usize, yroll as usize, ..])
+            .iter()
+            .rposition(|&x| x >= impulse_thres * Rww_f_max)
+            .unwrap_or(Nz_exp);
+
+        println!("ixmin: {ixmin}, ixmax {ixmax}");
+        println!("iymin: {iymin}, iymax {iymax}");
+        println!("izmax: {izmax}");
+
+        let Ruu_f: Array3<f32> = Ruu_f
+            .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .to_owned();
+        let Rvv_f: Array3<f32> = Rvv_f
+            .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .to_owned();
+        let Rww_f: Array3<f32> = Rww_f
+            .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .to_owned();
+        let Ruw_f: Array3<f32> = Ruw_f
+            .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .to_owned();
+        println!("hello3");
+        let Ruu_f: Array3<Complex32> = Ruu_f.mapv(|x| Complex32::new(x, 0.0));
+        let Rvv_f: Array3<Complex32> = Rvv_f.mapv(|x| Complex32::new(x, 0.0));
+        let Rww_f: Array3<Complex32> = Rww_f.mapv(|x| Complex32::new(x, 0.0));
+        let Ruw_f: Array3<Complex32> = Ruw_f.mapv(|x| Complex32::new(x, 0.0));
+        println!("hello4");
+        let kxs: Array1<f32> = kxs.slice(s![ixmin..ixmax]).to_owned();
+        let kys: Array1<f32> = kys.slice(s![iymin..iymax]).to_owned();
+        let kzs: Array1<f32> = kzs.slice(s![0..izmax]).to_owned();
+        println!("hello5");
+        // Calculate 3d meshgrid of linear wave numbers.
+        let (nx, ny, nz) = (kxs.len(), kys.len(), kzs.len());
+        let mut kx_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let mut ky_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        let mut kz_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
+        for i in 0..nx {
+            for j in 0..ny {
+                for k in 0..nz {
+                    kx_mesh[[i, j, k]] = Complex32::new(kxs[i], 0.0);
+                    ky_mesh[[i, j, k]] = Complex32::new(kys[j], 0.0);
+                    kz_mesh[[i, j, k]] = Complex32::new(kzs[k], 0.0);
+                }
+            }
+        }
+        println!("hello6");
+        let U_f: Array3<Complex32>;
+        let V_f: Array3<Complex32>;
+        let W_f: Array3<Complex32>;
+        if !parallel {
+            let mut _U_f = Array3::<Complex32>::zeros((nx, ny, nz));
+            let mut _V_f = Array3::<Complex32>::zeros((nx, ny, nz));
+            let mut _W_f = Array3::<Complex32>::zeros((nx, ny, nz));
+
+            for (i, c) in self.constraints.iter().enumerate() {
+                let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
+                    * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
+                    .mapv(|x| x.exp());
+
+                _U_f += &(&phase * (&Ruu_f * Uweight[i]));
+                // _U_f += &(&phase * (&Ruu_f * Uweight[i] + &Ruw_f * CConstW[i]));
+                // _V_f += &(&phase * (&Rvv_f * CConstV[i]));
+                // _W_f += &(&phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]));
+            }
+            U_f = _U_f;
+            V_f = _V_f;
+            W_f = _W_f;
+        } else {
+            let _U_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
+            let _V_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
+            let _W_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
+            self.constraints.par_iter().enumerate().for_each(|(i, c)| {
+                let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
+                    * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
+                    .mapv(|x| x.exp());
+
+                {
+                    let mut _U_f = _U_f.lock().unwrap();
+                    let mut _V_f = _V_f.lock().unwrap();
+                    let mut _W_f = _W_f.lock().unwrap();
+                    let to_add = Complex32::new(1.0, 0.0) * &phase * (&Ruu_f * Uweight[i]);
+                    _U_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
+                    // let to_add = Complex32::new(1.0, 0.0)
+                    //     * &phase
+                    //     * (&Ruu_f * CConstU[i] + &Ruw_f * CConstW[i]);
+                    // _U_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
+
+                    // let to_add = Complex32::new(1.0, 0.0) * &phase * (&Rvv_f * CConstV[i]);
+                    // _V_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
+
+                    // let to_add = Complex32::new(1.0, 0.0)
+                    //     * &phase
+                    //     * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]);
+                    // _W_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
+                }
+            });
+            U_f = _U_f.lock().unwrap().to_owned();
+            V_f = _V_f.lock().unwrap().to_owned();
+            W_f = _W_f.lock().unwrap().to_owned();
+        }
+        println!("hello7");
+        // Expand arrays
+        let mut U_f_exp: Array3<Complex32> = Array3::zeros((Nx_exp, Ny_exp, Nz_exp));
+        let mut V_f_exp: Array3<Complex32> = Array3::zeros((Nx_exp, Ny_exp, Nz_exp));
+        let mut W_f_exp: Array3<Complex32> = Array3::zeros((Nx_exp, Ny_exp, Nz_exp));
+
+        U_f_exp
+            .slice_mut(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .assign(&U_f);
+        V_f_exp
+            .slice_mut(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .assign(&V_f);
+        W_f_exp
+            .slice_mut(s![ixmin..ixmax, iymin..iymax, 0..izmax])
+            .assign(&W_f);
+
+        // Unroll arrays
+        let mut U_f_exp: Array3<Complex32> =
+            roll_3d_array(&U_f_exp, &(-xroll), &(-yroll), &(-zroll));
+        let mut V_f_exp: Array3<Complex32> =
+            roll_3d_array(&V_f_exp, &(-xroll), &(-yroll), &(-zroll));
+        let mut W_f_exp: Array3<Complex32> =
+            roll_3d_array(&W_f_exp, &(-xroll), &(-yroll), &(-zroll));
+
+        println!("inverse 3d fourier transform...");
+        let U: Array3<f32> = Utilities::irfft3d(&mut U_f_exp) + U;
+        let V: Array3<f32> = Utilities::irfft3d(&mut V_f_exp) + V;
+        let W: Array3<f32> = Utilities::irfft3d(&mut W_f_exp) + W;
+
+        println!("Done!");
+        (U, V, W)
     }
 }
 pub fn stencilate_par(p: StencilParams) -> Array5<f32> {

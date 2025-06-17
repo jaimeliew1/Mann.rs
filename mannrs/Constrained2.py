@@ -5,7 +5,6 @@ import numpy as np
 from mannrs.mannrs import RustConstrainedStencil
 
 
-
 @dataclass
 class Constraint:
     x: float
@@ -32,11 +31,14 @@ class ConstrainedStencil:
     aperiodic_y: bool = True
     aperiodic_z: bool = True
     parallel: bool = True
+    corr_thres: float = 0.0001
     sinc_thres: float = 3.0
 
     def __post_init__(self):
         print("generating stencil...")
-        _constraints = np.array([[x.x, x.y, x.z, x.u] for x in self.constraints], dtype=np.float32)
+        _constraints = np.array(
+            [[x.x, x.y, x.z, x.u] for x in self.constraints], dtype=np.float32
+        )
         self.stencil = RustConstrainedStencil(
             self.L,
             self.gamma,
@@ -51,8 +53,11 @@ class ConstrainedStencil:
             self.aperiodic_z,
             _constraints,
             self.parallel,
+            corr_thres=self.corr_thres,
             sinc_thres=self.sinc_thres,
         )
 
-    def turbulence(self, ae: float, seed: int, parallel: bool=True) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        raise NotImplementedError
+    def turbulence(
+        self, ae: float, seed: int, impulse_thres: float, parallel: bool = True
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return self.stencil.turbulate(float(ae), int(seed), impulse_thres, parallel)
