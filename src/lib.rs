@@ -39,6 +39,44 @@ use std::mem::drop;
 use std::sync::Arc;
 use std::sync::Mutex;
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
+
+use ndarray::{ArrayBase, Data, Dimension};
+use std::fmt::Debug;
+
+pub fn analyze_array<A, S, D>(array: &ArrayBase<S, D>)
+where
+    A: Copy + Into<f32> + Debug,
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    println!("Shape: {:?}", array.shape());
+
+    let mut sum = 0.0;
+    let mut sum_sq = 0.0;
+    let mut count = 0;
+
+    for &val in array.iter() {
+        let x: f32 = val.into();
+        sum += x;
+        sum_sq += x * x;
+        count += 1;
+    }
+
+    if count == 0 {
+        println!("Array is empty.");
+        return;
+    }
+
+    let mean = sum / count as f32;
+    let variance = (sum_sq / count as f32) - (mean * mean);
+    let std_dev = variance.sqrt();
+
+    println!("Mean: {}", mean);
+    println!("Standard Deviation: {}", std_dev);
+    println!("Sum (Checksum): {}", sum);
+    println!("");
+}
+
 pub struct StencilParams {
     L: f32,
     gamma: f32,
@@ -72,10 +110,8 @@ impl StencilParams {
 
     pub fn angular_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         // Calculate linear wave number arrays.
-        let kxs: Array1<f32> =
-            Utilities::fftfreq(self.Nx, self.Lx / (2.0 * PI * (self.Nx) as f32));
-        let kys: Array1<f32> =
-            Utilities::fftfreq(self.Ny, self.Ly / (2.0 * PI * (self.Ny) as f32));
+        let kxs: Array1<f32> = Utilities::fftfreq(self.Nx, self.Lx / (2.0 * PI * (self.Nx) as f32));
+        let kys: Array1<f32> = Utilities::fftfreq(self.Ny, self.Ly / (2.0 * PI * (self.Ny) as f32));
         let kzs: Array1<f32> =
             Utilities::rfftfreq(self.Nz, self.Lz / (2.0 * PI * (self.Nz) as f32));
         (kxs, kys, kzs)
@@ -300,6 +336,8 @@ impl ConstrainedStencil {
 
         println!("clip correlation data (current shape {:?})...", Ruu.shape());
         let Ruu: Array3<f32> = Ruu.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
+        println!("RUU");
+        analyze_array(&Ruu);
         // let Rvv: Array3<f32> = Rvv.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
         // let Rww: Array3<f32> = Rww.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
         // let Ruw: Array3<f32> = Ruw.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
@@ -312,8 +350,8 @@ impl ConstrainedStencil {
             Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.y)));
         let z_dist =
             Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.z)));
-        println!("x_dist {:?}.", x_dist);
-        println!("building interpolator...");
+        analyze_array(&x_dist);
+            println!("building interpolator...");
 
         let (x, y, z) = p.get_axes();
         let interp_uu = Interp3DOwned::new(
@@ -366,8 +404,8 @@ impl ConstrainedStencil {
             // *w = interp_ww.interpolate(&[*_x, *_y, *_z]).unwrap();
             // *uw = interp_uw.interpolate(&[*_x, *_y, *_z]).unwrap();
         }
-        println!("UUcorr {:?}.", UUcorr);
-
+        // println!("UUcorr {:?}.", UUcorr);
+        analyze_array(&UUcorr);
         println!(
             "Applying hard threshold {} and converting to sparse matrix...",
             corr_thres
@@ -397,6 +435,7 @@ impl ConstrainedStencil {
             &triplets,
         )
         .unwrap();
+
 
         println!("factorizing...");
         let llt = A.sp_cholesky(Side::Lower).unwrap();
@@ -447,12 +486,17 @@ impl ConstrainedStencil {
                 .zip(&self.constraints)
                 .map(|(&u, c)| c.u - u),
         );
-
+        println!("U_contemp");
+        analyze_array(&Array1::from_iter(U_contemp.into_iter()));
+        println!("b");
+        analyze_array(&Array1::from_iter(b.iter().map(|x| *x)));
         // println!("b: {:?}", b);
-
+        
         println!("solving linear system...");
         let Uweight: Vec<f32> = self.A_factorized.solve(&b).iter().map(|&x| x).collect();
-
+        
+        println!("Uweight");
+        analyze_array(&Array1::from_iter(Uweight.iter().map(|x| *x)));
         println!("performing spectral superposition...");
 
         // Calculate normalized spectral component grids
@@ -461,14 +505,16 @@ impl ConstrainedStencil {
         // Calculate linear wave number arrays and record sizes.
         let (kxs, kys, kzs) = self.stencil.p.linear_wave_numbers();
         let (Nx_exp, Ny_exp, Nz_exp): (usize, usize, usize) = (kxs.len(), kys.len(), kzs.len());
+        // TODO I think linear_wave_numbers should be for the true stencil size (including aperiodic doubling)
+        // By doing so, the clipping just below is not necessary.
         // clip spectra
         let Ruu_f: Array3<f32> = Ruu_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
         let Rvv_f: Array3<f32> = Rvv_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
         let Rww_f: Array3<f32> = Rww_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
         let Ruw_f: Array3<f32> = Ruw_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
-        
-        println!("hello2");
 
+        println!("Ruu_f");
+        analyze_array(&Ruu_f);
         // Roll arrays
         let (xroll, yroll, zroll): (isize, isize, isize) =
             ((&Nx_exp / 2) as isize, (&Ny_exp / 2) as isize, 0);

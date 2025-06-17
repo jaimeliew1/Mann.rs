@@ -12,6 +12,14 @@ from scipy.sparse.linalg import spsolve
 from tqdm import tqdm
 
 
+def analyze_array(array: np.ndarray):
+    print(f"shape: {array.shape}")
+    print(f"mean: {array.mean()}")
+    print(f"std: {array.std()}")
+    print(f"sum: {array.sum()}")
+    print()
+
+
 def threshold_and_sparse(matrix, threshold):
     # Count the number of values less than the threshold
     count_below_threshold = np.sum(matrix < threshold)
@@ -106,11 +114,14 @@ class ConstrainedStencil:
         RVV = RVV[: self.Nx, : self.Ny, : self.Nz]
         RWW = RWW[: self.Nx, : self.Ny, : self.Nz]
 
+        print("RUU")
+        analyze_array(RUU)
+
         self.Rall_func = FastNearestNeighbor3DEquidistantInputMultiOutputInterpolator(
             [RUU, RVV, RWW, RUW],
-            self.Lx / self.Nx,
-            self.Ly / self.Ny,
-            self.Lz / self.Nz,
+            self.Lx / (self.Nx - 1),
+            self.Ly / (self.Ny - 1),
+            self.Lz / (self.Nz - 1),
         )
 
         Nc = len(self.constraints)
@@ -124,14 +135,20 @@ class ConstrainedStencil:
             [[p.z] for p in self.constraints], [[p.z] for p in self.constraints]
         )
 
+        print("xdist")
+        analyze_array(xdist)
+
         UUcorr, VVcorr, WWcorr, UWcorr = self.Rall_func(xdist, ydist, zdist)
+
+        print("UUCorr")
+        analyze_array(UUcorr)
 
         UUcorr, cuu = threshold_and_sparse(UUcorr, 0.0001)
         VVcorr, cvv = threshold_and_sparse(VVcorr, 0.0001)
         WWcorr, cww = threshold_and_sparse(WWcorr, 0.0001)
         UWcorr, cuw = threshold_and_sparse(UWcorr, 0.0001)
         print("zero count:", cuu, cvv, cww, cuw)
-        sparsity =  cuu / (len(self.constraints) ** 2)
+        sparsity = cuu / (len(self.constraints) ** 2)
         print(f"sparsity: {100 * sparsity}%")
         # self.Auw = sparse.block_array(
         #     [
@@ -175,6 +192,8 @@ class ConstrainedStencil:
         # V_constraint = np.array([p.v for p in self.constraints])
         U_constraint = np.array([p.u for p in self.constraints])
 
+        print("U_contemp")
+        analyze_array(U_contemp)
         # Set absent constraints to contemporaneous value
         # UW_constraint = np.array([x or y for x, y in zip(UW_constraint, UW_contemp)])
         # V_constraint = np.array([x or y for x, y in zip(V_constraint, V_contemp)])
@@ -194,7 +213,12 @@ class ConstrainedStencil:
 
         print("Solving linear system for U...")
         bu = np.array((U_constraint - U_contemp), dtype=np.float32)
+
+        print("bu")
+        analyze_array(bu)
         CConstU = spsolve(self.Au, bu)
+        print("CConstU")
+        analyze_array(CConstU)
         CConstV = np.zeros_like(CConstU)
         CConstW = np.zeros_like(CConstU)
         # print("Solving linear systemfor V...")
