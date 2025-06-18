@@ -12,6 +12,7 @@ mod utilities;
 
 use faer::prelude::*;
 use faer::sparse::linalg::solvers::Llt;
+use faer::sparse::linalg::solvers::Lu;
 use faer::sparse::*;
 use faer::Side;
 
@@ -315,7 +316,7 @@ pub struct Constraint {
 pub struct ConstrainedStencil {
     stencil: Stencil,
     constraints: Vec<Constraint>,
-    A_factorized: Llt<usize, f32>,
+    A_factorized: Lu<usize, f32>,
 }
 
 impl ConstrainedStencil {
@@ -408,7 +409,7 @@ impl ConstrainedStencil {
         .unwrap();
 
         println!("factorizing...");
-        let llt = A.sp_cholesky(Side::Lower).unwrap();
+        let llt = A.sp_lu().unwrap();
         println!("Done!");
 
         ConstrainedStencil {
