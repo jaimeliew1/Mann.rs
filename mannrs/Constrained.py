@@ -57,3 +57,6 @@ class ConstrainedStencil:
         self, ae: float, seed: int, impulse_thres: float = 0.0005, parallel: bool = True
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         return self.stencil.turbulate(float(ae), int(seed), impulse_thres, parallel)
+
+    def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return self.stencil.get_axes()

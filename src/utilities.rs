@@ -14,7 +14,6 @@ use std::fmt::Debug;
 
 /// Various mathematical function implementations.
 pub mod Utilities {
-    use std::sync::{Arc, Mutex};
 
     use ndarray::Data;
     use rayon::prelude::*;
@@ -543,23 +542,19 @@ pub mod Utilities {
             }
         }
 
-        // let V_f: Array3<Complex32>;
-        // let W_f: Array3<Complex32>;
-
-        let mut U_f = Array3::<Complex32>::zeros((nx, ny, nz));
-        // let mut _V_f = Array3::<Complex32>::zeros((nx, ny, nz));
-        // let mut _W_f = Array3::<Complex32>::zeros((nx, ny, nz));
-
         let two_pi_i = Complex32::new(0.0, -2.0 * std::f32::consts::PI);
-        for (c, w) in constraints.iter().zip(weights) {
-            let phase: Array3<Complex32> =
-                (two_pi_i * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z)).mapv(|x| x.exp());
 
-            U_f += &(&phase * (&impulse_u.impulse * w));
-            // _U_f += &(&phase * (&Ruu_f * Uweight[i] + &Ruw_f * CConstW[i]));
-            // _V_f += &(&phase * (&Rvv_f * CConstV[i]));
-            // _W_f += &(&phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]));
-        }
+        let U_f = constraints.iter().zip(weights).fold(
+            Array3::<Complex32>::zeros((nx, ny, nz)),
+            |mut acc, (c, w)| {
+                let phase: Array3<Complex32> = (two_pi_i
+                    * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
+                    .mapv(|x| x.exp());
+
+                acc += &(&phase * (&impulse_u.impulse * w));
+                acc
+            },
+        );
 
         CompressedSpectralImpulseResponse {
             impulse: U_f,
@@ -592,38 +587,30 @@ pub mod Utilities {
             }
         }
 
-        let _U_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
-        let _V_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
-        let _W_f = Arc::new(Mutex::new(Array3::<Complex32>::zeros((nx, ny, nz))));
-        constraints.par_iter().zip(weights).for_each(|(c, w)| {
-            let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
-                * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
-                .mapv(|x| x.exp());
+        let two_pi_i = Complex32::new(0.0, -2.0 * std::f32::consts::PI);
 
-            {
-                let mut _U_f = _U_f.lock().unwrap();
-                let mut _V_f = _V_f.lock().unwrap();
-                let mut _W_f = _W_f.lock().unwrap();
-                let to_add = Complex32::new(1.0, 0.0) * &phase * (&impulse_u.impulse * *w);
-                _U_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
-                // let to_add = Complex32::new(1.0, 0.0)
-                //     * &phase
-                //     * (&Ruu_f * CConstU[i] + &Ruw_f * CConstW[i]);
-                // _U_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
+        let U_f = constraints
+            .iter()
+            .zip(weights)
+            .par_bridge()
+            .fold(
+                || Array3::<Complex32>::zeros((nx, ny, nz)),
+                |mut acc, (c, w)| {
+                    let phase: Array3<Complex32> = (two_pi_i
+                        * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
+                        .mapv(|x| x.exp());
 
-                // let to_add = Complex32::new(1.0, 0.0) * &phase * (&Rvv_f * CConstV[i]);
-                // _V_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
-
-                // let to_add = Complex32::new(1.0, 0.0)
-                //     * &phase
-                //     * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]);
-                // _W_f.scaled_add(Complex32::new(1.0, 0.0), &to_add);
-            }
-        });
-        let U_f = _U_f.lock().unwrap().to_owned();
-        // V_f = _V_f.lock().unwrap().to_owned();
-        // W_f = _W_f.lock().unwrap().to_owned();
-
+                    acc += &(&phase * (&impulse_u.impulse * *w));
+                    acc
+                },
+            )
+            .reduce(
+                || Array3::<Complex32>::zeros((nx, ny, nz)),
+                |mut acc, v| {
+                    acc += &v;
+                    acc
+                },
+            );
         CompressedSpectralImpulseResponse {
             impulse: U_f,
             kx: impulse_u.kx,
