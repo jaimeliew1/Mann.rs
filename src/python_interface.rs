@@ -209,6 +209,18 @@ impl RustConstrainedStencil {
         let (U, V, W) = self.stencil.turbulate(ae, seed, impulse_thres, parallel);
         (U.to_pyarray(py), V.to_pyarray(py), W.to_pyarray(py))
     }
+
+    fn get_axes<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+    ) {
+        let (x, y, z) = self.stencil.stencil.p.get_axes();
+        (x.to_pyarray(py), y.to_pyarray(py), z.to_pyarray(py))
+    }
 }
 
 #[pymethods]
