@@ -19,3 +19,6 @@ def test_mannrs():
     stencil = mannrs.Stencil(**params, parallel=False)
 
     U, V, W = stencil.turbulence(ae, seed)
+
+
+

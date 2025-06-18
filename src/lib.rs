@@ -10,71 +10,30 @@ mod tensors;
 mod tests;
 mod utilities;
 
-use crate::Utilities::roll_1d_array;
-use crate::Utilities::roll_3d_array;
-use crate::Utilities::spectral_superposition_par;
-use crate::Utilities::spectral_superposition_ser;
-use crate::Utilities::CompressedSpectralImpulseResponse;
-
-pub use self::tensors::Tensors;
-pub use self::utilities::Utilities;
-
 use faer::prelude::*;
 use faer::sparse::linalg::solvers::Llt;
 use faer::sparse::*;
 use faer::Side;
 
-use itertools::izip;
-use ndarray::linspace;
-use ndarray::parallel::prelude::*;
-use ndarray::prelude::*;
-use ndarray::Zip;
-use ndrustfft::Complex;
-use ninterp::prelude::*;
-use numpy::Complex32;
+use itertools::{izip};
 use std::f32::consts::PI;
 use std::iter::FromIterator;
 use std::mem::drop;
-use std::sync::Arc;
-use std::sync::Mutex;
+
+use ndarray::parallel::prelude::*;
+use ndarray::prelude::*;
+use ndarray::{linspace, Zip};
+use ndrustfft::Complex;
+use ninterp::prelude::*;
+use numpy::Complex32;
+
+pub use self::tensors::Tensors;
+pub use self::utilities::Utilities;
+use crate::Utilities::{
+    spectral_superposition_par, spectral_superposition_ser, CompressedSpectralImpulseResponse,
+};
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
 
-use ndarray::{ArrayBase, Data, Dimension};
-use std::fmt::Debug;
-
-pub fn analyze_array<A, S, D>(array: &ArrayBase<S, D>)
-where
-    A: Copy + Into<f32> + Debug,
-    S: Data<Elem = A>,
-    D: Dimension,
-{
-    println!("Shape: {:?}", array.shape());
-
-    let mut sum = 0.0;
-    let mut sum_sq = 0.0;
-    let mut count = 0;
-
-    for &val in array.iter() {
-        let x: f32 = val.into();
-        sum += x;
-        sum_sq += x * x;
-        count += 1;
-    }
-
-    if count == 0 {
-        println!("Array is empty.");
-        return;
-    }
-
-    let mean = sum / count as f32;
-    let variance = (sum_sq / count as f32) - (mean * mean);
-    let std_dev = variance.sqrt();
-
-    println!("Mean: {}", mean);
-    println!("Standard Deviation: {}", std_dev);
-    println!("Sum (Checksum): {}", sum);
-    println!("");
-}
 
 pub struct StencilParams {
     L: f32,
@@ -351,8 +310,6 @@ pub struct Constraint {
     y: f32,
     z: f32,
     u: f32,
-    // v: f32,
-    // w: f32,
 }
 
 pub struct ConstrainedStencil {
@@ -366,15 +323,13 @@ impl ConstrainedStencil {
         // Parallel?
         // where is threshold set?
         let p: &StencilParams = &stencil.p;
-        println!("hello!!!! YOU MADE IT!!!");
         println!("extracting correlation grid...");
-        let (Ruu, Rvv, Rww, Ruw): (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) =
+        let (Ruu, _Rvv, _Rww, _Ruw): (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) =
             stencil.correlation_grids();
 
         println!("clip correlation data (current shape {:?})...", Ruu.shape());
         let Ruu: Array3<f32> = Ruu.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        println!("RUU");
-        analyze_array(&Ruu);
+
         // let Rvv: Array3<f32> = Rvv.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
         // let Rww: Array3<f32> = Rww.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
         // let Ruw: Array3<f32> = Ruw.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
@@ -387,7 +342,7 @@ impl ConstrainedStencil {
             Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.y)));
         let z_dist =
             Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.z)));
-        analyze_array(&x_dist);
+
         println!("building interpolator...");
 
         let (x, y, z) = p.get_axes();
@@ -400,26 +355,6 @@ impl ConstrainedStencil {
             Extrapolate::Error,
         )
         .unwrap();
-        // let interp_vv = Interp3DOwned::new(
-        //     x.clone(),
-        //     y.clone(),
-        //     z.clone(),
-        //     Rvv,
-        //     strategy::Linear,
-        //     Extrapolate::Error,
-        // )
-        // .unwrap();
-        // let interp_ww = Interp3DOwned::new(
-        //     x.clone(),
-        //     y.clone(),
-        //     z.clone(),
-        //     Rww,
-        //     strategy::Linear,
-        //     Extrapolate::Error,
-        // )
-        // .unwrap();
-        // let interp_uw =
-        //     Interp3DOwned::new(x, y, z, Ruw, strategy::Linear, Extrapolate::Error).unwrap();
 
         println!("Calculating correlation matrix...");
         // Add caching to each interpolator.
@@ -441,8 +376,6 @@ impl ConstrainedStencil {
             // *w = interp_ww.interpolate(&[*_x, *_y, *_z]).unwrap();
             // *uw = interp_uw.interpolate(&[*_x, *_y, *_z]).unwrap();
         }
-        // println!("UUcorr {:?}.", UUcorr);
-        analyze_array(&UUcorr);
         println!(
             "Applying hard threshold {} and converting to sparse matrix...",
             corr_thres
@@ -459,6 +392,7 @@ impl ConstrainedStencil {
             .filter(|(_, &v)| v > corr_thres)
             .map(|((i, j), v)| Triplet::new(i, j, *v))
             .collect();
+        drop(UUcorr);
 
         println!("n_triplets: {:?}", triplets.len());
         println!(
@@ -522,175 +456,23 @@ impl ConstrainedStencil {
                 .zip(&self.constraints)
                 .map(|(&u, c)| c.u - u),
         );
-        println!("U_contemp");
-        analyze_array(&Array1::from_iter(U_contemp.into_iter()));
-        println!("b");
-        analyze_array(&Array1::from_iter(b.iter().map(|x| *x)));
         // println!("b: {:?}", b);
 
         println!("solving linear system...");
         let Uweight: Vec<f32> = self.A_factorized.solve(&b).iter().map(|&x| x).collect();
 
-        println!("Uweight");
-        analyze_array(&Array1::from_iter(Uweight.iter().map(|x| *x)));
         println!("performing spectral superposition...");
 
         // Calculate normalized spectral component grids
-        let (Ruu_f, Rvv_f, Rww_f, Ruw_f) = self.stencil.spectral_component_grids();
+        let (Ruu_f, _Rvv_f, _Rww_f, _Ruw_f) = self.stencil.spectral_component_grids();
 
         // Calculate linear wave number arrays and record sizes.
         let (kxs, kys, kzs) = self.stencil.p.aperiodic_linear_wave_numbers();
-        // let (Nx_exp, Ny_exp, Nz_exp): (usize, usize, usize) = (kxs.len(), kys.len(), kzs.len());
-        // // // TODO I think linear_wave_numbers should be for the true stencil size (including aperiodic doubling)
-        // // // By doing so, the clipping just below is not necessary.
-        // // // clip spectra
-        // // let Ruu_f: Array3<f32> = Ruu_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
-        // // let Rvv_f: Array3<f32> = Rvv_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
-        // // let Rww_f: Array3<f32> = Rww_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
-        // // let Ruw_f: Array3<f32> = Ruw_f.slice(s![..Nx_exp, ..Ny_exp, ..Nz_exp]).to_owned();
-
-        // println!("Ruu_f");
-        // analyze_array(&Ruu_f);
-        // // Roll arrays
-        // let (xroll, yroll, zroll): (isize, isize, isize) =
-        //     ((&Nx_exp / 2) as isize, (&Ny_exp / 2) as isize, 0);
-
-        // let kxs: Array1<f32> = roll_1d_array(&kxs, &xroll);
-        // let kys: Array1<f32> = roll_1d_array(&kys, &yroll);
-        // let kzs: Array1<f32> = roll_1d_array(&kzs, &zroll);
-
-        // let Ruu_f: Array3<f32> = roll_3d_array(&Ruu_f, &xroll, &yroll, &zroll);
-        // let Rvv_f: Array3<f32> = roll_3d_array(&Rvv_f, &xroll, &yroll, &zroll);
-        // let Rww_f: Array3<f32> = roll_3d_array(&Rww_f, &xroll, &yroll, &zroll);
-        // let Ruw_f: Array3<f32> = roll_3d_array(&Ruw_f, &xroll, &yroll, &zroll);
-        // println!("hello2");
-        // // Reduce arrays TODO
-        // let (Ruu_f_max, Rvv_f_max, Rww_f_max): (f32, f32, f32) = (
-        //     Ruu_f.iter().copied().fold(f32::NAN, f32::max),
-        //     Rvv_f.iter().copied().fold(f32::NAN, f32::max),
-        //     Rww_f.iter().copied().fold(f32::NAN, f32::max),
-        // );
-        // let ixmin: usize = Ruu_f
-        //     .slice(s![.., yroll as usize, zroll as usize])
-        //     .iter()
-        //     .position(|&x| x >= impulse_thres * Ruu_f_max)
-        //     .unwrap_or(0);
-        // let ixmax: usize = Ruu_f
-        //     .slice(s![.., yroll as usize, zroll as usize])
-        //     .iter()
-        //     .rposition(|&x| x >= impulse_thres * Ruu_f_max)
-        //     .unwrap_or(Nx_exp);
-
-        // let iymin: usize = Rvv_f
-        //     .slice(s![xroll as usize, .., zroll as usize])
-        //     .iter()
-        //     .position(|&x| x >= impulse_thres * Rvv_f_max)
-        //     .unwrap_or(0);
-        // let iymax: usize = Rvv_f
-        //     .slice(s![xroll as usize, .., zroll as usize])
-        //     .iter()
-        //     .rposition(|&x| x >= impulse_thres * Rvv_f_max)
-        //     .unwrap_or(Ny_exp);
-        // let izmax: usize = Rww_f
-        //     .slice(s![xroll as usize, yroll as usize, ..])
-        //     .iter()
-        //     .rposition(|&x| x >= impulse_thres * Rww_f_max)
-        //     .unwrap_or(Nz_exp);
-
-        // println!("ixmin: {ixmin}, ixmax {ixmax}");
-        // println!("iymin: {iymin}, iymax {iymax}");
-        // println!("izmax: {izmax}");
-
-        // let Ruu_f: Array3<f32> = Ruu_f
-        //     .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .to_owned();
-        // let Rvv_f: Array3<f32> = Rvv_f
-        //     .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .to_owned();
-        // let Rww_f: Array3<f32> = Rww_f
-        //     .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .to_owned();
-        // let Ruw_f: Array3<f32> = Ruw_f
-        //     .slice(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .to_owned();
-        // println!("hello3");
-        // let Ruu_f: Array3<Complex32> = Ruu_f.mapv(|x| Complex32::new(x, 0.0));
-        // let Rvv_f: Array3<Complex32> = Rvv_f.mapv(|x| Complex32::new(x, 0.0));
-        // let Rww_f: Array3<Complex32> = Rww_f.mapv(|x| Complex32::new(x, 0.0));
-        // let Ruw_f: Array3<Complex32> = Ruw_f.mapv(|x| Complex32::new(x, 0.0));
-        // println!("hello4");
-        // let kxs: Array1<f32> = kxs.slice(s![ixmin..ixmax]).to_owned();
-        // let kys: Array1<f32> = kys.slice(s![iymin..iymax]).to_owned();
-        // let kzs: Array1<f32> = kzs.slice(s![0..izmax]).to_owned();
-        // println!("hello5");
-        // // Calculate 3d meshgrid of linear wave numbers.
-        // let (nx, ny, nz) = (kxs.len(), kys.len(), kzs.len());
-        // let mut kx_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
-        // let mut ky_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
-        // let mut kz_mesh: Array3<Complex32> = Array3::zeros((nx, ny, nz));
-        // for i in 0..nx {
-        //     for j in 0..ny {
-        //         for k in 0..nz {
-        //             kx_mesh[[i, j, k]] = Complex32::new(kxs[i], 0.0);
-        //             ky_mesh[[i, j, k]] = Complex32::new(kys[j], 0.0);
-        //             kz_mesh[[i, j, k]] = Complex32::new(kzs[k], 0.0);
-        //         }
-        //     }
-        // }
-        // println!("hello6");
-        // let U_f: Array3<Complex32>;
-        // let V_f: Array3<Complex32>;
-        // let W_f: Array3<Complex32>;
-        // if !parallel {
-        //     let mut _U_f = Array3::<Complex32>::zeros((nx, ny, nz));
-        //     let mut _V_f = Array3::<Complex32>::zeros((nx, ny, nz));
-        //     let mut _W_f = Array3::<Complex32>::zeros((nx, ny, nz));
-
-        //     for (i, c) in self.constraints.iter().enumerate() {
-        //         let phase: Array3<Complex32> = (Complex32::new(0.0, -2.0 * std::f32::consts::PI)
-        //             * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
-        //             .mapv(|x| x.exp());
-
-        //         _U_f += &(&phase * (&Ruu_f * Uweight[i]));
-        //         // _U_f += &(&phase * (&Ruu_f * Uweight[i] + &Ruw_f * CConstW[i]));
-        //         // _V_f += &(&phase * (&Rvv_f * CConstV[i]));
-        //         // _W_f += &(&phase * (&Ruw_f * CConstU[i] + &Rww_f * CConstW[i]));
-        //     }
-        //     U_f = _U_f;
-        //     V_f = _V_f;
-        //     W_f = _W_f;
-        // } else {
-        //     
-        // }
-        // println!("hello7");
-        // // Expand arrays
-        // let mut U_f_exp: Array3<Complex32> = Array3::zeros((Nx_exp, Ny_exp, Nz_exp));
-        // let mut V_f_exp: Array3<Complex32> = Array3::zeros((Nx_exp, Ny_exp, Nz_exp));
-        // let mut W_f_exp: Array3<Complex32> = Array3::zeros((Nx_exp, Ny_exp, Nz_exp));
-
-        // U_f_exp
-        //     .slice_mut(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .assign(&U_f);
-        // V_f_exp
-        //     .slice_mut(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .assign(&V_f);
-        // W_f_exp
-        //     .slice_mut(s![ixmin..ixmax, iymin..iymax, 0..izmax])
-        //     .assign(&W_f);
-
-        // // Unroll arrays
-        // let mut U_f_exp: Array3<Complex32> =
-        //     roll_3d_array(&U_f_exp, &(-xroll), &(-yroll), &(-zroll));
-        // let mut V_f_exp: Array3<Complex32> =
-        //     roll_3d_array(&V_f_exp, &(-xroll), &(-yroll), &(-zroll));
-        // let mut W_f_exp: Array3<Complex32> =
-        //     roll_3d_array(&W_f_exp, &(-xroll), &(-yroll), &(-zroll));
 
         let impulse_u = Utilities::SpectralImpulseResponse::new(Ruu_f, kxs, kys, kzs);
         let compression_indices = impulse_u.get_compression_indices(impulse_thres);
         let compressed_impulse_u = impulse_u.compress(compression_indices);
 
-        println!("hello6");
         let U_f: CompressedSpectralImpulseResponse;
         if !parallel {
             println!("superimposing in serial");
@@ -698,13 +480,12 @@ impl ConstrainedStencil {
         } else {
             println!("superimposing in parallel");
             U_f = spectral_superposition_par(&self.constraints, compressed_impulse_u, &Uweight);
-        }        // let V_f: Array3<Complex32>;
-        // let W_f: Array3<Complex32>;
+        } // let V_f: Array3<Complex32>;
+          // let W_f: Array3<Complex32>;
 
         let mut U_f_exp: Array3<Complex32> = U_f.zero_pad_and_unroll_impulse();
-        let mut V_f_exp= Array3::<Complex32>::zeros(U_f_exp.dim());
-        let mut W_f_exp= Array3::<Complex32>::zeros(U_f_exp.dim());
-
+        let mut V_f_exp = Array3::<Complex32>::zeros(U_f_exp.dim());
+        let mut W_f_exp = Array3::<Complex32>::zeros(U_f_exp.dim());
 
         println!("inverse 3d fourier transform...");
         let output_slice = s![

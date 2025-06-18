@@ -8,15 +8,15 @@ use ndrustfft::{
     ndfft, ndfft_par, ndfft_r2c, ndfft_r2c_par, ndifft, ndifft_par, ndifft_r2c, ndifft_r2c_par,
     Complex, FftHandler, R2cFftHandler,
 };
-use num::traits::Float;
 use numpy::Complex32;
 use std::f32::consts::{PI, SQRT_2};
+use std::fmt::Debug;
 
 /// Various mathematical function implementations.
 pub mod Utilities {
     use std::sync::{Arc, Mutex};
 
-    use num::complex::ComplexFloat;
+    use ndarray::Data;
     use rayon::prelude::*;
 
     use crate::Constraint;
@@ -634,5 +634,39 @@ pub mod Utilities {
             zroll: impulse_u.zroll,
             indices: impulse_u.indices,
         }
+    }
+
+    pub fn analyze_array<A, S, D>(array: &ArrayBase<S, D>)
+    where
+        A: Copy + Into<f32> + Debug,
+        S: Data<Elem = A>,
+        D: Dimension,
+    {
+        println!("Shape: {:?}", array.shape());
+
+        let mut sum = 0.0;
+        let mut sum_sq = 0.0;
+        let mut count = 0;
+
+        for &val in array.iter() {
+            let x: f32 = val.into();
+            sum += x;
+            sum_sq += x * x;
+            count += 1;
+        }
+
+        if count == 0 {
+            println!("Array is empty.");
+            return;
+        }
+
+        let mean = sum / count as f32;
+        let variance = (sum_sq / count as f32) - (mean * mean);
+        let std_dev = variance.sqrt();
+
+        println!("Mean: {}", mean);
+        println!("Standard Deviation: {}", std_dev);
+        println!("Sum (Checksum): {}", sum);
+        println!("");
     }
 }

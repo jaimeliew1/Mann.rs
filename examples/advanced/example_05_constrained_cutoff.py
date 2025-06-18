@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mannrs import ConstrainedStencil, Constraint
+from mannrs import ConstrainedStencil, Constraint, Stencil
 
 params = {}
 Lx = 1000
@@ -17,9 +17,8 @@ if __name__ == "__main__":
     u_constraint = 10 * np.sin(x_constraint / 10)
     constraints = [Constraint(x, 60, 0, u) for x, u in zip(x_constraint, u_constraint)]
 
-    stencil = ConstrainedStencil(
-        constraints=constraints,
-        ae=0.2,
+    stencil = Stencil(
+        # constraints=constraints,
         L=30.0,
         gamma=3.2,
         Lx=Lx,
@@ -38,7 +37,7 @@ if __name__ == "__main__":
     kxs = np.fft.fftfreq(2 * Nx, Lx / Nx)
     kys = np.fft.fftfreq(2 * Ny, Ly / Ny)
     kzs = np.fft.rfftfreq(2 * Nz, Lz / Nz)
-    RUU_f, RVV_f, RWW_f, RUW_f = stencil.stencil.stencil.spectral_component_grids()
+    RUU_f, RVV_f, RWW_f, RUW_f = stencil.stencil.spectral_component_grids()
 
     xroll = len(kxs) // 2
     yroll = len(kys) // 2

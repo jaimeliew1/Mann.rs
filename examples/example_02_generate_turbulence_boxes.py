@@ -16,19 +16,19 @@ params = {
     "Nz": 32,
 }
 
-N = 10
+N = 1
 
 if __name__ == "__main__":
     print("Generating stencil...")
     for _ in trange(1, desc="stencil"):
-        stencil = mannrs.Stencil(**params, parallel=True)
+        stencil = mannrs.Stencil(**params, parallel=True, aperiodic_x=True, aperiodic_y=True, aperiodic_z=True)
 
     print(f"Generating {N} turbulence boxes to turb/...")
     for seed in trange(N, desc="turbulence"):
-        U, V, W = stencil.turbulence(ae, seed, domain="space")
+        U, V, W = stencil.turbulence(ae, seed, domain="space", parallel=True)
+        print(U.shape)
 
 
-
-        mannrs.save_box(f"turb/U_{seed}.bin", U)
-        mannrs.save_box(f"turb/V_{seed}.bin", V)
-        mannrs.save_box(f"turb/W_{seed}.bin", W)
+        # mannrs.save_box(f"turb/U_{seed}.bin", U)
+        # mannrs.save_box(f"turb/V_{seed}.bin", V)
+        # mannrs.save_box(f"turb/W_{seed}.bin", W)
