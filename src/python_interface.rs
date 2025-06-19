@@ -140,6 +140,30 @@ impl RustStencil {
             Ruw.to_pyarray(py),
         )
     }
+    fn spectral_impulses<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+    ) {
+        let (imp_uu, imp_vv, imp_ww, imp_uw) = &self.stencil.spectral_impulses();
+    
+        (
+            imp_uu.kx.to_pyarray(py),
+            imp_uu.ky.to_pyarray(py),
+            imp_uu.kz.to_pyarray(py),
+            imp_uu.impulse.to_pyarray(py),
+            imp_vv.impulse.to_pyarray(py),
+            imp_ww.impulse.to_pyarray(py),
+            imp_uw.impulse.to_pyarray(py),
+        )
+    }
 }
 
 #[pymethods]

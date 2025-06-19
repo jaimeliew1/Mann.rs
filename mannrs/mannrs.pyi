@@ -28,6 +28,17 @@ class RustStencil:
     def correlation_grids(
         self,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: ...
+    def spectral_impulses(
+        self,
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]: ...
 
 class RustConstrainedStencil:
     def __init__(

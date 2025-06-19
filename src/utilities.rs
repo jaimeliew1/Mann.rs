@@ -125,6 +125,42 @@ pub mod Utilities {
         df * f
     }
 
+    pub fn cholesky(A: Array2<f32>) -> Array2<f32> {
+        let mut l: Array2<f32> = Array2::<f32>::zeros((3, 3));
+
+        for i in 0..3 {
+            for j in 0..=i {
+                let sum = if i == j {
+                    let mut s = 0.0;
+                    for k in 0..j {
+                        s += l[[j, k]] * l[[j, k]];
+                    }
+                    (A[[j, j]] - s).sqrt()
+                } else {
+                    let mut s = 0.0;
+                    for k in 0..j {
+                        s += l[[i, k]] * l[[j, k]];
+                    }
+                    (1.0 / l[[j, j]]) * (A[[i, j]] - s)
+                };
+
+                if i == j {
+                    if sum <= 0.0 {
+                        panic!(); // Matrix is not positive definite
+                    }
+                } else {
+                    if l[[j, j]] <= 0.0 {
+                        panic!(); // Matrix is not positive definite
+                    }
+                }
+
+                l[[i, j]] = sum;
+            }
+        }
+
+        l
+    }
+
     /// Returns wave numbers for a turbulence box specification.
     pub fn freq_components(
         Lx: f32,
@@ -336,10 +372,10 @@ pub mod Utilities {
     }
 
     pub struct SpectralImpulseResponse {
-        impulse: Array3<Complex32>,
-        kx: Array1<f32>,
-        ky: Array1<f32>,
-        kz: Array1<f32>,
+        pub impulse: Array3<Complex32>,
+        pub kx: Array1<f32>,
+        pub ky: Array1<f32>,
+        pub kz: Array1<f32>,
         xroll: isize,
         yroll: isize,
         zroll: isize,

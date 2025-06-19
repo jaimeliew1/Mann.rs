@@ -21,6 +21,8 @@ pub fn vonkarman_spectrum(ae: f32, k: f32, L: f32) -> f32 {
 /// Contains calculations for various spectral tensors, including isotropic,
 /// sheared (Mann), and their decompositions.
 pub mod Tensors {
+    use crate::Utilities::cholesky;
+
     use super::*;
 
     pub struct Isotropic<T> {
@@ -250,40 +252,7 @@ pub mod Tensors {
 
         /// Decomposition of sheared spectral tensor with sinc correction using a Cholesky decomposition.
         fn decomp(&self, K: &[f32]) -> Array2<f32> {
-            let mut l: Array2<f32> = Array2::<f32>::zeros((3, 3));
-            let tensor: Array2<f32> = self.tensor(K);
-
-            for i in 0..3 {
-                for j in 0..=i {
-                    let sum = if i == j {
-                        let mut s = 0.0;
-                        for k in 0..j {
-                            s += l[[j, k]] * l[[j, k]];
-                        }
-                        (tensor[[j, j]] - s).sqrt()
-                    } else {
-                        let mut s = 0.0;
-                        for k in 0..j {
-                            s += l[[i, k]] * l[[j, k]];
-                        }
-                        (1.0 / l[[j, j]]) * (tensor[[i, j]] - s)
-                    };
-
-                    if i == j {
-                        if sum <= 0.0 {
-                            panic!(); // Matrix is not positive definite
-                        }
-                    } else {
-                        if l[[j, j]] <= 0.0 {
-                            panic!(); // Matrix is not positive definite
-                        }
-                    }
-
-                    l[[i, j]] = sum;
-                }
-            }
-
-            l
+            cholesky(self.tensor(K))
         }
     }
 }

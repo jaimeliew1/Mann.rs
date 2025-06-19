@@ -11,12 +11,10 @@ mod tests;
 mod utilities;
 
 use faer::prelude::*;
-use faer::sparse::linalg::solvers::Llt;
 use faer::sparse::linalg::solvers::Lu;
 use faer::sparse::*;
-use faer::Side;
 
-use itertools::{izip};
+use itertools::izip;
 use std::f32::consts::PI;
 use std::iter::FromIterator;
 use std::mem::drop;
@@ -30,11 +28,11 @@ use numpy::Complex32;
 
 pub use self::tensors::Tensors;
 pub use self::utilities::Utilities;
+use crate::tensors::Utilities::SpectralImpulseResponse;
 use crate::Utilities::{
     spectral_superposition_par, spectral_superposition_ser, CompressedSpectralImpulseResponse,
 };
 use tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
-
 
 pub struct StencilParams {
     L: f32,
@@ -304,6 +302,27 @@ impl Stencil {
     pub fn constrain(self, constraints: Vec<Constraint>, corr_thres: f32) -> ConstrainedStencil {
         ConstrainedStencil::new(self, constraints, corr_thres)
     }
+
+    pub fn spectral_impulses(
+        &self,
+    ) -> (
+        SpectralImpulseResponse,
+        SpectralImpulseResponse,
+        SpectralImpulseResponse,
+        SpectralImpulseResponse,
+    ) {
+        let (kxs, kys, kzs) = self.p.aperiodic_linear_wave_numbers();
+        let (Ruu_f, Rvv_f, Rww_f, Ruw_f) = self.spectral_component_grids();
+        let impulse_u =
+            Utilities::SpectralImpulseResponse::new(Ruu_f, kxs.clone(), kys.clone(), kzs.clone());
+        let impulse_v =
+            Utilities::SpectralImpulseResponse::new(Rvv_f, kxs.clone(), kys.clone(), kzs.clone());
+        let impulse_w =
+            Utilities::SpectralImpulseResponse::new(Rww_f, kxs.clone(), kys.clone(), kzs.clone());
+        let impulse_uw = Utilities::SpectralImpulseResponse::new(Ruw_f, kxs, kys, kzs);
+
+        (impulse_u, impulse_v, impulse_w, impulse_uw)
+    }
 }
 
 pub struct Constraint {
@@ -465,12 +484,8 @@ impl ConstrainedStencil {
         println!("performing spectral superposition...");
 
         // Calculate normalized spectral component grids
-        let (Ruu_f, _Rvv_f, _Rww_f, _Ruw_f) = self.stencil.spectral_component_grids();
 
-        // Calculate linear wave number arrays and record sizes.
-        let (kxs, kys, kzs) = self.stencil.p.aperiodic_linear_wave_numbers();
-
-        let impulse_u = Utilities::SpectralImpulseResponse::new(Ruu_f, kxs, kys, kzs);
+        let (impulse_u, _impulse_v, _impulse_w, _impulse_uw) = self.stencil.spectral_impulses();
         let compression_indices = impulse_u.get_compression_indices(impulse_thres);
         let compressed_impulse_u = impulse_u.compress(compression_indices);
 
