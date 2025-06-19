@@ -632,11 +632,9 @@ pub mod Utilities {
             .fold(
                 || Array3::<Complex32>::zeros((nx, ny, nz)),
                 |mut acc, (c, w)| {
-                    let phase: Array3<Complex32> = (two_pi_i
-                        * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
-                        .mapv(|x| x.exp());
-
-                    acc += &(&phase * (&impulse_u.impulse * *w));
+                    acc += &(&(two_pi_i * (&kx_mesh * c.x + &ky_mesh * c.y + &kz_mesh * c.z))
+                        .mapv(|x| x.exp())
+                        * (&impulse_u.impulse * *w));
                     acc
                 },
             )
