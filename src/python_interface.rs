@@ -153,7 +153,7 @@ impl RustStencil {
         Bound<'py, PyArray3<numpy::Complex32>>,
     ) {
         let (imp_uu, imp_vv, imp_ww, imp_uw) = &self.stencil.spectral_impulses();
-    
+
         (
             imp_uu.kx.to_pyarray(py),
             imp_uu.ky.to_pyarray(py),
@@ -492,5 +492,27 @@ pub fn mannrs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         Utilities::distance_matrix(&x.as_array().to_owned()).to_pyarray(py)
     }
 
+    #[pyfn(m)]
+    fn mann_spectra<'py>(
+        py: Python<'py>,
+        kx: PyReadonlyArray1<'py, f32>,
+        ae: f32,
+        l: f32,
+        gamma: f32,
+    ) -> (
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+    ) {
+        let kx = kx.as_array().to_owned();
+        let (uu, vv, ww, uw) = crate::mann_spectra(&kx, ae, l, gamma);
+        (
+            uu.to_pyarray(py),
+            vv.to_pyarray(py),
+            ww.to_pyarray(py),
+            uw.to_pyarray(py),
+        )
+    }
     Ok(())
 }

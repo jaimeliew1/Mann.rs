@@ -1,5 +1,9 @@
 import numpy as np
 
+def mann_spectra(
+    kxs: np.ndarray, ae: float, L: float, gamma: float
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: ...
+
 class RustStencil:
     def __init__(
         self,

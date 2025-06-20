@@ -323,6 +323,41 @@ pub mod Utilities {
         rolled
     }
 
+    /// Computes the 2D trapezoidal integral using two successive 1D trapezoidal integrations.
+    /// First integrates along the x-axis, then along the y-axis.
+    ///
+    /// # Arguments
+    /// * `f` - 2D ndarray representing function values at grid points.
+    /// * `x` - 1D array of x-coordinates (non-uniform spacing).
+    /// * `y` - 1D array of y-coordinates (non-uniform spacing).
+    ///
+    /// # Returns
+    /// * Approximate integral value.
+    pub fn trapezoidal_integral_2d(f: &Array2<f32>, x: &Array1<f32>, y: &Array1<f32>) -> f32 {
+        let nx = x.len();
+        let ny = y.len();
+
+        // Step 1: Integrate along the x-axis for each fixed y
+        let mut integral_x = Array1::zeros(ny);
+        for j in 0..ny {
+            let mut sum_x = 0.0;
+            for i in 0..nx - 1 {
+                let dx = x[i + 1] - x[i];
+                sum_x += 0.5 * (f[[i, j]] + f[[i + 1, j]]) * dx;
+            }
+            integral_x[j] = sum_x;
+        }
+
+        // Step 2: Integrate the intermediate result along the y-axis
+        let mut integral = 0.0;
+        for j in 0..ny - 1 {
+            let dy = y[j + 1] - y[j];
+            integral += 0.5 * (integral_x[j] + integral_x[j + 1]) * dy;
+        }
+
+        integral
+    }
+
     pub fn roll_3d_array<T>(
         arr: &Array3<T>,
         xroll: &isize,

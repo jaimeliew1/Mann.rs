@@ -1,11 +1,16 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 from numpy.typing import ArrayLike
 
 from . import mannrs
+
+
+def mann_spectra(
+    kxs: list[float], ae: float, L: float, gamma: float
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    return mannrs.mann_spectra(np.array(kxs, dtype=np.float32), ae, L, gamma)
 
 
 @dataclass
