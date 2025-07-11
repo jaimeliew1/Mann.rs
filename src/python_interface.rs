@@ -1,8 +1,5 @@
-use crate::{
-    forgetful_turbulate, forgetful_turbulate_par, partial_forgetful_turbulate,
-    partial_forgetful_turbulate_par, Tensors::*, Utilities, Utilities::freq_components,
-};
 use crate::{ConstrainedStencil, Constraint, Stencil};
+use crate::{Tensors::*, Utilities, Utilities::freq_components};
 use ndarray::{Array1, Array3};
 use numpy::{
     Complex32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2, ToPyArray,
@@ -200,25 +197,29 @@ impl RustConstrainedStencil {
             });
         }
         RustConstrainedStencil {
-            stencil: Stencil::from_params(
-                L,
-                gamma,
-                Lx,
-                Ly,
-                Lz,
-                Nx,
-                Ny,
-                Nz,
-                aperiodic_x,
-                aperiodic_y,
-                aperiodic_z,
-                sinc_thres,
-                parallel,
-            )
-            .constrain(constraints_new, corr_thres, impulse_thres),
+            stencil: ConstrainedStencil::new(
+                Stencil::from_params(
+                    L,
+                    gamma,
+                    Lx,
+                    Ly,
+                    Lz,
+                    Nx,
+                    Ny,
+                    Nz,
+                    aperiodic_x,
+                    aperiodic_y,
+                    aperiodic_z,
+                    sinc_thres,
+                    parallel,
+                ),
+                constraints_new,
+                corr_thres,
+                impulse_thres,
+            ),
         }
     }
-
+    
     fn turbulate<'py>(
         &self,
         py: Python<'py>,
@@ -252,119 +253,6 @@ impl RustConstrainedStencil {
 
     fn spectral_compression<'py>(&self) -> f64 {
         self.stencil.spectral_compression
-    }
-}
-
-#[pymethods]
-impl RustForgetfulStencil {
-    #[new]
-    fn __new__(
-        L: f32,
-        gamma: f32,
-        Lx: f32,
-        Ly: f32,
-        Lz: f32,
-        Nx: usize,
-        Ny: usize,
-        Nz: usize,
-        sinc_thres: f32,
-    ) -> Self {
-        RustForgetfulStencil {
-            L: L,
-            gamma: gamma,
-            Lx: Lx,
-            Ly: Ly,
-            Lz: Lz,
-            Nx: Nx,
-            Ny: Ny,
-            Nz: Nz,
-            sinc_thres: sinc_thres,
-        }
-    }
-
-    fn turbulence<'py>(
-        &self,
-        py: Python<'py>,
-        ae: f32,
-        seed: u64,
-        parallel: bool,
-    ) -> (
-        Bound<'py, PyArray3<f32>>,
-        Bound<'py, PyArray3<f32>>,
-        Bound<'py, PyArray3<f32>>,
-    ) {
-        let (U_f, V_f, W_f): (Array3<f32>, Array3<f32>, Array3<f32>) = match parallel {
-            true => forgetful_turbulate_par(
-                ae,
-                seed,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-                self.Lx,
-                self.Ly,
-                self.Lz,
-                self.L,
-                self.gamma,
-                self.sinc_thres,
-            ),
-            false => forgetful_turbulate(
-                ae,
-                seed,
-                self.Nx,
-                self.Ny,
-                self.Nz,
-                self.Lx,
-                self.Ly,
-                self.Lz,
-                self.L,
-                self.gamma,
-                self.sinc_thres,
-            ),
-        };
-        (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
-    }
-
-    fn partial_turbulence<'py>(
-        &self,
-        py: Python<'py>,
-        ae: f32,
-        seed: u64,
-        parallel: bool,
-    ) -> (
-        Bound<'py, PyArray3<Complex32>>,
-        Bound<'py, PyArray3<Complex32>>,
-        Bound<'py, PyArray3<Complex32>>,
-    ) {
-        let (U_f, V_f, W_f): (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) =
-            match parallel {
-                true => partial_forgetful_turbulate_par(
-                    ae,
-                    seed,
-                    self.Nx,
-                    self.Ny,
-                    self.Nz,
-                    self.Lx,
-                    self.Ly,
-                    self.Lz,
-                    self.L,
-                    self.gamma,
-                    self.sinc_thres,
-                ),
-                false => partial_forgetful_turbulate(
-                    ae,
-                    seed,
-                    self.Nx,
-                    self.Ny,
-                    self.Nz,
-                    self.Lx,
-                    self.Ly,
-                    self.Lz,
-                    self.L,
-                    self.gamma,
-                    self.sinc_thres,
-                ),
-            };
-        (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
 }
 
