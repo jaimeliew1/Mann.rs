@@ -426,6 +426,8 @@ pub mod Utilities {
         zroll: isize,
         indices: CompressionIndices,
     }
+
+    #[derive(Clone)]
     pub struct CompressionIndices {
         Nx_exp: usize,
         Ny_exp: usize,
@@ -438,6 +440,20 @@ pub mod Utilities {
     }
 
     impl CompressionIndices {
+        /// Returns the bounding `CompressionIndices` that encloses all given indices.
+        ///
+        /// Combines multiple `CompressionIndices` into one by taking the element-wise
+        /// min/max across the iterator:
+        /// - `ixmin`, `iymin`: minimum of all values
+        /// - `ixmax`, `iymax`, `izmax`: maximum of all values
+        /// - `Nx_exp`, `Ny_exp`, `Nz_exp`: taken from the first element (not checked for consistency)
+        ///
+        /// # Parameters
+        /// - `iter`: Any iterator of `CompressionIndices`
+        ///
+        /// # Returns
+        /// - `Some(CompressionIndices)` if input is non-empty
+        /// - `None` if input is empty      
         pub fn combine_all<I>(iter: I) -> Option<Self>
         where
             I: IntoIterator<Item = CompressionIndices>,
@@ -457,6 +473,23 @@ pub mod Utilities {
                     },
                 })
             })
+        }
+
+        /// Returns the compression ratios in each dimension (x, y, z).
+        ///
+        /// Each ratio is the size of the compressed range divided by the full dimension size.
+        /// Values are in the range `(0.0, 1.0]`.
+        pub fn compression_ratios(&self) -> (f64, f64, f64) {
+            let x_ratio = (self.ixmax - self.ixmin) as f64 / self.Nx_exp as f64;
+            let y_ratio = (self.iymax - self.iymin) as f64 / self.Ny_exp as f64;
+            let z_ratio = self.izmax as f64 / self.Nz_exp as f64;
+            (1.0 - x_ratio, 1.0 - y_ratio, 1.0 - z_ratio)
+        }
+
+        /// Returns the total compression ratio as the product of per-axis ratios.
+        pub fn total_compression_ratio(&self) -> f64 {
+            let (rx, ry, rz) = self.compression_ratios();
+            1.0 - (1.0 - rx) * (1.0 - ry) * (1.0 - rz)
         }
     }
 
@@ -593,7 +626,7 @@ pub mod Utilities {
 
     pub fn spectral_superposition_ser<I2>(
         constraints: &Vec<Constraint>,
-        impulse_u: CompressedSpectralImpulseResponse,
+        impulse_u: &CompressedSpectralImpulseResponse,
         weights: I2,
     ) -> CompressedSpectralImpulseResponse
     where
@@ -629,19 +662,19 @@ pub mod Utilities {
 
         CompressedSpectralImpulseResponse {
             impulse: U_f,
-            kx: impulse_u.kx,
-            ky: impulse_u.ky,
-            kz: impulse_u.kz,
+            kx: impulse_u.kx.clone(),
+            ky: impulse_u.ky.clone(),
+            kz: impulse_u.kz.clone(),
             xroll: impulse_u.xroll,
             yroll: impulse_u.yroll,
             zroll: impulse_u.zroll,
-            indices: impulse_u.indices,
+            indices: impulse_u.indices.clone(),
         }
     }
 
     pub fn spectral_superposition_par(
         constraints: &Vec<Constraint>,
-        impulse_u: CompressedSpectralImpulseResponse,
+        impulse_u: &CompressedSpectralImpulseResponse,
         weights: &Vec<f32>,
     ) -> CompressedSpectralImpulseResponse {
         let (nx, ny, nz) = (impulse_u.kx.len(), impulse_u.ky.len(), impulse_u.kz.len());
@@ -682,13 +715,13 @@ pub mod Utilities {
             );
         CompressedSpectralImpulseResponse {
             impulse: U_f,
-            kx: impulse_u.kx,
-            ky: impulse_u.ky,
-            kz: impulse_u.kz,
+            kx: impulse_u.kx.clone(),
+            ky: impulse_u.ky.clone(),
+            kz: impulse_u.kz.clone(),
             xroll: impulse_u.xroll,
             yroll: impulse_u.yroll,
             zroll: impulse_u.zroll,
-            indices: impulse_u.indices,
+            indices: impulse_u.indices.clone(),
         }
     }
 

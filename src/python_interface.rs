@@ -185,6 +185,7 @@ impl RustConstrainedStencil {
         constraints: PyReadonlyArray2<'py, f32>,
         parallel: bool,
         corr_thres: f32,
+        impulse_thres: f32,
         sinc_thres: f32,
     ) -> Self {
         let mut constraints_new: Vec<Constraint> = Vec::new();
@@ -214,7 +215,7 @@ impl RustConstrainedStencil {
                 sinc_thres,
                 parallel,
             )
-            .constrain(constraints_new, corr_thres),
+            .constrain(constraints_new, corr_thres, impulse_thres),
         }
     }
 
@@ -223,14 +224,13 @@ impl RustConstrainedStencil {
         py: Python<'py>,
         ae: f32,
         seed: u64,
-        impulse_thres: f32,
         parallel: bool,
     ) -> (
         Bound<'py, PyArray3<f32>>,
         Bound<'py, PyArray3<f32>>,
         Bound<'py, PyArray3<f32>>,
     ) {
-        let (U, V, W) = self.stencil.turbulate(ae, seed, impulse_thres, parallel);
+        let (U, V, W) = self.stencil.turbulate(ae, seed, parallel);
         (U.to_pyarray(py), V.to_pyarray(py), W.to_pyarray(py))
     }
 
@@ -244,6 +244,14 @@ impl RustConstrainedStencil {
     ) {
         let (x, y, z) = self.stencil.stencil.p.get_axes();
         (x.to_pyarray(py), y.to_pyarray(py), z.to_pyarray(py))
+    }
+
+    fn sparsity<'py>(&self) -> f64 {
+        self.stencil.sparsity
+    }
+
+    fn spectral_compression<'py>(&self) -> f64 {
+        self.stencil.spectral_compression
     }
 }
 

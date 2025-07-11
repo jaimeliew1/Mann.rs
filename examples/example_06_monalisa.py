@@ -47,10 +47,14 @@ if __name__ == "__main__":
         aperiodic_z=True,
         parallel=True,
         corr_thres=0.0001,
+        impulse_thres=0.0005,
         sinc_thres=3.0,
     )
 
-    U, V, W = stencil.turbulence(ae, 1234, parallel=True, impulse_thres=0.0005)
+    print(f"Correlation matrix sparsity: {100 * stencil.sparsity}%")
+    print(f"Spectral compression: {100 * stencil.spectral_compression}%")
+    
+    U, V, W = stencil.turbulence(ae, 1234, parallel=True)
     print(U.mean())
     print(V.mean())
     print(W.mean())

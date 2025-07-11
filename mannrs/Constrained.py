@@ -28,6 +28,7 @@ class ConstrainedStencil:
     aperiodic_z: bool = True
     parallel: bool = True
     corr_thres: float = 0.0001
+    impulse_thres: float = 0.0005
     sinc_thres: float = 3.0
 
     def __post_init__(self):
@@ -50,13 +51,22 @@ class ConstrainedStencil:
             _constraints,
             self.parallel,
             corr_thres=self.corr_thres,
+            impulse_thres=self.impulse_thres,
             sinc_thres=self.sinc_thres,
         )
 
     def turbulence(
-        self, ae: float, seed: int, impulse_thres: float = 0.0005, parallel: bool = True
+        self, ae: float, seed: int, parallel: bool = True
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        return self.stencil.turbulate(float(ae), int(seed), impulse_thres, parallel)
+        return self.stencil.turbulate(float(ae), int(seed), parallel)
 
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         return self.stencil.get_axes()
+
+    @property
+    def sparsity(self) -> float:
+        return self.stencil.sparsity()
+
+    @property
+    def spectral_compression(self) -> float:
+        return self.stencil.spectral_compression()

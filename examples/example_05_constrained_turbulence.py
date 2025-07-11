@@ -48,8 +48,12 @@ if __name__ == "__main__":
         aperiodic_z=True,
         parallel=True,
         corr_thres=0.001,
+        impulse_thres=0.0001,
         sinc_thres=12.0,
     )
+
+    print(f"Correlation matrix sparsity: {100 * stencil.sparsity}%")
+    print(f"Spectral compression: {100 * stencil.spectral_compression}%")
 
     N_boxes = 10
     fig, axes = plt.subplots(1, N_boxes)
@@ -58,7 +62,7 @@ if __name__ == "__main__":
     ys = []
     for i in range(N_boxes):
         U, V, W = stencil.turbulence(
-            ae=0.2, seed=i, impulse_thres=0.0001, parallel=True
+            ae=0.2, seed=i,  parallel=True
         )
         ys.append(U[:, 16, 16])
         axes[i].imshow(U[:, :, 16])

@@ -300,8 +300,13 @@ impl Stencil {
         )
     }
 
-    pub fn constrain(self, constraints: Vec<Constraint>, corr_thres: f32) -> ConstrainedStencil {
-        ConstrainedStencil::new(self, constraints, corr_thres)
+    pub fn constrain(
+        self,
+        constraints: Vec<Constraint>,
+        corr_thres: f32,
+        impulse_thres: f32,
+    ) -> ConstrainedStencil {
+        ConstrainedStencil::new(self, constraints, corr_thres, impulse_thres)
     }
 
     pub fn spectral_impulses(
@@ -337,26 +342,27 @@ pub struct ConstrainedStencil {
     stencil: Stencil,
     constraints: Vec<Constraint>,
     A_factorized: Lu<usize, f32>,
+    impulse_u: CompressedSpectralImpulseResponse,
+    sparsity: f64,
+    spectral_compression: f64,
 }
 
 impl ConstrainedStencil {
-    pub fn new(stencil: Stencil, constraints: Vec<Constraint>, corr_thres: f32) -> Self {
-        // Parallel?
-        // where is threshold set?
+    pub fn new(
+        stencil: Stencil,
+        constraints: Vec<Constraint>,
+        corr_thres: f32,
+        impulse_thres: f32,
+    ) -> Self {
         let p: &StencilParams = &stencil.p;
-        println!("extracting correlation grid...");
+
         let (Ruu, _Rvv, _Rww, _Ruw): (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) =
             stencil.correlation_grids();
 
-        println!("clip correlation data (current shape {:?})...", Ruu.shape());
+        // clip correlation data
         let Ruu: Array3<f32> = Ruu.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
 
-        // let Rvv: Array3<f32> = Rvv.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        // let Rww: Array3<f32> = Rww.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        // let Ruw: Array3<f32> = Ruw.slice(s![..p.Nx, ..p.Ny, ..p.Nz]).to_owned();
-        println!("clipped to {:?}.", Ruu.shape());
-        println!("Calculating distance matrices...");
-
+        // Calculating distance matrices
         let x_dist =
             Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.x)));
         let y_dist =
@@ -364,8 +370,7 @@ impl ConstrainedStencil {
         let z_dist =
             Utilities::distance_matrix(&Array1::from_iter(constraints.iter().map(|c| c.z)));
 
-        println!("building interpolator...");
-
+        // building interpolator
         let (x, y, z) = p.get_axes();
         let interp_uu = Interp3DOwned::new(
             x.clone(),
@@ -377,8 +382,8 @@ impl ConstrainedStencil {
         )
         .unwrap();
 
-        println!("Calculating correlation matrix...");
-        // Add caching to each interpolator.
+        //Calculating correlation matrix
+
         let mut UUcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
         // let mut VVcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
         // let mut WWcorr: Array2<f32> = Array2::zeros(x_dist.raw_dim());
@@ -397,16 +402,8 @@ impl ConstrainedStencil {
             // *w = interp_ww.interpolate(&[*_x, *_y, *_z]).unwrap();
             // *uw = interp_uw.interpolate(&[*_x, *_y, *_z]).unwrap();
         }
-        println!(
-            "Applying hard threshold {} and converting to sparse matrix...",
-            corr_thres
-        );
-        // let mut triplets: Vec<Triplet<usize, usize, f32>> = Vec::new();
-        // for ((i, j), v) in UUcorr.indexed_iter() {
-        //     if *v > corr_thres {
-        //         triplets.push(Triplet::new(i, j, *v))
-        //     }
-        // }
+
+        // Apply hard threshold and converting to sparse matrix.
         let triplets: Vec<Triplet<usize, usize, f32>> = UUcorr
             .indexed_iter()
             // .par_bridge()
@@ -415,12 +412,9 @@ impl ConstrainedStencil {
             .collect();
         drop(UUcorr);
 
-        println!("n_triplets: {:?}", triplets.len());
-        println!(
-            "sparsity: {:?}%",
-            100.0 - (triplets.len() as f64) / (constraints.len() as f64).powi(2) * 100.0
-        );
-        println!("creating sparse matrix...");
+        let sparsity: f64 = 1.0 - (triplets.len() as f64) / (constraints.len() as f64).powi(2);
+
+        // create sparse matrix
         let A = SparseColMat::<usize, f32>::try_new_from_triplets(
             constraints.len(),
             constraints.len(),
@@ -428,14 +422,23 @@ impl ConstrainedStencil {
         )
         .unwrap();
 
-        println!("factorizing...");
+        // factorize
         let llt = A.sp_lu().unwrap();
-        println!("Done!");
+
+        // Calculate compressed impulse responses
+        let (impulse_u, _impulse_v, _impulse_w, _impulse_uw) = stencil.spectral_impulses();
+        let compression_indices = impulse_u.get_compression_indices(impulse_thres);
+        // Note: use the CompressionIndices.combine_all method to find the max envelope of multiple compressed impulses when needed.
+        let spectral_compression = compression_indices.total_compression_ratio();
+        let compressed_impulse_u = impulse_u.compress(compression_indices);
 
         ConstrainedStencil {
             stencil: stencil,
             constraints: constraints,
             A_factorized: llt,
+            impulse_u: compressed_impulse_u,
+            sparsity: sparsity,
+            spectral_compression: spectral_compression,
         }
     }
 
@@ -443,17 +446,12 @@ impl ConstrainedStencil {
         &self,
         ae: f32,
         seed: u64,
-        impulse_thres: f32,
         parallel: bool,
     ) -> (Array3<f32>, Array3<f32>, Array3<f32>) {
-        println!(
-            "Generating unconstrained box with seed={}, ae={}.",
-            seed, ae
-        );
         let (U, V, W) = self.stencil.turbulate(ae, seed, parallel);
 
         let (x, y, z) = self.stencil.p.get_axes();
-        println!("making U interpolator...");
+        // make U interpolator
         let interp_uu = Interp3DOwned::new(
             x.clone(),
             y.clone(),
@@ -463,48 +461,44 @@ impl ConstrainedStencil {
             Extrapolate::Error,
         )
         .unwrap();
-        println!("interpolating contemporaneous wind speeds...");
+        // interpolate contemporaneous wind speeds
 
         let U_contemp: Vec<f32> = self
             .constraints
             .iter()
             .map(|c| interp_uu.interpolate(&[c.x, c.y, c.z]).unwrap())
             .collect();
-        println!("constructing b matrix...");
+        //construct b matrix
         let b = faer::col::Col::from_iter(
             U_contemp
                 .iter()
                 .zip(&self.constraints)
                 .map(|(&u, c)| c.u - u),
         );
-        // println!("b: {:?}", b);
 
-        println!("solving linear system...");
+        //solve linear system
         let Uweight: Vec<f32> = self.A_factorized.solve(&b).iter().map(|&x| x).collect();
 
-        println!("performing spectral superposition...");
+        //perform spectral superposition
 
         // Calculate normalized spectral component grids
 
-        let (impulse_u, _impulse_v, _impulse_w, _impulse_uw) = self.stencil.spectral_impulses();
-        let compression_indices = impulse_u.get_compression_indices(impulse_thres);
-        let compressed_impulse_u = impulse_u.compress(compression_indices);
-
         let U_f: CompressedSpectralImpulseResponse;
         if !parallel {
-            println!("superimposing in serial");
-            U_f = spectral_superposition_ser(&self.constraints, compressed_impulse_u, Uweight);
+            //superimpose in serial
+            U_f = spectral_superposition_ser(&self.constraints, &self.impulse_u, Uweight);
         } else {
-            println!("superimposing in parallel");
-            U_f = spectral_superposition_par(&self.constraints, compressed_impulse_u, &Uweight);
-        } // let V_f: Array3<Complex32>;
-          // let W_f: Array3<Complex32>;
+            //superimpose in parallel
+            U_f = spectral_superposition_par(&self.constraints, &self.impulse_u, &Uweight);
+            // let V_f: Array3<Complex32>;
+            // let W_f: Array3<Complex32>;
+        }
 
         let mut U_f_exp: Array3<Complex32> = U_f.zero_pad_and_unroll_impulse();
         let mut V_f_exp = Array3::<Complex32>::zeros(U_f_exp.dim());
         let mut W_f_exp = Array3::<Complex32>::zeros(U_f_exp.dim());
 
-        println!("inverse 3d fourier transform...");
+        // inverse 3d fourier transform
         let output_slice = s![
             ..self.stencil.p.Nx,
             ..self.stencil.p.Ny,
@@ -523,7 +517,6 @@ impl ConstrainedStencil {
             .to_owned()
             + W;
 
-        println!("Done!");
         (U, V, W)
     }
 }
