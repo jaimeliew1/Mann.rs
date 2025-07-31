@@ -10,15 +10,72 @@ from . import mannrs
 def mann_spectra(
     kxs: list[float], ae: float, L: float, gamma: float
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Computes the 1D Mann turbulence spectra for a range of streamwise wavenumbers.
+
+    Parameters
+    ----------
+    kxs : list of float
+        Streamwise wavenumber values (k₁) in rad/m.
+    ae : float
+        Turbulence intensity scaling parameter (α·ε^{2/3}).
+    L : float
+        Turbulence length scale (m).
+    gamma : float
+        Shear distortion parameter (dimensionless).
+
+    Returns
+    -------
+    tuple of np.ndarray
+        Four spectral components as functions of k₁:
+        - UU : Longitudinal auto-spectrum.
+        - VV : Lateral auto-spectrum.
+        - WW : Vertical auto-spectrum.
+        - UW : Longitudinal-vertical cross-spectrum.
+    """
     return mannrs.mann_spectra(np.array(kxs, dtype=np.float32), ae, L, gamma)
 
 
 @dataclass
 class Stencil:
     """
-    Generate a Mann turbulence stencil.
-    args:
-        parallel: Use parallel operations (default: False)
+    Generates a reusable Mann turbulence stencil for efficient 3D velocity field generation.
+
+    This class wraps a compiled `RustStencil` object and precomputes the structure
+    required to synthesize turbulence boxes using the Mann model. The stencil
+    allows rapid generation of multiple realizations with consistent spatial configuration.
+
+    Parameters
+    ----------
+    L : float
+        Turbulence length scale (m).
+    gamma : float
+        Shear distortion parameter (dimensionless).
+    Lx : float
+        Domain size in the streamwise (x) direction (m).
+    Ly : float
+        Domain size in the lateral (y) direction (m).
+    Lz : float
+        Domain size in the vertical (z) direction (m).
+    Nx : int
+        Number of grid points in the x direction.
+    Ny : int
+        Number of grid points in the y direction.
+    Nz : int
+        Number of grid points in the z direction.
+    aperiodic_x : bool, optional
+        If True, the turbulence box will be aperiodic in the x direction,
+        achieved by doubling the stencil domain in x (default: False).
+    aperiodic_y : bool, optional
+        If True, the turbulence box will be aperiodic in the y direction,
+        achieved by doubling the stencil domain in y (default: True).
+    aperiodic_z : bool, optional
+        If True, the turbulence box will be aperiodic in the z direction,
+        achieved by doubling the stencil domain in z (default: True).
+    parallel : bool, optional
+        Enable parallel computation (default: True).
+    sinc_thres : float, optional
+        Threshold parameter used internally by the stencil algorithm (default: 3.0).
     """
 
     L: float
@@ -32,7 +89,7 @@ class Stencil:
     aperiodic_x: bool = False
     aperiodic_y: bool = True
     aperiodic_z: bool = True
-    parallel: bool = False
+    parallel: bool = True
     sinc_thres: float = 3.0
 
     def __post_init__(self):
@@ -53,98 +110,34 @@ class Stencil:
         )
 
     def turbulence(
-        self, ae: float, seed: int, domain="space", parallel=False
-    ) -> tuple[ArrayLike, ...]:
+        self, ae: float, seed: int, parallel=True
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Generate a Mann turbulence from a stencil.
-        args:
-            ae (float): scaling factor.
-            seed (int): random seed.
-            domain: return domain type. Either `space` (default) or `frequency`
-            parallel: Use parallel operations (default: False)
+        Generate a single realization of a 3D Mann turbulence velocity field.
+
+        Parameters
+        ----------
+        ae : float
+            Scaling factor related to turbulence intensity (α·ε^{2/3}).
+        seed : int
+            Random seed for reproducibility.
+        parallel : bool, optional
+            Whether to use parallel computation for this generation (default: True).
+
+        Returns
+        -------
+        tuple of np.ndarray
+            A tuple of 3D arrays (U, V, W), each of shape (Nx, Ny, Nz),
+            representing the velocity components in the x, y, and z directions.
         """
-        if domain == "space":
-            U, V, W = self.stencil.turbulence(
-                ae,
-                seed,
-                parallel,
-            )
-        elif domain == "frequency":
-            U, V, W = self.stencil.partial_turbulence(
-                ae,
-                seed,
-                parallel,
-            )
 
-        else:
-            raise ValueError
+        U, V, W = self.stencil.turbulence(ae, seed, parallel)
 
-        # to do
         return (
             U[: self.Nx, : self.Ny, : self.Nz],
             V[: self.Nx, : self.Ny, : self.Nz],
             W[: self.Nx, : self.Ny, : self.Nz],
         )
-
-
-@dataclass
-class ForgetfulStencil:
-    """
-    Generate a Mann turbulence stencil which has a low memory usage (the
-    spectral tensors are not cached).
-    """
-
-    L: float
-    gamma: float
-    Lx: float
-    Ly: float
-    Lz: float
-    Nx: int
-    Ny: int
-    Nz: int
-    sinc_thres: float = 3.0
-
-    def __post_init__(self):
-        self.stencil = mannrs.RustForgetfulStencil(
-            self.L,
-            self.gamma,
-            self.Lx,
-            self.Ly,
-            self.Lz,
-            self.Nx,
-            self.Ny,
-            self.Nz,
-            self.sinc_thres,
-        )
-
-    def turbulence(
-        self, ae: float, seed: int, domain="space", parallel=False
-    ) -> tuple[ArrayLike, ...]:
-        """
-        Generate a Mann turbulence from a stencil.
-        args:
-            ae (float): scaling factor.
-            seed (int): random seed.
-            domain: return domain type. Either `space` (default) or `frequency`
-            parallel: Use parallel operations (default: False)
-        """
-        if domain == "space":
-            U, V, W = self.stencil.turbulence(
-                ae,
-                seed,
-                parallel,
-            )
-        elif domain == "frequency":
-            U, V, W = self.stencil.partial_turbulence(
-                ae,
-                seed,
-                parallel,
-            )
-
-        else:
-            raise ValueError
-
-        return U, V, W
 
 
 def save_box(filename: Path, box: ArrayLike):
@@ -168,16 +161,17 @@ def load_mann_binary(filename: Path, N=(32, 32)) -> ArrayLike:
     if len(N) == 2:
         ny, nz = N
         nx = len(data) / (ny * nz)
-        assert nx == int(
-            nx
-        ), f"Size of turbulence box ({len(data)}) does not match ny x nz ({ny*nx}), nx={nx}"
+        assert nx == int(nx), (
+            f"Size of turbulence box ({len(data)}) does not match ny x nz ({ny * nx}), nx={nx}"
+        )
         nx = int(nx)
     else:
         nx, ny, nz = N
-        assert (
-            len(data) == nx * ny * nz
-        ), "Size of turbulence box (%d) does not match nx x ny x nz (%d)" % (
-            len(data),
-            nx * ny * nz,
+        assert len(data) == nx * ny * nz, (
+            "Size of turbulence box (%d) does not match nx x ny x nz (%d)"
+            % (
+                len(data),
+                nx * ny * nz,
+            )
         )
     return data.reshape(nx, ny, nz)

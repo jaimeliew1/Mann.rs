@@ -53,11 +53,8 @@ if __name__ == "__main__":
 
     print(f"Correlation matrix sparsity: {100 * stencil.sparsity}%")
     print(f"Spectral compression: {100 * stencil.spectral_compression}%")
-    
+
     U, V, W = stencil.turbulence(ae, 1234, parallel=True)
-    print(U.mean())
-    print(V.mean())
-    print(W.mean())
 
     for i, slice in enumerate(tqdm(U)):
         if i % 16 != 0:

@@ -118,7 +118,7 @@ mod tests {
         let (Lx, Ly, Lz) = (10.0, 20.0, 30.0);
         let (Nx, Ny, Nz) = (10, 10, 10);
         let (Kx, Ky, Kz): (Array1<f32>, Array1<f32>, Array1<f32>) =
-            Utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
+            utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
         println!("{:?}", Kx);
         let ans_Kx = [
             0.,
@@ -163,7 +163,7 @@ mod tests {
         let x: Array1<f32> = array![1.0, 2.0, 4.0];
 
         let expected: Array2<f32> = array![[0.0, 1.0, 3.0], [1.0, 0.0, 2.0], [3.0, 2.0, 0.0]];
-        let ans: Array2<f32> = Utilities::distance_matrix(&x);
+        let ans: Array2<f32> = utilities::distance_matrix(&x);
         ans.into_iter()
             .zip(expected.iter())
             .for_each(|(a, b)| assert!((a - b).abs() < TOL));

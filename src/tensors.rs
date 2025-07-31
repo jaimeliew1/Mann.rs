@@ -1,4 +1,4 @@
-pub use crate::utilities::Utilities;
+use crate::utilities;
 use ndarray::prelude::*;
 use std::f32::consts::PI;
 
@@ -21,7 +21,7 @@ pub fn vonkarman_spectrum(ae: f32, k: f32, L: f32) -> f32 {
 /// Contains calculations for various spectral tensors, including isotropic,
 /// sheared (Mann), and their decompositions.
 pub mod Tensors {
-    use crate::Utilities::cholesky;
+    use crate::utilities::cholesky;
 
     use super::*;
 
@@ -131,12 +131,12 @@ pub mod Tensors {
             let tensor_gen: Sheared<f32> = Sheared::from_params(self.ae, self.L, self.gamma);
 
             let func = |y: f32, z: f32| {
-                Utilities::sinc2(y * self.Ly / 2.0)
-                    * Utilities::sinc2(z * self.Lz / 2.0)
+                utilities::sinc2(y * self.Ly / 2.0)
+                    * utilities::sinc2(z * self.Lz / 2.0)
                     * tensor_gen.tensor(&[K[0], K[1] + y, K[2] + z])
             };
 
-            let (mut out, neval): (Array2<f32>, u64) = Utilities::adaptive_quadrature_2d(
+            let (mut out, neval): (Array2<f32>, u64) = utilities::adaptive_quadrature_2d(
                 func,
                 -2.0 * PI / self.Ly,
                 2.0 * PI / self.Ly,

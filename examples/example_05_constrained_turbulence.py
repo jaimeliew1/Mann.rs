@@ -11,18 +11,6 @@ N_periods = 3
 N_constraints = 100
 
 
-def random_walk(n_steps, std_dev, seed=None):
-    if seed:
-        np.random.seed(seed)
-    # Generate random steps with standard deviation
-
-    steps = np.random.normal(loc=0, scale=std_dev, size=n_steps)
-    # Calculate the position by cumulative sum of steps
-    position = np.cumsum(steps)
-
-    return position - position.mean()
-
-
 if __name__ == "__main__":
     x_constraint = np.linspace(0, Lx, N_constraints)
     y_constraint = 10 * np.sin(N_periods * np.pi * x_constraint / Lx) + 5 * np.sin(
@@ -43,12 +31,6 @@ if __name__ == "__main__":
         Nx=Nx,
         Ny=32,
         Nz=32,
-        aperiodic_x=True,
-        aperiodic_y=True,
-        aperiodic_z=True,
-        parallel=True,
-        corr_thres=0.001,
-        impulse_thres=0.0001,
         sinc_thres=12.0,
     )
 
@@ -61,9 +43,7 @@ if __name__ == "__main__":
     axes = np.atleast_1d(axes)
     ys = []
     for i in range(N_boxes):
-        U, V, W = stencil.turbulence(
-            ae=0.2, seed=i,  parallel=True
-        )
+        U, V, W = stencil.turbulence(ae=0.2, seed=i, parallel=True)
         ys.append(U[:, 16, 16])
         axes[i].imshow(U[:, :, 16])
     plt.savefig("constraint_slice.png", dpi=300, bbox_inches="tight")
@@ -74,3 +54,5 @@ if __name__ == "__main__":
         plt.plot(x, y)
     plt.plot(x_constraint, y_constraint, ".k")
     plt.savefig("constraint_timeseries.png", dpi=300, bbox_inches="tight")
+
+    plt.show()

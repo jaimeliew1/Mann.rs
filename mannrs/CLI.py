@@ -4,7 +4,7 @@ import click
 import toml
 from tqdm import tqdm
 
-from . import Stencil, ForgetfulStencil, save_box
+from . import Stencil, save_box
 
 
 @click.command()
@@ -108,7 +108,7 @@ def separate_stencil_and_turb_params(param_list):
 
 
 def generate_single_separated(
-    stencil_params, turb_param_list, parallel=True, forgetful=False, progress_bar=None
+    stencil_params, turb_param_list, parallel=True, progress_bar=None
 ):
     """
     Generate turbulence with fixed stencil parameters and a list of turbulence parameters.
@@ -121,10 +121,8 @@ def generate_single_separated(
     return:
         None
     """
-    if forgetful:
-        stencil = ForgetfulStencil(**stencil_params, parallel=parallel)
-    else:
-        stencil = Stencil(**stencil_params, parallel=parallel)
+
+    stencil = Stencil(**stencil_params, parallel=parallel)
 
     for turb_params in turb_param_list:
         U, V, W = stencil.turbulence(

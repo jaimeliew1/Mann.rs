@@ -1,5 +1,6 @@
 use crate::{ConstrainedStencil, Constraint, Stencil};
-use crate::{Tensors::*, Utilities, Utilities::freq_components};
+use crate::Tensors::*;
+use crate::utilities;
 use ndarray::{Array1, Array3};
 use numpy::{
     Complex32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2, ToPyArray,
@@ -277,7 +278,7 @@ pub fn mannrs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         Bound<'py, PyArray1<f32>>,
     ) {
         let (f_x, f_y, f_z): (Array1<f32>, Array1<f32>, Array1<f32>) =
-            freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
+            utilities::freq_components(Lx, Ly, Lz, Nx, Ny, Nz);
         (f_x.to_pyarray(py), f_y.to_pyarray(py), f_z.to_pyarray(py))
     }
 
@@ -385,7 +386,7 @@ pub fn mannrs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         py: Python<'py>,
         x: PyReadonlyArray1<'py, f32>,
     ) -> Bound<'py, PyArray2<f32>> {
-        Utilities::distance_matrix(&x.as_array().to_owned()).to_pyarray(py)
+        utilities::distance_matrix(&x.as_array().to_owned()).to_pyarray(py)
     }
 
     #[pyfn(m)]
