@@ -1,6 +1,6 @@
-use crate::{ConstrainedStencil, Constraint, Stencil};
-use crate::Tensors::*;
 use crate::utilities;
+use crate::Tensors::*;
+use crate::{ConstrainedStencil, Constraint, Stencil};
 use ndarray::{Array1, Array3};
 use numpy::{
     Complex32, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2, ToPyArray,
@@ -84,6 +84,18 @@ impl RustStencil {
         (U_f.to_pyarray(py), V_f.to_pyarray(py), W_f.to_pyarray(py))
     }
 
+    fn get_axes<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+    ) {
+        let (x, y, z) = self.stencil.p.get_axes();
+
+        (x.to_pyarray(py), y.to_pyarray(py), z.to_pyarray(py))
+    }
     fn partial_turbulence<'py>(
         &self,
         py: Python<'py>,
@@ -220,7 +232,7 @@ impl RustConstrainedStencil {
             ),
         }
     }
-    
+
     fn turbulate<'py>(
         &self,
         py: Python<'py>,

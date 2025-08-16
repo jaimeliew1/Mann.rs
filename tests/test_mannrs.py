@@ -19,6 +19,10 @@ def test_mannrs():
     stencil = mannrs.Stencil(**params, parallel=False)
 
     U, V, W = stencil.turbulence(ae, seed)
+    x, y, z = stencil.get_axes()
+    assert len(x) == params["Nx"]
+    assert len(y) == params["Ny"]
+    assert len(z) == params["Nz"]
 
 
 

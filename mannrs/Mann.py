@@ -139,6 +139,17 @@ class Stencil:
             W[: self.Nx, : self.Ny, : self.Nz],
         )
 
+    def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Get the spatial grid axes corresponding to the generated field.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            (x, y, z) coordinate arrays of lengths Nx, Ny, Nz respectively.
+        """
+        return self.stencil.get_axes()
+
 
 def save_box(filename: Path, box: ArrayLike):
     filename = Path(filename)
