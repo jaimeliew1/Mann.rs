@@ -412,10 +412,10 @@ pub struct CompressedSpectralImpulseResponse {
     xroll: isize,
     yroll: isize,
     zroll: isize,
-    indices: CompressionIndices,
+    pub indices: CompressionIndices,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CompressionIndices {
     Nx_exp: usize,
     Ny_exp: usize,
@@ -509,36 +509,55 @@ impl SpectralImpulseResponse {
             (self.kx.len(), self.ky.len(), self.kz.len());
 
         let impulse_max: f32 = self.impulse.iter().map(|x| x.re).fold(f32::NAN, f32::max);
+
         let ixmin: usize = self
             .impulse
-            .slice(s![.., self.yroll as usize, self.zroll as usize])
-            .iter()
-            .position(|&x| x.re >= impulse_thres * impulse_max)
+            .axis_iter(Axis(0))
+            .position(|x| {
+                x.map(|v| v.re)
+                    .fold(f32::NEG_INFINITY, |acc, v| acc.max(*v))
+                    >= impulse_thres * impulse_max
+            })
             .unwrap_or(0);
+
         let ixmax: usize = self
             .impulse
-            .slice(s![.., self.yroll as usize, self.zroll as usize])
-            .iter()
-            .rposition(|&x| x.re >= impulse_thres * impulse_max)
+            .axis_iter(Axis(0))
+            .rposition(|x| {
+                x.map(|v| v.re)
+                    .fold(f32::NEG_INFINITY, |acc, v| acc.max(*v))
+                    >= impulse_thres * impulse_max
+            })
             .unwrap_or(Nx_exp);
 
         let iymin: usize = self
             .impulse
-            .slice(s![self.xroll as usize, .., self.zroll as usize])
-            .iter()
-            .position(|&x| x.re >= impulse_thres * impulse_max)
+            .axis_iter(Axis(1))
+            .position(|x| {
+                x.map(|v| v.re)
+                    .fold(f32::NEG_INFINITY, |acc, v| acc.max(*v))
+                    >= impulse_thres * impulse_max
+            })
             .unwrap_or(0);
+
         let iymax: usize = self
             .impulse
-            .slice(s![self.xroll as usize, .., self.zroll as usize])
-            .iter()
-            .rposition(|&x| x.re >= impulse_thres * impulse_max)
+            .axis_iter(Axis(1))
+            .rposition(|x| {
+                x.map(|v| v.re)
+                    .fold(f32::NEG_INFINITY, |acc, v| acc.max(*v))
+                    >= impulse_thres * impulse_max
+            })
             .unwrap_or(Ny_exp);
+
         let izmax: usize = self
             .impulse
-            .slice(s![self.xroll as usize, self.yroll as usize, ..])
-            .iter()
-            .rposition(|&x| x.re >= impulse_thres * impulse_max)
+            .axis_iter(Axis(2))
+            .rposition(|x| {
+                x.map(|v| v.re)
+                    .fold(f32::NEG_INFINITY, |acc, v| acc.max(*v))
+                    >= impulse_thres * impulse_max
+            })
             .unwrap_or(Nz_exp);
 
         CompressionIndices {

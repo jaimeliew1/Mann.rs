@@ -17,6 +17,7 @@ use numpy::Complex32;
 
 use ndarray::prelude::*;
 
+#[derive(Debug)]
 pub struct Constraint {
     pub x: f32,
     pub y: f32,
@@ -26,9 +27,9 @@ pub struct Constraint {
 
 pub struct ConstrainedStencil {
     pub stencil: Stencil,
-    constraints: Vec<Constraint>,
+    pub constraints: Vec<Constraint>,
     A_factorized: Lu<usize, f32>,
-    impulse_u: CompressedSpectralImpulseResponse,
+    pub impulse_u: CompressedSpectralImpulseResponse,
     pub sparsity: f64,
     pub spectral_compression: f64,
 }
