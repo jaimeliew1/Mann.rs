@@ -11,6 +11,7 @@ mod tests;
 mod utilities;
 mod unconstrained;
 mod constrained;
+mod spectral_impulse;
 
 
 use std::f32::consts::PI;
@@ -21,6 +22,7 @@ use ndarray::prelude::*;
 pub use self::tensors::Tensors;
 pub use self::unconstrained::{Stencil, StencilParams};
 pub use self::constrained::{ConstrainedStencil, Constraint};
+pub use self::spectral_impulse::SpectralImpulseResponse;
 use self::utilities::trapezoidal_integral_2d;
 use tensors::Tensors::{Sheared, TensorGenerator};
 

@@ -195,7 +195,7 @@ impl RustConstrainedStencil {
         constraints: PyReadonlyArray2<'py, f32>,
         parallel: bool,
         corr_thres: f32,
-        impulse_thres: f32,
+        spectral_compression_target: f64,
         sinc_thres: f32,
     ) -> Self {
         let mut constraints_new: Vec<Constraint> = Vec::new();
@@ -228,7 +228,7 @@ impl RustConstrainedStencil {
                 ),
                 constraints_new,
                 corr_thres,
-                impulse_thres,
+                spectral_compression_target,
             ),
         }
     }

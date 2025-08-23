@@ -43,7 +43,7 @@ if __name__ == "__main__":
         Nz=32,
         sinc_thres=12.0,
         aperiodic_x=True,
-        impulse_thres=0.001,
+        spectral_compression_target=0.8,
     )
 
     print(f"Correlation matrix sparsity: {100 * stencil.sparsity:.2f}%")

@@ -1,8 +1,8 @@
 use crate::tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
 use crate::utilities::{
-    complex_random_gaussian, fftfreq, freq_components, irfft3d, irfft3d_par, rfftfreq,
-    SpectralImpulseResponse,
+    complex_random_gaussian, fftfreq, freq_components, irfft3d, irfft3d_par, rfftfreq
 };
+use crate::spectral_impulse::SpectralImpulseResponse;
 use ndrustfft::Complex;
 use numpy::Complex32;
 use std::f32::consts::PI;

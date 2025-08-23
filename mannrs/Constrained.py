@@ -83,7 +83,7 @@ class ConstrainedStencil:
     aperiodic_z: bool = True
     parallel: bool = True
     corr_thres: float = 0.0001
-    impulse_thres: float = 0.0005
+    spectral_compression_target: float = 0.80
     sinc_thres: float = 3.0
 
     def __post_init__(self):
@@ -105,7 +105,7 @@ class ConstrainedStencil:
             _constraints,
             self.parallel,
             corr_thres=self.corr_thres,
-            impulse_thres=self.impulse_thres,
+            spectral_compression_target=self.spectral_compression_target,
             sinc_thres=self.sinc_thres,
         )
 

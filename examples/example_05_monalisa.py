@@ -81,7 +81,9 @@ if __name__ == "__main__":
     constraints = encode_image_as_constraint_field(IMAGE_FN, Lx / 2, Ly, Lz, RES)
 
     print(f"Generating turbulence stencil with {len(constraints)} constraints...")
-    stencil = ConstrainedStencil(constraints, L, gamma, Nx, Ny, Nz, Lx, Ly, Lz)
+    stencil = ConstrainedStencil(
+        constraints, L, gamma, Nx, Ny, Nz, Lx, Ly, Lz, spectral_compression_target=0.9
+    )
 
     print(f"Correlation matrix sparsity: {100 * stencil.sparsity:.2f}%")
     print(f"Spectral compression: {100 * stencil.spectral_compression:.2f}%")

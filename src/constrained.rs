@@ -1,8 +1,9 @@
-use crate::unconstrained::{Stencil, StencilParams};
-use crate::utilities::{
-    distance_matrix, irfft3d, spectral_superposition_par, spectral_superposition_ser,
-    CompressedSpectralImpulseResponse,
+use crate::spectral_impulse::{
+    spectral_superposition_par, spectral_superposition_ser, CompressedSpectralImpulseResponse,
 };
+use crate::unconstrained::{Stencil, StencilParams};
+use crate::utilities::{distance_matrix, irfft3d};
+
 use ninterp::prelude::*;
 
 use itertools::izip;
@@ -39,7 +40,7 @@ impl ConstrainedStencil {
         stencil: Stencil,
         constraints: Vec<Constraint>,
         corr_thres: f32,
-        impulse_thres: f32,
+        spectral_compression_target: f64,
     ) -> Self {
         let p: &StencilParams = &stencil.p;
 
@@ -111,6 +112,7 @@ impl ConstrainedStencil {
 
         // Calculate compressed impulse responses
         let (impulse_u, _impulse_v, _impulse_w, _impulse_uw) = stencil.spectral_impulses();
+        let impulse_thres = impulse_u.get_thres_from_compression_ratio(spectral_compression_target);
         let compression_indices = impulse_u.get_compression_indices(impulse_thres);
         // Note: use the CompressionIndices.combine_all method to find the max envelope of multiple compressed impulses when needed.
         let spectral_compression = compression_indices.total_compression_ratio();
@@ -188,18 +190,9 @@ impl ConstrainedStencil {
             ..self.stencil.p.Ny,
             ..self.stencil.p.Nz
         ];
-        let U: Array3<f32> = irfft3d(&mut U_f_exp)
-            .slice(output_slice)
-            .to_owned()
-            + U;
-        let V: Array3<f32> = irfft3d(&mut V_f_exp)
-            .slice(output_slice)
-            .to_owned()
-            + V;
-        let W: Array3<f32> = irfft3d(&mut W_f_exp)
-            .slice(output_slice)
-            .to_owned()
-            + W;
+        let U: Array3<f32> = irfft3d(&mut U_f_exp).slice(output_slice).to_owned() + U;
+        let V: Array3<f32> = irfft3d(&mut V_f_exp).slice(output_slice).to_owned() + V;
+        let W: Array3<f32> = irfft3d(&mut W_f_exp).slice(output_slice).to_owned() + W;
 
         (U, V, W)
     }

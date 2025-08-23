@@ -61,7 +61,7 @@ class RustConstrainedStencil:
         aperiodic_z: bool,
         constraints: np.ndarray,
         corr_thres: float,
-        impulse_thres: float,
+        spectral_compression_target: float,
         sinc_thres: float,
         parallel: bool,
     ): ...
