@@ -89,11 +89,11 @@ if __name__ == "__main__":
     print(f"Spectral compression: {100 * stencil.spectral_compression:.2f}%")
 
     print("Generating constrained turbulence...")
-    U, V, W = stencil.turbulence(ae, 1234, parallel=True)
+    wf = stencil.turbulence(ae, 1234, parallel=True)
 
     print("Plotting...")
     fig, axes = plt.subplots(1, 8, figsize=(16, 2))
-    for slice, ax in zip(U[::16], axes):
+    for slice, ax in zip(wf.U[::16], axes):
         ax.imshow(slice)
         ax.axis("off")
 

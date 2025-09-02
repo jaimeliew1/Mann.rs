@@ -28,8 +28,8 @@ if __name__ == "__main__":
     print(f"Generating {N_boxes} turbulence boxes...")
     U_slices = []
     for seed in trange(N_boxes, desc="turbulence"):
-        U, V, W = stencil.turbulence(ae, seed)
-        U_slices.append(U[0, :, :])
+        wf = stencil.turbulence(ae, seed)
+        U_slices.append(wf.U[0, :, :])
 
     print("Plotting...")
     fig, axes = plt.subplots(1, N_boxes, figsize=(16, 2))
@@ -38,4 +38,5 @@ if __name__ == "__main__":
         ax.axis("off")
         ax.set_title(f"box {i + 1}")
 
+    print(wf)
     plt.show()

@@ -5,6 +5,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 from . import mannrs
+from .Windfield import Windfield
 
 
 def mann_spectra(
@@ -109,9 +110,7 @@ class Stencil:
             self.sinc_thres,
         )
 
-    def turbulence(
-        self, ae: float, seed: int, parallel=True
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def turbulence(self, ae: float, seed: int, parallel=True) -> Windfield:
         """
         Generate a single realization of a 3D Mann turbulence velocity field.
 
@@ -132,11 +131,15 @@ class Stencil:
         """
 
         U, V, W = self.stencil.turbulence(ae, seed, parallel)
+        x, y, z = self.get_axes()
 
-        return (
+        return Windfield(
             U[: self.Nx, : self.Ny, : self.Nz],
             V[: self.Nx, : self.Ny, : self.Nz],
             W[: self.Nx, : self.Ny, : self.Nz],
+            x,
+            y,
+            z,
         )
 
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -149,12 +152,6 @@ class Stencil:
             (x, y, z) coordinate arrays of lengths Nx, Ny, Nz respectively.
         """
         return self.stencil.get_axes()
-
-
-def save_box(filename: Path, box: ArrayLike):
-    filename = Path(filename)
-    filename.parent.mkdir(exist_ok=True, parents=True)
-    np.array(box).astype("<f").tofile(filename)
 
 
 def load_mann_binary(filename: Path, N=(32, 32)) -> ArrayLike:

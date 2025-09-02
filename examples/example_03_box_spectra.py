@@ -81,9 +81,9 @@ if __name__ == "__main__":
 
     Suu_list, Svv_list, Sww_list, Suw_list = [], [], [], []
     for seed in trange(20):
-        U, V, W = stencil.turbulence(ae, seed)
+        wf = stencil.turbulence(ae, seed)
         f, Suu, Svv, Sww, Suw = calculate_box_spectra(
-            U, V, W, params["Lx"], params["Nx"]
+            wf.U, wf.V, wf.W, params["Lx"], params["Nx"]
         )
 
         Suu_list.append(Suu)

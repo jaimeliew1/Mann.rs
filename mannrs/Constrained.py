@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from mannrs.mannrs import RustConstrainedStencil
+from .Windfield import Windfield
 
 
 @dataclass
@@ -109,9 +110,7 @@ class ConstrainedStencil:
             sinc_thres=self.sinc_thres,
         )
 
-    def turbulence(
-        self, ae: float, seed: int, parallel: bool = True
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def turbulence(self, ae: float, seed: int, parallel: bool = True) -> Windfield:
         """
         Generate a constrained 3D Mann turbulence field realization.
 
@@ -129,7 +128,10 @@ class ConstrainedStencil:
         tuple of np.ndarray
             Velocity components (U, V, W), each of shape (Nx, Ny, Nz).
         """
-        return self.stencil.turbulate(float(ae), int(seed), parallel)
+        U, V, W = self.stencil.turbulate(float(ae), int(seed), parallel)
+        x, y, z = self.get_axes()
+
+        return Windfield(U, V, W, x, y, z)
 
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """

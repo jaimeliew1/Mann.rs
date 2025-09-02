@@ -53,8 +53,8 @@ if __name__ == "__main__":
     U_slices = []
     print(f"Generating {N_boxes} constrained turbulence boxes...")
     for i in range(N_boxes):
-        U, V, W = stencil.turbulence(ae=0.2, seed=i)
-        U_slices.append(U[:, :, 16])
+        wf = stencil.turbulence(ae=0.2, seed=i)
+        U_slices.append(wf.U[:, :, 16])
 
     # Plot results
     print("Plotting...")
