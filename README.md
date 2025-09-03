@@ -43,8 +43,15 @@ seed = 1234
 stencil = mannrs.Stencil(**params)
 
 # Generate one turbulence realization
-x, y, z = stencil.get_axes()
-U, V, W = stencil.turbulence(ae, seed)
+wf = stencil.turbulence(ae, seed)
+
+# Access axes dimension data
+print(wf.x, wf.y, wf.z)
+# Access field velocity data
+print(wf.U, wf.V, wf.W)
+
+# Save wind field to file.
+wf.to_netCDF("output.nc")
 ```
 
 
@@ -74,8 +81,10 @@ params = {
 cstencil = ConstrainedStencil(constraints=constraints, **params)
 
 # Generate constrained turbulence realization
-x, y, z = cstencil.get_axes()
-U, V, W = cstencil.turbulence(ae=0.2, seed=1234)
+wf = cstencil.turbulence(ae=0.2, seed=1234)
+
+# Save wind field to file
+wf.to_netCDF("output.nc")
 ```
 
 
