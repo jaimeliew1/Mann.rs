@@ -21,7 +21,7 @@ class TurbulenceParams(BaseModel):
     ae: float
     seed: int
     output: Path
-    format: Literal["netCDF", "HAWC2"] = "netCDF"
+    format: Literal["netCDF", "npz", "HAWC2"] = "netCDF"
 
 
 class StencilParams(BaseModel):
@@ -123,6 +123,9 @@ def main(src, parallel, dryrun):
             case "netCDF":
                 turb.to_netCDF(turbbox.output, Uamb=0.0)
                 print(f"Output written to '{turbbox.output}' (netCDF format).")
+            case "npz":
+                turb.to_npz(turbbox.output)
+                print(f"Output written to '{turbbox.output}' (npz format).")
             case "HAWC2":
                 _stem = turbbox.output.stem
                 turb.to_HAWC2(

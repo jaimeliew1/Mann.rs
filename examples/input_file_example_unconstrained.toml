@@ -31,13 +31,13 @@ Nz = 32     # Number of grid points in z-direction
 ae = 0.1              # Spectral scaling factor (αε^{2/3}), controls the amplitude of the turbulence spectrum
 seed = 42             # Random seed for reproducibility
 output = "output1.nc" # Output file name for the generated turbulence field
-# format = "netCDF"   # Output format: 'netCDF' or 'HAWC2' (default = 'netCDF')
+# format = "netCDF"   # Output format: 'netCDF', 'npz', or 'HAWC2' (default = 'netCDF')
 
 [[turbulence_boxes]]
 ae = 0.1
 seed = 123
-output = "output2.nc"
-format = "HAWC2"
+output = "output2.npz"
+format = "npz"
 
 [[turbulence_boxes]]
 ae = 0.1

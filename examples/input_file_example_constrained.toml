@@ -38,7 +38,7 @@ Nz = 64     # Number of grid points in z-direction
 ae = 0.05                 # Spectral scaling factor (αε^{2/3}), controls the amplitude of the turbulence spectrum
 seed = 42                 # Random seed for reproducibility
 output = "mona_lisa.nc" # Output file name for the generated turbulence field
-# format = "netCDF"   # Output format: 'netCDF' or 'HAWC2' (default = 'netCDF')
+# format = "netCDF"   # Output format: 'netCDF', 'npz', or 'HAWC2' (default = 'netCDF')
 
 
 # Constraint settings:

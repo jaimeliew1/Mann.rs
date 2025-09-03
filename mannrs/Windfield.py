@@ -68,6 +68,24 @@ class Windfield:
         np.array(self.V).astype("<f").tofile(fn_v)
         np.array(self.W).astype("<f").tofile(fn_w)
 
+    def to_npz(
+        self,
+        fn: str | Path,
+        U_offset: float = 0.0,
+        z_offset: float = 0.0,
+        y_offset: float = 0.0,
+    ) -> None:
+        np.savez(
+            fn,
+            allow_pickle=False,
+            u=self.U + U_offset,
+            v=self.V,
+            w=self.W,
+            x=self.x,
+            y=self.y + y_offset,
+            z=self.z + z_offset,
+        )
+
     def to_netCDF(
         self,
         fn: str | Path,
