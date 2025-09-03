@@ -11,6 +11,7 @@ dependencies = [
     "click>=8.0.4",
     "netcdf4>=1.6.5",
     "numpy>=1.21.6",
+    "pydantic>=2.5.3",
     "scipy>=1.5.4",
     "toml>=0.10.2",
     "tqdm>=4.64.1",
