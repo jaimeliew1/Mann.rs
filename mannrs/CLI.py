@@ -72,14 +72,26 @@ class SimulationParams(BaseModel):
     help="Do not overwrite existing files.",
     show_default=True,
 )
+@click.option(
+    "--benchmark",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Optional path to benchmarking output file",
+)
 @click.argument("filename", type=click.Path(exists=True, path_type=Path))
-def CLI(filename: Path, parallel: bool, dryrun: bool, skip_existing: bool):
+def CLI(
+    filename: Path,
+    parallel: bool,
+    dryrun: bool,
+    skip_existing: bool,
+    benchmark: Path | None,
+):
     """
     Mann.rs turbulence generator.
     Author: Jaime Liew <jaimeliew1@gmail.com>
     """
 
-    main(filename, parallel, dryrun, skip_existing)
+    main(filename, parallel, dryrun, skip_existing, benchmark)
 
 
 def load_sim_params(src: Path) -> SimulationParams:
@@ -120,8 +132,10 @@ def generate_stencil(
 
 def generate_turbulence_boxes(
     sim: SimulationParams, stencil: Stencil, parallel: bool, skip_existing: bool
-) -> None:
+) -> list[float]:
     """Generate all turbulent wind fields and write output in the specified format."""
+
+    turb_times: list[float] = []
     for i, turbbox in enumerate(sim.turbulence_boxes, start=1):
         print(f"Generating turbulence box {i}/{len(sim.turbulence_boxes)}...")
         print(f"Parameters: {turbbox}")
@@ -149,11 +163,26 @@ def generate_turbulence_boxes(
             case other:
                 raise ValueError(f"ERROR Output format '{other}' not implemented.")
 
-        turb_time = perf_counter() - tstart
-        print(f"Turbulence box {i} generated in {turb_time:.4f} seconds.\n")
+        turb_times.append(perf_counter() - tstart)
+        print(f"Turbulence box {i} generated in {turb_times[-1]:.4f} seconds.\n")
+
+    return turb_times
 
 
-def main(src: Path, parallel: bool, dryrun: bool, skip_existing: bool):
+class Benchmark(BaseModel):
+    stencil_time: float
+    sparsity: float | None = None
+    spectral_compression: float | None = None
+    turb_times: list[float]
+
+    def to_toml(self, fn: Path) -> None:
+        with open(fn, "w") as f:
+            toml.dump(self.model_dump(), f)
+
+
+def main(
+    src: Path, parallel: bool, dryrun: bool, skip_existing: bool, benchmark: Path | None
+):
     sim = load_sim_params(src)
 
     if dryrun:
@@ -171,4 +200,17 @@ def main(src: Path, parallel: bool, dryrun: bool, skip_existing: bool):
     stencil_time = perf_counter() - tstart
     print(f"Stencil generated in {stencil_time:.4f} seconds.\n")
 
-    generate_turbulence_boxes(sim, stencil, parallel, skip_existing)
+    turb_times = generate_turbulence_boxes(sim, stencil, parallel, skip_existing)
+
+    if benchmark:
+        if isinstance(stencil, ConstrainedStencil):
+            sparsity = stencil.sparsity
+            spectral_compression = stencil.spectral_compression
+        else:
+            sparsity, spectral_compression = None, None
+        Benchmark(
+            stencil_time=stencil_time,
+            sparsity=sparsity,
+            spectral_compression=spectral_compression,
+            turb_times=turb_times,
+        ).to_toml(benchmark)
