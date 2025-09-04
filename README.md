@@ -4,11 +4,33 @@
 A constrained Mann turbulence generator for Python written in Rust. Mannrs can generate 3D coherent turbulence boxes for wind turbine simulations. It can generate 3D coherent turbulence boxes for wind turbine simulations, including constrained turbulence fields that enforce any number of velocity constraints at arbitrary locations within the wind field. The numerical innovations used in this package are described in [Liew, J., Riva, R., & Göçmen, T. (2023) *Efficient Mann turbulence generation for offshore wind farms with applications in fatigue load surrogate modelling*](https://doi.org/10.1088/1742-6596/2626/1/012050). The underlying Mann turbulence model is originially described in [Mann, J. (1998). *Wind field simulation*](https://doi.org/10.1016/S0266-8920(97)00036-2).
 
 Features include:
-- **Parallelized computations:** Just set `parallel=True`
+- **Parallelized computations** Calculations are parallelized using [Rayon](https://github.com/rayon-rs/rayon).
 - **Memory efficient:** Can generate extremely high resolution turbulence.
 - **Blazing fast:** Thanks to the stencil method and the Rust backend.
 - **Arbitrary box sizing:** Box discretization is not limited to powers of 2.
 - **Supports constrained turbulence:** Generate turbulence fields conditioned on pointwise velocity constraints.
+
+
+
+# Installation
+## Installation from Pypi
+Mann.rs supports **Windows**, **Linux**, and **MacOS**, and can be installed easily via pip without requiring a Rust compiler:
+```bash
+pip install mannrs
+```
+## Installation from source
+To install from source, the Rust compiler must be installed. Clone the repository and run pip install:
+```bash
+git clone git@github.com:jaimeliew1/Mann.rs.git
+cd Mann.rs
+pip install .
+```
+
+## Installation in Rust
+To install the underlying Rust package for use in Rust, run:
+```bash
+cargo install --git https://github.com/jaimeliew1/Mann.rs mannrs
+```
 
 # Usage
 Mannrs separates the turbulence generation process into two distinct steps:
@@ -18,6 +40,45 @@ Mannrs separates the turbulence generation process into two distinct steps:
 2) **Turbulence synthesis** — generates velocity fields from the stencil given a random seed.
 
 This design enables reusing the stencil to generate multiple independent turbulence realizations efficiently.
+## Command line
+
+A command-line interface for generating turbulence using the Mann.rs model. This CLI tool reads a TOML configuration file describing simulation parameters, generates a stencil (constrained or unconstrained), and produces turbulence boxes in various output formats. 
+
+## 📦 Command
+
+```bash
+mannrs [OPTIONS] FILENAME
+```
+
+
+## 🔧 Arguments
+
+### `FILENAME` *(required)*
+- Path to the Mannrs input file.
+
+### ⚙️ Options
+
+### `--parallel / --serial`
+- **Type**: flag (boolean switch)
+- **Default**: `--parallel`
+- **Description**: Controls whether stencil and turbulence generation is parallelized.
+- Use `--serial` to disable parallel execution.
+
+### `--dryrun`
+- **Description**: Validates the input file and prints parsed parameters without generating turbulence.
+
+### `--skip-existing`
+- **Description**: Skips generation for turbulence boxes whose output files already exist.
+
+### 🧪 Example Usage
+
+```bash
+mannrs --skip-existing configs/sim.toml
+```
+
+```bash
+mannrs --dryrun configs/test.toml
+```
 
 ## Python
 
@@ -120,25 +181,6 @@ let stencil = Stencil::from_params(
 let (U, V, W) = stencil.turbulence(ae, seed, parallel);
 ```
 
-# Installation
-## Installation from Pypi
-Mann.rs supports Windows, Linux, and MacOS, and can be installed easily via pip without requiring a Rust compiler:
-```bash
-pip install mannrs
-```
-## Installation from source
-To install from source, the Rust compiler must be installed. Clone the repository and run pip install:
-```bash
-git clone git@github.com:jaimeliew1/Mann.rs.git
-cd Mann.rs
-pip install .
-```
-
-## Installation in Rust
-To install the underlying Rust package for use in Rust, run:
-```bash
-cargo install --git https://github.com/jaimeliew1/Mann.rs mannrs
-```
 
 # Contributions
 If you have suggestions or issues with Mann.rs, feel free to contact me at `jaimeliew1@gmail.com`. Pull requests are welcome.

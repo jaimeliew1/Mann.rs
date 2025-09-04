@@ -21,7 +21,7 @@ class TurbulenceParams(BaseModel):
     ae: float
     seed: int
     output: Path
-    format: Literal["netCDF", "npz", "HAWC2"] = "netCDF"
+    format: Literal["npz", "netCDF", "HAWC2"] = "npz"
 
 
 class StencilParams(BaseModel):
@@ -63,32 +63,37 @@ class SimulationParams(BaseModel):
     is_flag=True,
     default=False,
     help="Evaluate input files without generating turbulence.",
+    show_default=True,
+)
+@click.option(
+    "--skip-existing",
+    is_flag=True,
+    default=False,
+    help="Do not overwrite existing files.",
+    show_default=True,
 )
 @click.argument("filename", type=click.Path(exists=True, path_type=Path))
-def CLI(filename, parallel, dryrun):
+def CLI(filename: Path, parallel: bool, dryrun: bool, skip_existing: bool):
     """
     Mann.rs turbulence generator.
     Author: Jaime Liew <jaimeliew1@gmail.com>
     """
 
-    main(filename, parallel, dryrun)
+    main(filename, parallel, dryrun, skip_existing)
 
 
-def main(src, parallel, dryrun):
-    # Load input file and parse into SimulationParams
-
+def load_sim_params(src: Path) -> SimulationParams:
+    """Load and parse the TOML input file into a SimulationParams object."""
     with open(src, "r") as f:
         data = toml.load(f)
     sim = SimulationParams(**data)
+    return sim
 
-    if dryrun:
-        print("[DRY RUN] Input file successfully read. Skipping turbulence generation.")
-        print("Parsed simulation parameters:")
-        print(sim)
-        return
 
-    # Generate stencil (constrained or unconstrained)
-    tstart = perf_counter()
+def generate_stencil(
+    sim: SimulationParams, parallel: bool
+) -> Stencil | ConstrainedStencil:
+    """Generate a turbulence stencil based on simulation parameters, optionally with constraints."""
     if sim.constraint_params is None:
         print("Generating unconstrained stencil...")
         print(f"Stencil parameters: {sim.stencil_params}")
@@ -109,23 +114,30 @@ def main(src, parallel, dryrun):
         )
         print(f"Correlation matrix sparsity: {stencil.sparsity}")
         print(f"Spectral compression: {stencil.spectral_compression}")
-    stencil_time = perf_counter() - tstart
-    print(f"Stencil generated in {stencil_time:.4f} seconds.\n")
 
-    # Generate turbulence for each box
+    return stencil
+
+
+def generate_turbulence_boxes(
+    sim: SimulationParams, stencil: Stencil, parallel: bool, skip_existing: bool
+) -> None:
+    """Generate all turbulent wind fields and write output in the specified format."""
     for i, turbbox in enumerate(sim.turbulence_boxes, start=1):
         print(f"Generating turbulence box {i}/{len(sim.turbulence_boxes)}...")
         print(f"Parameters: {turbbox}")
+        if skip_existing and turbbox.output.exists():
+            print(f"Output '{turbbox.output}' already exists. Skipping.")
+            continue
         tstart = perf_counter()
         turb = stencil.turbulence(turbbox.ae, turbbox.seed, parallel=parallel)
 
         match turbbox.format:
-            case "netCDF":
-                turb.to_netCDF(turbbox.output, Uamb=0.0)
-                print(f"Output written to '{turbbox.output}' (netCDF format).")
             case "npz":
                 turb.to_npz(turbbox.output)
                 print(f"Output written to '{turbbox.output}' (npz format).")
+            case "netCDF":
+                turb.to_netCDF(turbbox.output, Uamb=0.0)
+                print(f"Output written to '{turbbox.output}' (netCDF format).")
             case "HAWC2":
                 _stem = turbbox.output.stem
                 turb.to_HAWC2(
@@ -139,3 +151,24 @@ def main(src, parallel, dryrun):
 
         turb_time = perf_counter() - tstart
         print(f"Turbulence box {i} generated in {turb_time:.4f} seconds.\n")
+
+
+def main(src: Path, parallel: bool, dryrun: bool, skip_existing: bool):
+    sim = load_sim_params(src)
+
+    if dryrun:
+        print("[DRY RUN] Input file successfully read. Skipping turbulence generation.")
+        print("Parsed simulation parameters:")
+        print(sim)
+        return
+
+    if skip_existing and all(x.output.exists() for x in sim.turbulence_boxes):
+        print("All turbulence boxes already exist. Skipping generation.")
+        return
+
+    tstart = perf_counter()
+    stencil = generate_stencil(sim, parallel)
+    stencil_time = perf_counter() - tstart
+    print(f"Stencil generated in {stencil_time:.4f} seconds.\n")
+
+    generate_turbulence_boxes(sim, stencil, parallel, skip_existing)
