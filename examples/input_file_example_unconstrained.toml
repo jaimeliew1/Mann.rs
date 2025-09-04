@@ -1,6 +1,6 @@
-# ┌────────────────────────────────────────────────────────────────────────────┐
-# │                         Mann.rs Turbulence Input File                      │
-# └────────────────────────────────────────────────────────────────────────────┘
+#
+#                          Mann.rs Turbulence Input File                      
+#
 # This file defines the parameters for generating synthetic turbulence fields using the Mann model.
 # This example generates three turbulence boxes with different spectral scaling and random seeds,
 # all sharing the same Mann stencil parameters.
@@ -33,6 +33,10 @@ ae = 0.1               # Spectral scaling factor (αε^{2/3}), controls the ampl
 seed = 42              # Random seed for reproducibility
 output = "output1.npz" # Output file name for the generated turbulence field
 # format = "npz"   # Output format: 'npz', 'netCDF', or 'HAWC2' (default = 'npz')
+# u_offset = 0.0   # Velocity offset added to the u velocity component.
+# y_offset = 0.0   # Spatial offset added to the y axis (e.g. to center the box at zero.)
+# z_offset = 0.0   # Spatial offset added to the z axis.
+
 
 [[turbulence_boxes]]
 ae = 0.2

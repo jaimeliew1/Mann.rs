@@ -1,6 +1,6 @@
-# ┌────────────────────────────────────────────────────────────────────────────┐
-# │                         Mann.rs Turbulence Input File                      │
-# └────────────────────────────────────────────────────────────────────────────┘
+#
+#                          Mann.rs Turbulence Input File                      
+#
 # This file defines the parameters for generating synthetic turbulence fields
 # using the Mann model with velocity constraints.
 
