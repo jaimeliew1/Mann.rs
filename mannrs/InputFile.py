@@ -24,29 +24,48 @@ class TurbulenceParams(BaseModel):
     output: Path
     format: Literal["npz", "netCDF", "HAWC2"] = "npz"
     u_offset: float = 0.0
+    """Velocity offset added to the u velocity component."""
     y_offset: float = 0.0
+    """Spatial offset added to the y axis (e.g. to center the box at zero.)"""
     z_offset: float = 0.0
+    """Spatial offset added to the z axis."""
 
 
 class StencilParams(BaseModel):
     L: float
+    """Length scale (m), characterizes the size of energy-containing eddies"""
     gamma: float
+    """Anisotropy parameter [-]"""
     Lx: float
+    """Domain length in x-direction (m)"""
     Ly: float
+    """Domain length in y-direction (m)"""
     Lz: float
+    """Domain length in z-direction (m)"""
     Nx: int
+    """Number of grid points in x-direction"""
     Ny: int
+    """Number of grid points in y-direction"""
     Nz: int
+    """Number of grid points in z-direction"""
     aperiodic_x: bool = False
+    """sets aperiodicity in the x-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
     aperiodic_y: bool = True
+    """sets aperiodicity in the y-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
     aperiodic_z: bool = True
+    """sets aperiodicity in the z-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
     sinc_thres: float = 3.0
+    """
+    Threshold for applying the Mann sinc correction to low-frequency modes. 
+    """
 
 
 class ConstraintParams(BaseModel):
     constraints: list[SimConstraint] = Field(..., repr=False)
     spectral_compression_target: float = 0.8
+    """Desired compression ratio for the constraint impulse response."""
     corr_thres: float = 0.0001
+    """Threshold for sparsifying the constraint correlation matrix"""
 
 
 class MannrsInputParams(BaseModel):
@@ -105,35 +124,35 @@ def generate_turbulence_boxes(
         tstart = perf_counter()
         turb = stencil.turbulence(turbbox.ae, turbbox.seed, parallel=parallel)
 
-        match turbbox.format:
-            case "npz":
-                turb.to_npz(
-                    turbbox.output,
-                    U_offset=turbbox.u_offset,
-                    y_offset=turbbox.y_offset,
-                    z_offset=turbbox.z_offset,
-                )
-                print(f"Output written to '{turbbox.output}' (npz format).")
-            case "netCDF":
-                turb.to_netCDF(
-                    turbbox.output,
-                    Uamb=0.0,
-                    U_offset=turbbox.u_offset,
-                    y_offset=turbbox.y_offset,
-                    z_offset=turbbox.z_offset,
-                )
-                print(f"Output written to '{turbbox.output}' (netCDF format).")
-            case "HAWC2":
-                _stem = turbbox.output.stem
-                turb.to_HAWC2(
-                    turbbox.output.with_stem(_stem + "_u"),
-                    turbbox.output.with_stem(_stem + "_v"),
-                    turbbox.output.with_stem(_stem + "_w"),
-                    U_offset=turbbox.u_offset,
-                )
-                print(f"Output written to '{turbbox.output}' (HAWC2 format).")
-            case other:
-                raise ValueError(f"ERROR Output format '{other}' not implemented.")
+
+        if turbbox.format== "npz":
+            turb.to_npz(
+                turbbox.output,
+                U_offset=turbbox.u_offset,
+                y_offset=turbbox.y_offset,
+                z_offset=turbbox.z_offset,
+            )
+            print(f"Output written to '{turbbox.output}' (npz format).")
+        elif turbbox.format== "netCDF":
+            turb.to_netCDF(
+                turbbox.output,
+                Uamb=0.0,
+                U_offset=turbbox.u_offset,
+                y_offset=turbbox.y_offset,
+                z_offset=turbbox.z_offset,
+            )
+            print(f"Output written to '{turbbox.output}' (netCDF format).")
+        elif turbbox.format== "HAWC2":
+            _stem = turbbox.output.stem
+            turb.to_HAWC2(
+                turbbox.output.with_stem(_stem + "_u"),
+                turbbox.output.with_stem(_stem + "_v"),
+                turbbox.output.with_stem(_stem + "_w"),
+                U_offset=turbbox.u_offset,
+            )
+            print(f"Output written to '{turbbox.output}' (HAWC2 format).")
+        else:
+            raise ValueError(f"ERROR Output format '{turbbox.format}' not implemented.")
 
         turb_times.append(perf_counter() - tstart)
         print(f"Turbulence box {i} generated in {turb_times[-1]:.4f} seconds.\n")
@@ -153,9 +172,12 @@ class Benchmark(BaseModel):
 
 
 def run(
-    sim: MannrsInputParams, parallel: bool, dryrun: bool, skip_existing: bool, benchmark: Path | None
+    sim: MannrsInputParams,
+    parallel: bool,
+    dryrun: bool,
+    skip_existing: bool,
+    benchmark: Path | None,
 ):
-
     if dryrun:
         print("[DRY RUN] Input file successfully read. Skipping turbulence generation.")
         print("Parsed simulation parameters:")

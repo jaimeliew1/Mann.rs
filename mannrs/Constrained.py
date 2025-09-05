@@ -36,7 +36,7 @@ class ConstrainedStencil:
 
     Parameters
     ----------
-    constraints : list of Constraint
+    constraints : list[Constraint]
         List of velocity constraints to enforce.
     L : float
         Turbulence length scale (m).
@@ -55,19 +55,19 @@ class ConstrainedStencil:
     Lz : float
         Domain size in z direction (m).
     aperiodic_x : bool, optional
-        If True, doubles the domain in x to enforce aperiodicity (default: False).
+        If True, doubles the domain in x to enforce aperiodicity.
     aperiodic_y : bool, optional
-        If True, doubles the domain in y to enforce aperiodicity (default: True).
+        If True, doubles the domain in y to enforce aperiodicity.
     aperiodic_z : bool, optional
-        If True, doubles the domain in z to enforce aperiodicity (default: True).
+        If True, doubles the domain in z to enforce aperiodicity.
     parallel : bool, optional
-        Enable parallel computation (default: True).
+        Enable parallel computation.
     corr_thres : float, optional
-        Correlation threshold used to truncate weak constraint influence (default: 1e-4).
-    impulse_thres : float, optional
-        Spectral impulse truncation threshold. (default: 5e-4).
+        Correlation threshold used to truncate weak constraint influence.
+    spectral_compression_target : float, optional
+        Spectral impulse truncation threshold..
     sinc_thres : float, optional
-        Threshold parameter used internally by the stencil algorithm (default: 3.0).
+        Threshold parameter used internally by the stencil algorithm.
     """
 
     constraints: list[Constraint]

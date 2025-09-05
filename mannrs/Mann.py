@@ -45,6 +45,32 @@ class Stencil:
     This class wraps a compiled `RustStencil` object and precomputes the structure
     required to synthesize turbulence boxes using the Mann model. The stencil
     allows rapid generation of multiple realizations with consistent spatial configuration.
+    Examples
+    --------
+
+    ```python
+    import mannrs
+    
+    params = {
+        "L": 30.0,
+        "gamma": 3.2,
+        "Lx": 6000,
+        "Ly": 200,
+        "Lz": 200,
+        "Nx": 8192,
+        "Ny": 64,
+        "Nz": 64,
+    }
+
+    # Generate stencil
+    stencil = mannrs.Stencil(**params)
+
+    # Generate turbulent wind field
+    wf = stencil.turbulence(0.2, 1234)
+
+    # Save wind field to file.
+    wf.to_netCDF("output.nc")
+    ```
 
     Parameters
     ----------
@@ -125,9 +151,19 @@ class Stencil:
 
         Returns
         -------
-        tuple of np.ndarray
-            A tuple of 3D arrays (U, V, W), each of shape (Nx, Ny, Nz),
-            representing the velocity components in the x, y, and z directions.
+        Windfield
+            A Windfield object containing the velocity components (U, V, W) and axes
+            coordinates (x, y, z).
+
+        Examples
+        --------
+        Generate a single turbulence realization:
+
+        >>> wf = stencil.turbulence(ae=0.2, seed=42)
+        >>> print(f"U-component shape: {wf.U.shape}")
+        U-component shape: (64, 64, 8192)
+        >>> print(f"Mean wind speed: {wf.U.mean():.3f} m/s")
+        Mean wind speed: 0.125 m/s
         """
 
         U, V, W = self.stencil.turbulence(ae, seed, parallel)

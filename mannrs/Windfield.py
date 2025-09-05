@@ -9,6 +9,17 @@ import netCDF4
 class Windfield:
     """
     A container for generated wind field data.
+    Examples
+    --------
+    Save to file:
+    >>> wf.to_netCDF("turbulence_field.nc")
+
+    Access individual components:
+
+    >>> u_velocity = wf.U  # Streamwise component
+    >>> v_velocity = wf.V  # Lateral component
+    >>> w_velocity = wf.W  # Vertical component
+    >>> x_coords = wf.x    # X-coordinates
     """
 
     U: np.ndarray
@@ -109,11 +120,11 @@ class Windfield:
         Uamb : float
             Ambient wind speed used to convert x-coordinates to time.
         U_offset : float, optional
-            Offset added to the U-component of velocity (default is 0.0).
+            Offset added to the U-component of velocity.
         z_offset : float, optional
-            Offset added to the z-coordinate (default is 0.0).
+            Offset added to the z-coordinate.
         y_offset : float, optional
-            Offset added to the y-coordinate (default is 0.0).
+            Offset added to the y-coordinate.
 
         - The NetCDF file will contain dimensions: time, x, y, z and variables: u, v, w, x, y, z, time.
         """
