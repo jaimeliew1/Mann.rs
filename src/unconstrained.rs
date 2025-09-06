@@ -11,7 +11,7 @@ use ndarray::parallel::prelude::*;
 use ndarray::prelude::*;
 use ndarray::{linspace, Zip};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StencilParams {
     pub L: f32,
     pub gamma: f32,
@@ -90,6 +90,7 @@ impl StencilParams {
     }
 }
 
+#[derive(Clone)]
 pub struct Stencil {
     pub p: StencilParams,
     stencil: Array5<f32>,

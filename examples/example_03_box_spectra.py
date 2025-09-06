@@ -77,7 +77,7 @@ def calculate_box_spectra(
 
 
 if __name__ == "__main__":
-    stencil = Stencil(**params)
+    stencil = Stencil(**params).build()
 
     Suu_list, Svv_list, Sww_list, Suw_list = [], [], [], []
     for seed in trange(20):

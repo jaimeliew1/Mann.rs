@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 
 
-from mannrs import ConstrainedStencil, Constraint
+from mannrs import Stencil, Constraint
 
 
 IMAGE_FN = Path(__file__).parent / "mona_lisa.webp"
@@ -81,8 +81,10 @@ if __name__ == "__main__":
     constraints = encode_image_as_constraint_field(IMAGE_FN, Lx / 2, Ly, Lz, RES)
 
     print(f"Generating turbulence stencil with {len(constraints)} constraints...")
-    stencil = ConstrainedStencil(
-        constraints, L, gamma, Nx, Ny, Nz, Lx, Ly, Lz, spectral_compression_target=0.9
+    stencil = (
+        Stencil(L=L, gamma=gamma, Nx=Nx, Ny=Ny, Nz=Nz, Lx=Lx, Ly=Ly, Lz=Lz)
+        .constrain(constraints, spectral_compression_target=0.9)
+        .build()
     )
 
     print(f"Correlation matrix sparsity: {100 * stencil.sparsity:.2f}%")

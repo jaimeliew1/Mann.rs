@@ -33,10 +33,9 @@ theme:
 nav:
   - Home: index.md
   - Installation: installation.md
-  - Basic usage: 
-    - Basic principles: usage/basic_principles.md
-    - Unconstrained turbulence: usage/unconstrained.md
-    - Constrained turbulence: usage/Constrained.md
+  - Usage: 
+    - Basic usage: usage/basic_usage.md
+    - What is the stencil?: usage/stencil.md
   - API Reference:
     - Input file schema: api/schema.md
     - Python API: api/python.md
@@ -53,7 +52,7 @@ plugins:
           options:
             extensions:
             - griffe_pydantic:
-                schema: true
+                schema: false
             docstring_style: numpy  # or "google" or "sphinx"
             show_source: false
             show_root_heading: true
@@ -66,7 +65,8 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: "."
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
@@ -76,6 +76,8 @@ markdown_extensions:
       permalink: true
   - attr_list
   - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
 
 extra:
   social:
@@ -84,9 +86,8 @@ extra:
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/mannrs/
 
-markdown_extensions:
-  - pymdownx.arithmatex:
-      generic: true
+
+
 
 extra_javascript:
   - javascripts/mathjax.js

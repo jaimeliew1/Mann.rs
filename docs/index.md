@@ -17,7 +17,6 @@ Mann.rs is a Rust-based turbulence generator with Python bindings. It implements
 
 
 
-
 ## Scientific Background
 The numerical innovations in Mann.rs are described in:
 

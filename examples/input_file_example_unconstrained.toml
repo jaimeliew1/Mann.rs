@@ -1,42 +1,41 @@
 #
-#                          Mann.rs Turbulence Input File                      
+#             Mann.rs Turbulence Input File
 #
-# This file defines the parameters for generating synthetic turbulence fields using the Mann model.
-# This example generates three turbulence boxes with different spectral scaling and random seeds,
-# all sharing the same Mann stencil parameters.
+# Defines parameters for generating synthetic turbulence
+# fields using the Mann model. This example generates
+# three turbulence boxes with different spectral scaling
+# and random seeds, all sharing the same stencil params.
 
-[stencil_params]
-L = 30.0    # Length scale (m), characterizes the size of energy-containing eddies
-gamma = 3.9 # Anisotropy parameter, controls the elongation of turbulence structures
-Lx = 200.0  # Domain length in x-direction (m)
-Ly = 200.0  # Domain length in y-direction (m)
-Lz = 8192.0 # Domain length in z-direction (m)
-Nx = 4028   # Number of grid points in x-direction
-Ny = 32     # Number of grid points in y-direction
-Nz = 32     # Number of grid points in z-direction
-# sinc_thres = 3.0 # Threshold for applying the Mann sinc correction to low-frequency modes (default = 3.0)
+[stencil_spec]
+L = 30.0    # Length scale (m), size of large eddies
+gamma = 3.9 # Anisotropy, elongation of structures
+Lx = 200.0  # Domain length in x (m)
+Ly = 200.0  # Domain length in y (m)
+Lz = 8192.0 # Domain length in z (m)
+Nx = 8192   # Grid points in x
+Ny = 32     # Grid points in y
+Nz = 32     # Grid points in z
+# sinc_thres = 3.0  # Threshold for Mann sinc
+# correction at low frequencies (default = 3.0)
 
-# Periodicity settings:
-# These flags determine whether the turbulence box is periodic in each spatial direction.
-# Setting a direction to periodic (false) can reduce computational cost by approximately half.
-# If omitted, lateral (y) and vertical (z) axes are set to to aperiodic.
+# Periodicity flags: control whether the turbulence
+# box is periodic in each direction. Setting false
+# can cut cost ~half. Defaults: y,z = aperiodic.
 # aperiodic_x = false
 # aperiodic_y = true
 # aperiodic_z = true
 
-
 # Turbulence boxes:
-# Each entry defines a separate turbulence realization with its own spectral scaling and seed.
-# You can add as many turbulence boxes as needed to generate multiple outputs from the same stencil.
+# Each defines a turbulence realization with its own
+# scaling and seed. Add as many as needed.
 [[turbulence_boxes]]
-ae = 0.1               # Spectral scaling factor (αε^{2/3}), controls the amplitude of the turbulence spectrum
-seed = 42              # Random seed for reproducibility
-output = "output1.npz" # Output file name for the generated turbulence field
-# format = "npz"   # Output format: 'npz', 'netCDF', or 'HAWC2' (default = 'npz')
-# u_offset = 0.0   # Velocity offset added to the u velocity component.
-# y_offset = 0.0   # Spatial offset added to the y axis (e.g. to center the box at zero.)
-# z_offset = 0.0   # Spatial offset added to the z axis.
-
+ae = 0.1   # Spectral scaling factor (αε^{2/3})
+seed = 42  # Random seed
+output = "output1.npz"  # Output filename
+# format = "npz"   # 'npz', 'netCDF', or 'HAWC2'
+# u_offset = 0.0   # Velocity offset in u
+# y_offset = 0.0   # Spatial offset in y
+# z_offset = 0.0   # Spatial offset in z
 
 [[turbulence_boxes]]
 ae = 0.2
@@ -49,12 +48,13 @@ seed = 234
 output = "output3.nc"
 format = "netCDF"
 
-# Constraint settings: Ommitting constraint_params will generate an unconstrained box. See the 
-# input_file_example_constrained.toml for an example of a constrained turbulence input file.
-# [constraint_params]
-# spectral_compression_target = 0.8 # Desired compression ratio for the constraint impulse response (default = 0.8)
-# corr_thres = 0.0001               # Threshold for sparsifying the constraint correlation matrix (default = 0.0001)
+# Constraints: omit [constraint_spec] for an
+# unconstrained box. See example_constrained.toml
+# for constrained turbulence input files.
+# [constraint_spec]
+# spectral_compression_target = 0.8
+# corr_thres = 0.0001
 # constraints = [
-#     { x = 10, y = 10, z = 10, u = 0.3 }, 
-#     { x = 20, y = 20, z = 20, u = 0.3 },
+#   { x = 10, y = 10, z = 10, u = 0.3 },
+#   { x = 20, y = 20, z = 20, u = 0.3 },
 # ]

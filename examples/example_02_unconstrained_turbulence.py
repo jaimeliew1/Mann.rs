@@ -3,7 +3,7 @@ Generates multiple unconstrained turbulence boxes using a shared stencil. Plots
 wind field slices of each box.
 """
 
-import mannrs
+from mannrs import Stencil
 from tqdm import trange
 import matplotlib.pyplot as plt
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     print("Generating turbulence stencil...")
     for _ in trange(1, desc="stencil"):
-        stencil = mannrs.Stencil(
+        stencil = Stencil(
             L=30.0,
             gamma=3.2,
             Lx=6000,
@@ -23,7 +23,7 @@ if __name__ == "__main__":
             Nx=8192,
             Ny=32,
             Nz=32,
-        )
+        ).build()
 
     print(f"Generating {N_boxes} turbulence boxes...")
     U_slices = []

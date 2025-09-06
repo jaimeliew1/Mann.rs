@@ -2,27 +2,27 @@
 
 ## Stencil
 
-::: mannrs.Stencil
+::: mannrs.Stencil.Stencil
     options:
       members:
         - turbulence
-      show_root_heading: false
+      show_root_heading: true
       heading_level: 3
 
-## ConstrainedStencil
-
-::: mannrs.ConstrainedStencil
+::: mannrs.Stencil.StencilInstance
     options:
       members:
         - turbulence
-      show_root_heading: false
+      show_root_heading: true
       heading_level: 3
+
+
 
 ## Constraint
 
-::: mannrs.Constraint
+::: mannrs.Stencil.Constraint
     options:
-      show_root_heading: false
+      show_root_heading: true
       heading_level: 3
 
 ## Windfield
@@ -30,8 +30,6 @@
 ::: mannrs.Windfield.Windfield
     options:
       members:
-        - to_npz
-        - to_netCDF
-        - to_HAWC2
-      show_root_heading: false
+        - write
+      show_root_heading: true
       heading_level: 3

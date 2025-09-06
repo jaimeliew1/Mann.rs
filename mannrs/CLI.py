@@ -1,8 +1,11 @@
 import click
 from pathlib import Path
+from time import perf_counter
 
-
-from .InputFile import MannrsInputParams, run
+import toml
+from pydantic import BaseModel
+from rich import print
+from .Stencil import Stencil
 
 
 @click.command()
@@ -45,5 +48,63 @@ def CLI(
     Author: Jaime Liew <jaimeliew1@gmail.com>
     """
 
-    sim = MannrsInputParams.from_toml(filename)
-    run(sim, parallel, dryrun, skip_existing, benchmark)
+    sim = Stencil.from_file(filename)
+
+    if dryrun:
+        print("[DRY RUN] Input file successfully read. Skipping turbulence generation.")
+        print("Parsed simulation parameters:")
+        print(sim)
+        return
+
+    if skip_existing and all(x.output.exists() for x in sim.turbulence_boxes):
+        print("All turbulence boxes already exist. Skipping generation.")
+        return
+
+    if sim.constrained:
+        print(
+            f"Generating constrained stencil with {len(sim.constraint_spec.constraints)} constraints..."
+        )
+        print(sim.stencil_spec)
+        print(sim.constraint_spec)
+    else:
+        print("Generating unconstrained stencil...")
+        print(sim.stencil_spec)
+
+    stencil = sim.build(parallel=parallel)
+
+    if sim.constrained:
+        print(f"Correlation matrix sparsity: {100*stencil.sparsity:.4f} %")
+        print(f"Spectral compression: {100*stencil.spectral_compression:.4f} %")
+    print(f"Stencil generated in {stencil.stencil_time:.4f} seconds.\n")
+
+    turb_times: list[float] = []
+    for i, turbbox in enumerate(sim.turbulence_boxes, start=1):
+        print(f"Generating turbulence box {i}/{len(sim.turbulence_boxes)}...")
+        print(f"Parameters: {turbbox}")
+        if skip_existing and turbbox.output.exists():
+            print(f"Output '{turbbox.output}' already exists. Skipping.")
+            continue
+        tstart = perf_counter()
+        turbbox.generate_and_save(stencil, parallel=parallel)
+
+        turb_times.append(perf_counter() - tstart)
+        print(f"Turbulence box {i} generated in {turb_times[-1]:.4f} seconds.\n")
+
+    if benchmark:
+        Benchmark(
+            stencil_time=stencil.stencil_time,
+            sparsity=stencil.sparsity,
+            spectral_compression=stencil.spectral_compression,
+            turb_times=turb_times,
+        ).to_toml(benchmark)
+
+
+class Benchmark(BaseModel):
+    stencil_time: float
+    sparsity: float | None = None
+    spectral_compression: float | None = None
+    turb_times: list[float]
+
+    def to_toml(self, fn: Path) -> None:
+        with open(fn, "w") as f:
+            toml.dump(self.model_dump(), f)

@@ -1,5 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 import netCDF4
@@ -12,7 +13,7 @@ class Windfield:
     Examples
     --------
     Save to file:
-    >>> wf.to_netCDF("turbulence_field.nc")
+    >>> wf.write("turbulence_field.nc", format="netCDF")
 
     Access individual components:
 
@@ -50,6 +51,60 @@ class Windfield:
 
     def __repr__(self):
         return f"Windfield(Nx={len(self.x)}, Ny={len(self.y)}, Nz={len(self.z)})"
+
+    def write(
+        self,
+        filename: Path,
+        format: Literal["npz", "netCDF", "HAWC2"] = "npz",
+        u_offset: float = 0.0,
+        y_offset: float = 0.0,
+        z_offset: float = 0.0,
+    ) -> None:
+        """
+        Write the turbulence field to disk in one of several supported formats.
+
+        Parameters
+        ----------
+        filename : Path
+            Target file path. For HAWC2 output, this stem will be used to
+            generate three files (``*_u``, ``*_v``, ``*_w``).
+        format : {"npz", "netCDF", "HAWC2"}, default="npz"
+            Output format:
+            - "npz"    : Compressed NumPy archive (single file).
+            - "netCDF" : NetCDF format.
+            - "HAWC2"  : Three component files suitable for HAWC2.
+        u_offset : float, default=0.0
+            Constant offset to add to the u-component of the velocity field.
+        y_offset : float, default=0.0
+            Spatial offset applied to the y-axis.
+        z_offset : float, default=0.0
+            Spatial offset applied to the z-axis.
+
+        Notes
+        -----
+        - In "HAWC2" mode, three separate files are created for the velocity
+          components (u, v, w) with suffixes appended to the given filename stem.
+        """
+        if format == "npz":
+            self.to_npz(
+                filename, U_offset=u_offset, y_offset=y_offset, z_offset=z_offset
+            )
+        elif format == "netCDF":
+            self.to_netCDF(
+                filename,
+                Uamb=0.0,
+                U_offset=u_offset,
+                y_offset=y_offset,
+                z_offset=z_offset,
+            )
+        elif format == "HAWC2":
+            _stem = filename.stem
+            self.to_HAWC2(
+                filename.with_stem(_stem + "_u"),
+                filename.with_stem(_stem + "_v"),
+                filename.with_stem(_stem + "_w"),
+                U_offset=u_offset,
+            )
 
     def to_HAWC2(
         self,

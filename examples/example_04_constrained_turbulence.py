@@ -8,7 +8,7 @@ and visualizes the resulting flow patterns across multiple realizations.
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mannrs import ConstrainedStencil, Constraint
+from mannrs.Stencil import Constraint, Stencil
 
 # Domain and constraint parameters
 Lx = 1000
@@ -31,19 +31,24 @@ if __name__ == "__main__":
 
     # Create constrained stencil
     print(f"Generating turbulence stencil with {len(constraints)} constraints...")
-    stencil = ConstrainedStencil(
-        constraints=constraints,
-        L=30.0,
-        gamma=3.2,
-        Lx=Lx,
-        Ly=200,
-        Lz=200,
-        Nx=Nx,
-        Ny=32,
-        Nz=32,
-        sinc_thres=12.0,
-        aperiodic_x=True,
-        spectral_compression_target=0.8,
+    stencil = (
+        Stencil(
+            L=30.0,
+            gamma=3.2,
+            Lx=Lx,
+            Ly=200,
+            Lz=200,
+            Nx=Nx,
+            Ny=32,
+            Nz=32,
+            sinc_thres=12.0,
+            aperiodic_x=True,
+        )
+        .constrain(
+            spectral_compression_target=0.8,
+            constraints=constraints,
+        )
+        .build()
     )
 
     print(f"Correlation matrix sparsity: {100 * stencil.sparsity:.2f}%")

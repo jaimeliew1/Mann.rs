@@ -20,6 +20,12 @@ class RustStencil:
         aperiodic_z: bool,
         sinc_thres: float,
     ): ...
+    def constrain(
+        self,
+        constraints: np.ndarray,
+        corr_thres: float,
+        spectral_compression_target: float,
+    ): ...
     def turbulence(
         self, ae: float, seed: int, parallel=bool
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
@@ -65,7 +71,7 @@ class RustConstrainedStencil:
         sinc_thres: float,
         parallel: bool,
     ): ...
-    def turbulate(
+    def turbulence(
         self, ae: float, seed: int, parallel: bool
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
@@ -73,5 +79,39 @@ class RustConstrainedStencil:
     def spectral_compression(self) -> float: ...
 
 def distance_matrix(x: np.ndarray) -> np.ndarray: ...
-
-# To do: finish
+def isotropic_f32(k: np.ndarray, ae: float, L: float) -> np.ndarray: ...
+def isotropic_sqrt_f32(k: np.ndarray, ae: float, L: float) -> np.ndarray: ...
+def sheared_f32(k: np.ndarray, ae: float, L: float, gamma: float) -> np.ndarray: ...
+def sheared_sqrt_f32(
+    k: np.ndarray, ae: float, L: float, gamma: float
+) -> np.ndarray: ...
+def sheared_sinc_info_f32(
+    k: np.ndarray,
+    ae: float,
+    L: float,
+    gamma: float,
+    Ly: float,
+    Lz: float,
+    tol: float,
+    min_depth: float,
+) -> tuple[np.ndarray, int]: ...
+def sheared_sinc_f32(
+    k: np.ndarray,
+    ae: float,
+    L: float,
+    gamma: float,
+    Ly: float,
+    Lz: float,
+    tol: float,
+    min_depth: float,
+) -> np.ndarray: ...
+def sheared_sinc_sqrt_f32(
+    k: np.ndarray,
+    ae: float,
+    L: float,
+    gamma: float,
+    Ly: float,
+    Lz: float,
+    tol: float,
+    min_depth: float,
+) -> np.ndarray: ...

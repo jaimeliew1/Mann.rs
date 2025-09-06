@@ -15,7 +15,7 @@
 #   corresponding lines.
 
 
-[stencil_params]
+[stencil_spec]
 L = 30.0    # Length scale (m), characterizes the size of energy-containing eddies
 gamma = 3.9 # Anisotropy parameter, controls the elongation of turbulence structures
 Lx = 1000.0 # Domain length in x-direction (m)
@@ -47,9 +47,9 @@ output = "mona_lisa.npz" # Output file name for the generated turbulence field
 
 
 # Constraint settings:
-# Providing constraint_params will generate a constrained turbulence box.
+# Providing constraint_spec will generate a constrained turbulence box.
 # You may specify any number of velocity constraints to enforce specific values at grid points.
-[constraint_params]
+[constraint_spec]
 spectral_compression_target = 0.9 # Desired compression ratio for the constraint impulse response (default = 0.8)
 # corr_thres = 0.0001               # Threshold for sparsifying the constraint correlation matrix (default = 0.0001)
 constraints = [

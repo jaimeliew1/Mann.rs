@@ -840,6 +840,7 @@ dev = [
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "pymdown-extensions" },
     { name = "pytest" },
     { name = "rich" },
 ]
@@ -863,6 +864,7 @@ dev = [
     { name = "mkdocs", specifier = ">=1.5.3" },
     { name = "mkdocs-material", specifier = ">=9.2.7" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.22.0" },
+    { name = "pymdown-extensions", specifier = ">=10.16.1" },
     { name = "pytest", specifier = ">=7.4.4" },
     { name = "rich", specifier = ">=13.8.1" },
 ]

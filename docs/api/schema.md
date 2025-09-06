@@ -1,9 +1,14 @@
 # Input file schema
 
+## Input file example
+
+```toml
+--8<-- "examples/input_file_example_unconstrained.toml"
+```
 ## Stencil
 
-::: mannrs.InputFile.MannrsInputParams
-::: mannrs.InputFile.StencilParams
-::: mannrs.InputFile.TurbulenceParams
-::: mannrs.InputFile.ConstraintParams
-::: mannrs.InputFile.SimConstraint
+<!-- ::: mannrs.Stencil.Stencil -->
+::: mannrs.Stencil.StencilSpec
+::: mannrs.Stencil.ConstraintSpec
+::: mannrs.Stencil.Constraint
+::: mannrs.Stencil.TurbulenceSpec

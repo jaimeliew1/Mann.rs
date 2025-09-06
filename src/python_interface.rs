@@ -66,7 +66,33 @@ impl RustStencil {
             ),
         }
     }
-
+    fn constrain<'py>(
+        &self,
+        py: Python<'py>,
+        constraints: PyReadonlyArray2<'py, f32>,
+        corr_thres: f32,
+        spectral_compression_target: f64,
+    ) -> RustConstrainedStencil {
+        let mut constraints_new: Vec<Constraint> = Vec::new();
+        for row in constraints.as_array().rows() {
+            let slice = row.as_slice().unwrap();
+            let (x, y, z, u) = (slice[0], slice[1], slice[2], slice[3]);
+            constraints_new.push(Constraint {
+                x: x,
+                y: y,
+                z: z,
+                u: u,
+            });
+        }
+        RustConstrainedStencil {
+            stencil: ConstrainedStencil::new(
+                self.stencil.clone(),
+                constraints_new,
+                corr_thres,
+                spectral_compression_target,
+            ),
+        }
+    }
     fn turbulence<'py>(
         &self,
         py: Python<'py>,
@@ -233,7 +259,7 @@ impl RustConstrainedStencil {
         }
     }
 
-    fn turbulate<'py>(
+    fn turbulence<'py>(
         &self,
         py: Python<'py>,
         ae: f32,
