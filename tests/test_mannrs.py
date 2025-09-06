@@ -1,4 +1,4 @@
-import mannrs
+from mannrs import Constraint, Stencil
 
 ae = 0.2
 seed = 1234
@@ -13,16 +13,26 @@ params = {
     "Nz": 32,
 }
 
-
-def test_mannrs():
-
-    stencil = mannrs.Stencil(**params, parallel=False)
-
-    U, V, W = stencil.turbulence(ae, seed)
-    x, y, z = stencil.get_axes()
-    assert len(x) == params["Nx"]
-    assert len(y) == params["Ny"]
-    assert len(z) == params["Nz"]
+constraints = [
+    Constraint(x=100, y=100, z=100, u=0.5),
+    Constraint(x=150, y=100, z=100, u=-0.5),
+    Constraint(x=200, y=100, z=100, u=0.0),
+]
 
 
+def test_unconstrained():
+    stencil = Stencil(**params, parallel=False).build()
+    wf = stencil.turbulence(ae, seed)
 
+    assert len(wf.x) == params["Nx"]
+    assert len(wf.y) == params["Ny"]
+    assert len(wf.z) == params["Nz"]
+
+
+def test_constrained():
+    stencil = Stencil(**params, parallel=False).constrain(constraints).build()
+    wf = stencil.turbulence(ae, seed)
+
+    assert len(wf.x) == params["Nx"]
+    assert len(wf.y) == params["Ny"]
+    assert len(wf.z) == params["Nz"]
