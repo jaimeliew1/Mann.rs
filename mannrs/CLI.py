@@ -48,7 +48,7 @@ def CLI(
     Author: Jaime Liew <jaimeliew1@gmail.com>
     """
 
-    sim = Stencil.from_file(filename)
+    sim = Stencil.from_toml(filename)
 
     if dryrun:
         print("[DRY RUN] Input file successfully read. Skipping turbulence generation.")
