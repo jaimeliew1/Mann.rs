@@ -1,6 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Union
 
 import numpy as np
 import netCDF4
@@ -108,9 +108,9 @@ class Windfield:
 
     def to_HAWC2(
         self,
-        fn_u: str | Path,
-        fn_v: str | Path,
-        fn_w: str | Path,
+        fn_u: Union[str, Path],
+        fn_v: Union[str, Path],
+        fn_w: Union[str, Path],
         U_offset: float = 0.0,
     ) -> None:
         """
@@ -136,7 +136,7 @@ class Windfield:
 
     def to_npz(
         self,
-        fn: str | Path,
+        fn: Union[str, Path],
         U_offset: float = 0.0,
         z_offset: float = 0.0,
         y_offset: float = 0.0,
@@ -154,7 +154,7 @@ class Windfield:
 
     def to_netCDF(
         self,
-        fn: str | Path,
+        fn: Union[str, Path],
         Uamb: float,
         U_offset: float = 0.0,
         z_offset: float = 0.0,
