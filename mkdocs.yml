@@ -41,6 +41,7 @@ nav:
     - Python API: api/python.md
     - Rust API: api/rust.md
   - About:
+    - About: about/about.md
     - Citation: citation.md
 
 

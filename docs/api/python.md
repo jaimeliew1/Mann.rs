@@ -5,7 +5,9 @@
 ::: mannrs.Stencil.Stencil
     options:
       members:
-        - turbulence
+        - from_toml
+        - constrain
+        - build
       show_root_heading: true
       heading_level: 3
 
@@ -13,6 +15,7 @@
     options:
       members:
         - turbulence
+        - get_axes
       show_root_heading: true
       heading_level: 3
 

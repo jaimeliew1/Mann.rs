@@ -70,8 +70,11 @@ class Windfield:
             generate three files (``*_u``, ``*_v``, ``*_w``).
         format : {"npz", "netCDF", "HAWC2"}, default="npz"
             Output format:
-            - "npz"    : Compressed NumPy archive (single file).
+
+            - "npz"    : NumPy archive.
+
             - "netCDF" : NetCDF format.
+
             - "HAWC2"  : Three component files suitable for HAWC2.
         u_offset : float, default=0.0
             Constant offset to add to the u-component of the velocity field.
