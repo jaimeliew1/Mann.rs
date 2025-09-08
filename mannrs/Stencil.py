@@ -12,7 +12,7 @@ from .mannrs import RustConstrainedStencil, RustStencil
 from .Windfield import Windfield
 
 
-class Stencil(BaseModel):
+class Stencil(BaseModel, extra="allow"):
     stencil_spec: StencilSpec
     constraint_spec: Optional[ConstraintSpec] = None
     turbulence_boxes: Optional[list[TurbulenceSpec]] = None
@@ -43,7 +43,7 @@ class Stencil(BaseModel):
         )
 
     @classmethod
-    def from_file(cls, filepath: str | Path) -> Stencil:
+    def from_toml(cls, filepath: str | Path) -> Stencil:
         """
         Load stencil parameters (and optional constraints) from a TOML file.
         """
@@ -108,6 +108,12 @@ class Stencil(BaseModel):
 
         return StencilInstance(stencil, benchmark, self)
 
+    def turbulence(self, *_, **__):
+        raise RuntimeError(
+            "Cannot call `.turbulence()` on a Stencil object. "
+            "Call `.build()` first to get a StencilInstance, then call `.turbulence()` on that."
+        )
+
 
 class StencilInstance:
     """
@@ -162,7 +168,7 @@ class StencilInstance:
         return Windfield(U, V, W, x, y, z)
 
 
-class StencilSpec(BaseModel):
+class StencilSpec(BaseModel, extra="allow"):
     """
     Base stencil template. Can be constrained via `constrain`.
     """
@@ -195,7 +201,7 @@ class StencilSpec(BaseModel):
     """
 
 
-class ConstraintSpec(BaseModel):
+class ConstraintSpec(BaseModel, extra="allow"):
     constraints: list[Constraint] = Field(..., repr=False)
     """List of velocity constraints at certain positions in 3D space."""
     spectral_compression_target: float = 0.8
@@ -204,7 +210,7 @@ class ConstraintSpec(BaseModel):
     """Threshold for sparsifying the constraint correlation matrix"""
 
 
-class Constraint(BaseModel):
+class Constraint(BaseModel, extra="allow"):
     """
     A velocity constraint at a specific point in space.
     """
@@ -228,7 +234,7 @@ class Constraint(BaseModel):
                 raise
 
 
-class TurbulenceSpec(BaseModel):
+class TurbulenceSpec(BaseModel, extra="allow"):
     ae: float
     seed: int
     output: Path
