@@ -9,16 +9,17 @@ theme:
   name: material
   palette:
     - scheme: default
-      primary: teal
-      accent: teal
+      primary: orange
+      accent: green
       toggle:
-        icon: material/brightness-7
+        icon: material/weather-night
         name: Switch to dark mode
     - scheme: slate
-      primary: teal
-      accent: teal
+      primary: orange
+      accent: green
       toggle:
-        icon: material/brightness-4
+        icon: material/weather-sunny
+
         name: Switch to light mode
   features:
     - navigation.tabs
@@ -42,7 +43,6 @@ nav:
     - Rust API: api/rust.md
   - About:
     - About: about/about.md
-    - Citation: citation.md
 
 
 plugins:
@@ -52,12 +52,19 @@ plugins:
         python:
           options:
             extensions:
+            - griffe_typingdoc
             - griffe_pydantic:
                 schema: false
             docstring_style: numpy  # or "google" or "sphinx"
             show_source: false
+            separate_signature: false
             show_root_heading: true
             show_root_toc_entry: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            merge_init_into_class: true
+            # docstring_section_style: spacy
+            # signature_crossrefs: true
             heading_level: 2
 
 markdown_extensions:
@@ -86,6 +93,7 @@ extra:
       link: https://github.com/jaimeliew1/Mann.rs
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/mannrs/
+
 
 
 

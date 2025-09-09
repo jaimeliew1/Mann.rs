@@ -31,6 +31,7 @@ build-backend = "maturin"
 [dependency-groups]
 dev = [
     "griffe-pydantic>=1.1.7",
+    "griffe-typingdoc>=0.2.9",
     "ipython>=7.34.0",
     "matplotlib>=3.5.3",
     "mkdocs>=1.5.3",

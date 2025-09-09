@@ -1,6 +1,6 @@
 
 # Basic Usage
-## Turbulence from command line
+## **Turbulence from command line**
 The **Mann.rs** package can be run directly from the command line by providing an input file in TOML format:
 ```bash
 mannrs input.toml
@@ -30,34 +30,34 @@ seed = 123
 
 This input file creates two turbulent wind fields with the same Mann parameters, but with two different random seeds.
 
-### Verify an input file
+### **Verify an input file**
 Use `--dryrun` to check that an input file is valid without generating turbulence:
 ```bash
 mannrs --dryrun input.toml
 ```
 
-### Turn off parallelisation
+### **Turn off parallelisation**
 By default, Mann.rs uses parallelisation. To force serial execution:
 ```bash
 mannrs --serial input.toml
 ```
 
-### Avoid Overwriting Existing Files
+### **Avoid Overwriting Existing Files**
 **Mann.rs** will overwrite any existing turbulent wind field files. Use the `--skip-existing` option to leave existing results untouched and only generate missing outputs:
 ```bash
 mannrs --skip-existing input.toml
 ```
 This is especially useful when running batch jobs, where some files may have already been created.
 
-### See all available options
+### **See all available options**
 To list all available command-line options and their descriptions, use the `--help` flag:
 ```bash
 mannrs --help
 ```
 
-## Turbulence from Python
+## **Turbulence from Python**
 
-### Building a stencil
+### **Building a stencil**
 A Stencil defines the turbulence generation setup. There are three ways to build one.
 
 **1. Unconstrained Stencil**
@@ -123,7 +123,7 @@ from mannrs import Stencil
 stencil = Stencil.from_toml("input.toml").build()
 ```
 
-### Generating turbulence
+### **Generating turbulence**
 Once a stencil is built, turbulence fields can be generated with the `turbulence()` method. The two main arguments are:
 - `ae`: turbulence scaling parameter
 - `seed`: random number generator seed
@@ -134,7 +134,7 @@ windfield = stencil.turbulence(ae, seed)
 ```
 Here is a basic example of generating unconstrained turbulence with Mann.rs:
 
-### Saving turbulent wind fields
+### **Saving turbulent wind fields**
 
 the `turbulence()` method returns a **Windfield** object, which contains the three components of velocity as well as the axes as Numpy arrays:
 
@@ -159,14 +159,14 @@ windfield.write("output.nc", format="netCDF")
 ```
 💡 Missing a format you need? Let me know.
 
-### Adding a Streamwise Offset
+### **Adding a Streamwise Offset**
 
 Mann.rs wind fields have zero-mean velocities. To set a non-zero mean wind speed, provide a `U_offset`:
 
 ```python
 windfield.write("output.npz", U_offset=10.0) # mean wind = 10 m/s
 ```
-### Shifting Axes
+### **Shifting Axes**
 All Mann.rs wind field axes start at zero:
 
 - `x`: $0 \rightarrow L_x$
@@ -180,7 +180,7 @@ Offsets can be applied during saving:
 windfield.write("output.npz", y_offset=-100.0, z_offset=20.0)
 ```
 
-## Complete example (Constraned Turbulence)
+## **Complete example (Constraned Turbulence)**
 
 
 

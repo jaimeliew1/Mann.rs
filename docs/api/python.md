@@ -8,8 +8,7 @@
         - from_toml
         - constrain
         - build
-      show_root_heading: true
-      heading_level: 3
+
 
 ::: mannrs.Stencil.StencilInstance
     options:

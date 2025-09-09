@@ -7,29 +7,49 @@
 [![GitHub forks](https://img.shields.io/github/forks/jaimeliew1/mann.rs.svg?style=social)](https://github.com/jaimeliew1/Mann.rs)
 
 
-Mann.rs is a Rust-based turbulence generator with Python bindings. It implements the Mann turbulence model to produce three-dimensional coherent wind fields for wind turbine simulations. The library supports both unconstrained and constrained turbulence generation.
+**Mann.rs** is a high-performance turbulent wind field generator based on the Mann turbulence model, designed for wind turbine and wind farm simulations. It produces three-dimensional coherent wind fields and supports both unconstrained and constrained turbulence generation.
+
+Built in Rust for speed and efficiency, Mann.rs provides seamless Python bindings and a command-line interface for easy integration and scalability into engineering workflows.
+
+## **Installation**
+**Mann.rs** is available for **Windows**, **MacOS**, and **Linux** as a Python package.
+```bash
+pip install mannrs
+```
+For more details on the installation process, see the [**installation Guide**](installation).
+## **Usage**
+
+### **Command line**
+```bash
+mannrs input.toml
+```
+Define your simulation parameters in a TOML file. See the [**Input file format**](api/schema) for details.
+
+### **Python**
+
+```python
+from mannrs import Stencil
+
+...
+
+(
+    Stencil(**mann_params)    # Define a stencil with Mann parameters
+    .constrain(constraints)   # Apply velocity constraints (optional)
+    .build()                  # Build the turbulence stencil
+    .turbulence(ae, seed)     # Generate turbulent wind field
+    .write("out.npz")         # Save windfield to file
+)
+
+```
+For a step-by-step walkthrough, visit the [**Basic usage**](usage/basic_usage) page.
 
 
-## Key Features
 
-- **🚀 Blazing Fast**: Thanks to the stencil method and Rust backend
-- **⚡ Parallelized**: Calculations parallelized using Rayon
-- **💾 Memory Efficient**: Can generate extremely high resolution turbulence
-- **📐 Flexible**: Arbitrary box sizing - not limited to powers of 2
-- **🎯 Constrained**: Generate turbulence fields with pointwise velocity constraints
+# Contributions
+If you have suggestions or issues with Mann.rs, feel free raise an issue in the [Mann.rs Github repository](https://github.com/jaimeliew1/Mann.rs). Pull requests are welcome.
 
-
-
-## Citation
-
-The Mann.rs repository can be cited directly here
-
-    Jaime Liew. (2022). jaimeliew1/Mann.rs: Publish Mann.rs v1.0.0 (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.7254149
-
-The numerical innovations in Mann.rs are described in:
-
-    Liew, J., Riva, R., & Göçmen, T. (2023). Efficient Mann turbulence generation for offshore wind farms with applications in fatigue load surrogate modelling. Journal of Physics: Conference Series, 2626, 012050. DOI: 10.1088/1742-6596/2626/1/012050
-
-The underlying Mann turbulence model is originally described in:
-
-    Mann, J. (1998). Wind field simulation. Probabilistic Engineering Mechanics, 13(4), 269-282. DOI: 10.1016/S0266-8920(97)00036-2
+# Citation
+If you want to cite Mann.rs, please use this citation:
+```
+Liew, J., Riva, R., & Göçmen, T. (2023). Efficient Mann turbulence generation for offshore wind farms with applications in fatigue load surrogate modelling. Journal of Physics: Conference Series, 2626, 012050. DOI: 10.1088/1742-6596/2626/1/012050
+```
