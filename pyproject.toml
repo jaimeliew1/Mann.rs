@@ -15,6 +15,7 @@ dependencies = [
     "scipy>=1.5.4",
     "toml>=0.10.2",
     "tqdm>=4.64.1",
+    "rich>=13.8.1",
 ]
 
 [project.scripts]
@@ -39,5 +40,4 @@ dev = [
     "mkdocstrings[python]>=0.22.0",
     "pymdown-extensions>=10.16.1",
     "pytest>=7.4.4",
-    "rich>=13.8.1",
 ]
