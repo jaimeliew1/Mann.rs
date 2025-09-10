@@ -55,16 +55,18 @@ plugins:
             - griffe_typingdoc
             - griffe_pydantic:
                 schema: false
-            docstring_style: numpy  # or "google" or "sphinx"
+            docstring_style: numpy
             show_source: false
-            separate_signature: false
+            summary: true
+            separate_signature: true
             show_root_heading: true
             show_root_toc_entry: true
             show_symbol_type_heading: true
             show_symbol_type_toc: true
-            merge_init_into_class: true
-            # docstring_section_style: spacy
-            # signature_crossrefs: true
+            merge_init_into_class: false
+            type_parameter_headings: true
+            show_signature_annotations: true
+            signature_crossrefs: true
             heading_level: 2
 
 markdown_extensions:
