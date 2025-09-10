@@ -1184,7 +1184,8 @@
 
 
 <h2 id="mannrs.Stencil.Stencil" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>              <code class="highlight language-python"><span class="n">mannrs</span><span class="o">.</span><span class="n">Stencil</span><span class="o">.</span><span class="n">Stencil</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">mannrs.Stencil.Stencil</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-pydantic-model"><code>pydantic-model</code></small>
@@ -1248,14 +1249,21 @@
 
 
 <h3 id="mannrs.Stencil.Stencil.from_toml" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">from_toml</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">from_toml</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
   </span>
 
 <a href="#mannrs.Stencil.Stencil.from_toml" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_toml</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            mannrs.Stencil.Stencil
 
+
+  
+      pydantic-model
+  " href="#mannrs.Stencil.Stencil">Stencil</a></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1270,10 +1278,22 @@
 
 
 <h3 id="mannrs.Stencil.Stencil.constrain" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">constrain</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">spectral_compression_target</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">corr_thres</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">constrain</span>
+
 
 <a href="#mannrs.Stencil.Stencil.constrain" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">constrain</span><span class="p">(</span><span class="n">constraints</span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            mannrs.Stencil.Constraint
 
+
+  
+      pydantic-model
+  " href="#mannrs.Stencil.Constraint">Constraint</a></span><span class="p">],</span> <span class="n">spectral_compression_target</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">corr_thres</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            mannrs.Stencil.Stencil
+
+
+  
+      pydantic-model
+  " href="#mannrs.Stencil.Stencil">Stencil</a></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1289,10 +1309,12 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h3 id="mannrs.Stencil.Stencil.build" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">build</span><span class="p">(</span><span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">build</span>
+
 
 <a href="#mannrs.Stencil.Stencil.build" class="headerlink" title="Permanent link">&para;</a></h3>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">build</span><span class="p">(</span><span class="n">parallel</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            mannrs.Stencil.StencilInstance" href="#mannrs.Stencil.StencilInstance">StencilInstance</a></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1316,7 +1338,8 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h3 id="mannrs.Stencil.StencilInstance" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>              <code class="highlight language-python"><span class="n">mannrs</span><span class="o">.</span><span class="n">Stencil</span><span class="o">.</span><span class="n">StencilInstance</span><span class="p">(</span><span class="n">stencil</span><span class="p">,</span> <span class="n">benchmark</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">mannrs.Stencil.StencilInstance</span>
+
 
 <a href="#mannrs.Stencil.StencilInstance" class="headerlink" title="Permanent link">&para;</a></h3>
 
@@ -1330,6 +1353,40 @@ Returns a ConstrainedStencil object.</p>
 
 
 
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            turbulence (mannrs.Stencil.StencilInstance.turbulence)" href="#mannrs.Stencil.StencilInstance.turbulence">turbulence</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generate a constrained 3D Mann turbulence field realization.</p>
+                </div>
+              </td>
+            </tr>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            get_axes (mannrs.Stencil.StencilInstance.get_axes)" href="#mannrs.Stencil.StencilInstance.get_axes">get_axes</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Get the spatial grid axes corresponding to the generated field.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
 
 
 
@@ -1351,10 +1408,17 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Stencil.StencilInstance.turbulence" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">turbulence</span><span class="p">(</span><span class="n">ae</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">turbulence</span>
+
 
 <a href="#mannrs.Stencil.StencilInstance.turbulence" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">turbulence</span><span class="p">(</span><span class="n">ae</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n">parallel</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            mannrs.Windfield.Windfield
 
+
+  
+      dataclass
+  " href="#mannrs.Windfield.Windfield">Windfield</a></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1435,11 +1499,12 @@ Returns a ConstrainedStencil object.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="              mannrs.Windfield.Windfield(U, V, W, x, y, z)
+                  <code><a class="autorefs autorefs-internal" title="            mannrs.Windfield.Windfield
+
 
   
       dataclass
-   (mannrs.Windfield.Windfield)" href="#mannrs.Windfield.Windfield">Windfield</a></code>
+  " href="#mannrs.Windfield.Windfield">Windfield</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -1459,10 +1524,12 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Stencil.StencilInstance.get_axes" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">get_axes</span><span class="p">()</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_axes</span>
+
 
 <a href="#mannrs.Stencil.StencilInstance.get_axes" class="headerlink" title="Permanent link">&para;</a></h4>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_axes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">,</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span><span class="p">]</span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1510,7 +1577,8 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h3 id="mannrs.Stencil.Constraint" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>              <code class="highlight language-python"><span class="n">mannrs</span><span class="o">.</span><span class="n">Stencil</span><span class="o">.</span><span class="n">Constraint</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">mannrs.Stencil.Constraint</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-pydantic-model"><code>pydantic-model</code></small>
@@ -1532,6 +1600,7 @@ Returns a ConstrainedStencil object.</p>
             <li>
               <code><a class="autorefs autorefs-internal" title="            x
 
+
   
       pydantic-field
    (mannrs.Stencil.Constraint.x)" href="#mannrs.Stencil.Constraint.x">x</a></code>
@@ -1539,6 +1608,7 @@ Returns a ConstrainedStencil object.</p>
             </li>
             <li>
               <code><a class="autorefs autorefs-internal" title="            y
+
 
   
       pydantic-field
@@ -1548,6 +1618,7 @@ Returns a ConstrainedStencil object.</p>
             <li>
               <code><a class="autorefs autorefs-internal" title="            z
 
+
   
       pydantic-field
    (mannrs.Stencil.Constraint.z)" href="#mannrs.Stencil.Constraint.z">z</a></code>
@@ -1555,6 +1626,7 @@ Returns a ConstrainedStencil object.</p>
             </li>
             <li>
               <code><a class="autorefs autorefs-internal" title="            u
+
 
   
       pydantic-field
@@ -1579,14 +1651,16 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Stencil.Constraint.u" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">u</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">u</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
   </span>
 
 <a href="#mannrs.Stencil.Constraint.u" class="headerlink" title="Permanent link">&para;</a></h4>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">u</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1601,14 +1675,16 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Stencil.Constraint.x" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">x</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">x</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
   </span>
 
 <a href="#mannrs.Stencil.Constraint.x" class="headerlink" title="Permanent link">&para;</a></h4>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">x</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1623,14 +1699,16 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Stencil.Constraint.y" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">y</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">y</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
   </span>
 
 <a href="#mannrs.Stencil.Constraint.y" class="headerlink" title="Permanent link">&para;</a></h4>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">y</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1645,14 +1723,16 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Stencil.Constraint.z" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <code class="highlight language-python"><span class="n">z</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">z</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
   </span>
 
 <a href="#mannrs.Stencil.Constraint.z" class="headerlink" title="Permanent link">&para;</a></h4>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">z</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
@@ -1679,7 +1759,8 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h3 id="mannrs.Windfield.Windfield" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>              <code class="highlight language-python"><span class="n">mannrs</span><span class="o">.</span><span class="n">Windfield</span><span class="o">.</span><span class="n">Windfield</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">mannrs.Windfield.Windfield</span>
+
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
@@ -1715,6 +1796,32 @@ Returns a ConstrainedStencil object.</p>
 
 
 
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            write (mannrs.Windfield.Windfield.write)" href="#mannrs.Windfield.Windfield.write">write</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Write the turbulence field to disk in one of several supported formats.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -1730,10 +1837,12 @@ Returns a ConstrainedStencil object.</p>
 
 
 <h4 id="mannrs.Windfield.Windfield.write" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;npz&#39;</span><span class="p">,</span> <span class="n">u_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">y_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">z_offset</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">write</span>
+
 
 <a href="#mannrs.Windfield.Windfield.write" class="headerlink" title="Permanent link">&para;</a></h4>
-
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">write</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">,</span> <span class="nb">format</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s1">&#39;npz&#39;</span><span class="p">,</span> <span class="s1">&#39;netCDF&#39;</span><span class="p">,</span> <span class="s1">&#39;HAWC2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;npz&#39;</span><span class="p">,</span> <span class="n">u_offset</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">y_offset</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">z_offset</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</span></code></pre></div>
 
     <div class="doc doc-contents ">
 
