@@ -180,7 +180,7 @@ Offsets can be applied during saving:
 windfield.write("output.npz", y_offset=-100.0, z_offset=20.0)
 ```
 
-## **Complete example (Constraned Turbulence)**
+## **Complete example (Constrained Turbulence)**
 
 
 

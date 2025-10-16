@@ -17,18 +17,6 @@ struct RustConstrainedStencil {
     stencil: ConstrainedStencil,
 }
 
-#[pyclass]
-struct RustForgetfulStencil {
-    L: f32,
-    gamma: f32,
-    Lx: f32,
-    Ly: f32,
-    Lz: f32,
-    Nx: usize,
-    Ny: usize,
-    Nz: usize,
-    sinc_thres: f32,
-}
 
 #[pymethods]
 impl RustStencil {
@@ -299,7 +287,6 @@ impl RustConstrainedStencil {
 pub fn mannrs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<RustStencil>()?;
     m.add_class::<RustConstrainedStencil>()?;
-    m.add_class::<RustForgetfulStencil>()?;
 
     #[pyfn(m)]
     fn freq_components_f32<'py>(

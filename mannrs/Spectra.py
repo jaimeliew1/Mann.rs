@@ -26,11 +26,11 @@ def mann_spectra(
     Returns
     -------
     tuple of np.ndarray
-        Four spectral components as functions of k₁:
-        - UU : Longitudinal auto-spectrum.
-        - VV : Lateral auto-spectrum.
-        - WW : Vertical auto-spectrum.
-        - UW : Longitudinal-vertical cross-spectrum.
+    Four spectral components as functions of k₁:
+    - UU : Longitudinal auto-spectrum.
+    - VV : Lateral auto-spectrum.
+    - WW : Vertical auto-spectrum.
+    - UW : Longitudinal-vertical cross-spectrum.
     """
     return mannrs.mann_spectra(np.array(kxs, dtype=np.float32), ae, L, gamma)
 

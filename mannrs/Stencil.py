@@ -13,9 +13,15 @@ from .Windfield import Windfield
 
 
 class Stencil(BaseModel, extra="allow"):
+    """
+    Main entry point for defining a turbulence stencil, constraints, and turbulence field generation specs.
+    """
     stencil_spec: StencilSpec
+    """Parameters for the turbulence stencil."""
     constraint_spec: Optional[ConstraintSpec] = None
+    """Optional velocity constraints applied to the stencil."""
     turbulence_boxes: Optional[list[TurbulenceSpec]] = None
+    """Optional list of TurbulenceSpec objects for wind field generation."""
 
     def __init__(self, **kwargs) -> Stencil:
         try:
@@ -196,18 +202,19 @@ class StencilSpec(BaseModel, extra="allow"):
     aperiodic_z: bool = True
     """sets aperiodicity in the z-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
     sinc_thres: float = 3.0
-    """
-    Threshold for applying the Mann sinc correction to low-frequency modes. 
-    """
+    """Threshold for applying the Mann sinc correction to low-frequency modes."""
 
 
 class ConstraintSpec(BaseModel, extra="allow"):
+    """
+    Specification for velocity constraints and related parameters.
+    """
     constraints: list[Constraint] = Field(..., repr=False)
     """List of velocity constraints at certain positions in 3D space."""
     spectral_compression_target: float = 0.8
     """Desired compression ratio for the constraint impulse response."""
     corr_thres: float = 0.0001
-    """Threshold for sparsifying the constraint correlation matrix"""
+    """Threshold for sparsifying the constraint correlation matrix."""
 
 
 class Constraint(BaseModel, extra="allow"):
@@ -235,10 +242,17 @@ class Constraint(BaseModel, extra="allow"):
 
 
 class TurbulenceSpec(BaseModel, extra="allow"):
+    """
+    Parameters for generating and saving a turbulence wind field realization.
+    """
     ae: float
+    """Turbulence intensity scaling factor."""
     seed: int
+    """Random seed for reproducibility."""
     output: Path
+    """Output file path for saving the wind field."""
     format: Literal["npz", "netCDF", "HAWC2"] = "npz"
+    """Output file format."""
     u_offset: float = 0.0
     """Velocity offset added to the u velocity component."""
     y_offset: float = 0.0

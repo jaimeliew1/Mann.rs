@@ -36,7 +36,6 @@ nav:
   - Installation: installation.md
   - Usage: 
     - Basic usage: usage/basic_usage.md
-    - What is the stencil?: usage/stencil.md
   - API Reference:
     - Input file schema: api/schema.md
     - Python API: api/python.md
