@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://jaimeliew1.github.io/Mann.rs/api/schema/">
       
       
-        <link rel="prev" href="../../usage/stencil/">
+        <link rel="prev" href="../../usage/basic_usage/">
       
       
         <link rel="next" href="../python/">
@@ -481,29 +481,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../usage/stencil/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    What is the stencil?
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -858,6 +835,42 @@
   
     <nav class="md-nav" aria-label=" TurbulenceSpec">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.ae" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;ae
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.format" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.output" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;output
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;seed
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#mannrs.Stencil.TurbulenceSpec.u_offset" class="md-nav__link">
@@ -1297,6 +1310,42 @@
   
     <nav class="md-nav" aria-label=" TurbulenceSpec">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.ae" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;ae
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.format" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.output" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;output
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mannrs.Stencil.TurbulenceSpec.seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;seed
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#mannrs.Stencil.TurbulenceSpec.u_offset" class="md-nav__link">
@@ -1880,6 +1929,8 @@
             <p class="doc doc-class-bases">
               Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
+        <p>Specification for velocity constraints and related parameters.</p>
+
     
 
         <p>Fields:</p>
@@ -1976,7 +2027,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>Threshold for sparsifying the constraint correlation matrix</p>
+        <p>Threshold for sparsifying the constraint correlation matrix.</p>
 
     </div>
 
@@ -2217,24 +2268,46 @@
             <p class="doc doc-class-bases">
               Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
 
+        <p>Parameters for generating and saving a turbulence wind field realization.</p>
+
     
 
         <p>Fields:</p>
         <ul>
             <li>
-              <code><span title="mannrs.Stencil.TurbulenceSpec.ae">ae</span></code>
+              <code><a class="autorefs autorefs-internal" title="            ae
+
+
+  
+      pydantic-field
+   (mannrs.Stencil.TurbulenceSpec.ae)" href="#mannrs.Stencil.TurbulenceSpec.ae">ae</a></code>
                 (<code><span title="float">float</span></code>)
             </li>
             <li>
-              <code><span title="mannrs.Stencil.TurbulenceSpec.seed">seed</span></code>
+              <code><a class="autorefs autorefs-internal" title="            seed
+
+
+  
+      pydantic-field
+   (mannrs.Stencil.TurbulenceSpec.seed)" href="#mannrs.Stencil.TurbulenceSpec.seed">seed</a></code>
                 (<code><span title="int">int</span></code>)
             </li>
             <li>
-              <code><span title="mannrs.Stencil.TurbulenceSpec.output">output</span></code>
+              <code><a class="autorefs autorefs-internal" title="            output
+
+
+  
+      pydantic-field
+   (mannrs.Stencil.TurbulenceSpec.output)" href="#mannrs.Stencil.TurbulenceSpec.output">output</a></code>
                 (<code><span title="pathlib.Path">Path</span></code>)
             </li>
             <li>
-              <code><span title="mannrs.Stencil.TurbulenceSpec.format">format</span></code>
+              <code><a class="autorefs autorefs-internal" title="            format
+
+
+  
+      pydantic-field
+   (mannrs.Stencil.TurbulenceSpec.format)" href="#mannrs.Stencil.TurbulenceSpec.format">format</a></code>
                 (<code><span title="typing.Literal">Literal</span>[&#39;npz&#39;, &#39;netCDF&#39;, &#39;HAWC2&#39;]</code>)
             </li>
             <li>
@@ -2276,6 +2349,102 @@
 
 
 
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mannrs.Stencil.TurbulenceSpec.ae" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">ae</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
+  </span>
+
+<a href="#mannrs.Stencil.TurbulenceSpec.ae" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">ae</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Turbulence intensity scaling factor.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mannrs.Stencil.TurbulenceSpec.format" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">format</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
+  </span>
+
+<a href="#mannrs.Stencil.TurbulenceSpec.format" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">format</span><span class="p">:</span> <span class="n"><span title="typing.Literal">Literal</span></span><span class="p">[</span><span class="s1">&#39;npz&#39;</span><span class="p">,</span> <span class="s1">&#39;netCDF&#39;</span><span class="p">,</span> <span class="s1">&#39;HAWC2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;npz&#39;</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Output file format.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mannrs.Stencil.TurbulenceSpec.output" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">output</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
+  </span>
+
+<a href="#mannrs.Stencil.TurbulenceSpec.output" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">output</span><span class="p">:</span> <span class="n"><span title="pathlib.Path">Path</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Output file path for saving the wind field.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="mannrs.Stencil.TurbulenceSpec.seed" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">seed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-pydantic-field"><code>pydantic-field</code></small>
+  </span>
+
+<a href="#mannrs.Stencil.TurbulenceSpec.seed" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">seed</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Random seed for reproducibility.</p>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-attribute">
 
