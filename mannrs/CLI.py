@@ -1,6 +1,7 @@
 import click
 from pathlib import Path
 from time import perf_counter
+from typing import Union
 
 import toml
 from pydantic import BaseModel
@@ -41,7 +42,7 @@ def CLI(
     parallel: bool,
     dryrun: bool,
     skip_existing: bool,
-    benchmark: Path | None,
+    benchmark: Union[Path, None],
 ):
     """
     Mann.rs turbulence generator.
@@ -101,8 +102,8 @@ def CLI(
 
 class Benchmark(BaseModel):
     stencil_time: float
-    sparsity: float | None = None
-    spectral_compression: float | None = None
+    sparsity: Union[float, None] = None
+    spectral_compression: Union[float, None] = None
     turb_times: list[float]
 
     def to_toml(self, fn: Path) -> None:

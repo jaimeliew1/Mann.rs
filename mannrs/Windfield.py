@@ -65,7 +65,7 @@ class Windfield:
 
         Parameters
         ----------
-        filename : Path | str
+        filename : Union[str, Path]
             Target file path. For HAWC2 output, this stem will be used to
             generate three files (``*_u``, ``*_v``, ``*_w``).
         format : {"npz", "netCDF", "HAWC2"}, default="npz"

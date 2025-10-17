@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import perf_counter
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 import numpy as np
 import toml
@@ -49,7 +49,7 @@ class Stencil(BaseModel, extra="allow"):
         )
 
     @classmethod
-    def from_toml(cls, filepath: str | Path) -> Stencil:
+    def from_toml(cls, filepath: Union[str, Path]) -> Stencil:
         """
         Load stencil parameters (and optional constraints) from a TOML file.
         """
@@ -128,16 +128,16 @@ class StencilInstance:
 
     def __init__(
         self,
-        stencil: RustStencil | RustConstrainedStencil,
+        stencil: Union[RustStencil, RustConstrainedStencil],
         benchmark: dict,
         params: Stencil,
     ):
-        self.stencil: RustStencil | RustConstrainedStencil = stencil
+        self.stencil: Union[RustStencil, RustConstrainedStencil] = stencil
         self.params: Stencil = params
         self.benchmark: dict = benchmark
-        self.sparsity: float | None = benchmark.get("sparsity")
-        self.spectral_compression: float | None = benchmark.get("spectral_compression")
-        self.stencil_time: float | None = benchmark.get("stencil_time")
+        self.sparsity: Union[float, None] = benchmark.get("sparsity")
+        self.spectral_compression: Union[float, None] = benchmark.get("spectral_compression")
+        self.stencil_time: Union[float, None] = benchmark.get("stencil_time")
 
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
