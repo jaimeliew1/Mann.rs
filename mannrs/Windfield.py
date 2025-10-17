@@ -54,7 +54,7 @@ class Windfield:
 
     def write(
         self,
-        filename: Path,
+        filename: Union[str, Path],
         format: Literal["npz", "netCDF", "HAWC2"] = "npz",
         u_offset: float = 0.0,
         y_offset: float = 0.0,
@@ -65,7 +65,7 @@ class Windfield:
 
         Parameters
         ----------
-        filename : Path
+        filename : Path | str
             Target file path. For HAWC2 output, this stem will be used to
             generate three files (``*_u``, ``*_v``, ``*_w``).
         format : {"npz", "netCDF", "HAWC2"}, default="npz"
@@ -101,6 +101,7 @@ class Windfield:
                 z_offset=z_offset,
             )
         elif format == "HAWC2":
+            filename = Path(filename)
             _stem = filename.stem
             self.to_HAWC2(
                 filename.with_stem(_stem + "_u"),

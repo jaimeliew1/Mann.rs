@@ -18,6 +18,7 @@ class RustStencil:
         aperiodic_x: bool,
         aperiodic_y: bool,
         aperiodic_z: bool,
+        parallel: bool,
         sinc_thres: float,
     ): ...
     def constrain(
@@ -27,11 +28,11 @@ class RustStencil:
         spectral_compression_target: float,
     ): ...
     def turbulence(
-        self, ae: float, seed: int, parallel=bool
+        self, ae: float, seed: int, parallel: bool
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
     def partial_turbulence(
-        self, ae: float, seed: int, parallel=bool
+        self, ae: float, seed: int, parallel: bool
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
     def spectral_component_grids(
         self,
@@ -66,10 +67,10 @@ class RustConstrainedStencil:
         aperiodic_y: bool,
         aperiodic_z: bool,
         constraints: np.ndarray,
+        parallel: bool,
         corr_thres: float,
         spectral_compression_target: float,
         sinc_thres: float,
-        parallel: bool,
     ): ...
     def turbulence(
         self, ae: float, seed: int, parallel: bool

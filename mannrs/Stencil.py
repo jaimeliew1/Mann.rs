@@ -23,7 +23,7 @@ class Stencil(BaseModel, extra="allow"):
     turbulence_boxes: Optional[list[TurbulenceSpec]] = None
     """Optional list of TurbulenceSpec objects for wind field generation."""
 
-    def __init__(self, **kwargs) -> Stencil:
+    def __init__(self, **kwargs) -> None:
         try:
             super().__init__(stencil_spec=StencilSpec(**kwargs))
         except ValidationError:
@@ -68,7 +68,7 @@ class Stencil(BaseModel, extra="allow"):
         """
         benchmark = {}
         tstart = perf_counter()
-        if self.constrained:
+        if self.constraint_spec is not None:
             _constraints = np.array(
                 [[x.x, x.y, x.z, x.u] for x in self.constraint_spec.constraints],
                 dtype=np.float32,
@@ -137,7 +137,7 @@ class StencilInstance:
         self.benchmark: dict = benchmark
         self.sparsity: float | None = benchmark.get("sparsity")
         self.spectral_compression: float | None = benchmark.get("spectral_compression")
-        self.stencil_time: float = benchmark.get("stencil_time")
+        self.stencil_time: float | None = benchmark.get("stencil_time")
 
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
