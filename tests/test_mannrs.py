@@ -1,4 +1,7 @@
 from mannrs import Constraint, Stencil
+from click.testing import CliRunner
+from mannrs.CLI import CLI  
+import toml
 
 ae = 0.2
 seed = 1234
@@ -108,8 +111,9 @@ def test_parallel_vs_serial():
 
 
 def test_cli_parallel_serial(tmp_path):
-    import subprocess
-    import toml
+    runner = CliRunner()
+
+
 
     input_file = tmp_path / "input.toml"
     toml_dict = {
@@ -121,16 +125,9 @@ def test_cli_parallel_serial(tmp_path):
     with open(input_file, "w") as f:
         toml.dump(toml_dict, f)
     # Run CLI with --serial
-    result_serial = subprocess.run(
-        ["python", "-m", "mannrs.CLI", "--serial", str(input_file)],
-        capture_output=True,
-        text=True,
-    )
-    assert result_serial.returncode == 0
+    result_serial = runner.invoke(CLI, ["--serial", str(input_file)])
+    assert result_serial.exit_code == 0, result_serial.output
+
     # Run CLI with --parallel
-    result_parallel = subprocess.run(
-        ["python", "-m", "mannrs.CLI", "--parallel", str(input_file)],
-        capture_output=True,
-        text=True,
-    )
-    assert result_parallel.returncode == 0
+    result_parallel = runner.invoke(CLI, ["--parallel", str(input_file)])
+    assert result_parallel.exit_code == 0, result_parallel.output
