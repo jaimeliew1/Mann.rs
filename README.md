@@ -49,8 +49,8 @@ let (U, V, W) = stencil.turbulence(ae, seed);
 
 # Installation
 Installation for both Python and Rust versions requires the Rust compiler to be installed (see [here](https://www.rust-lang.org/tools/install) for installation instructions).
-## Python
-Mann.rs is available in Windows, MacOS and Linux.
+## Python (Linux and MacOS only)
+
 
 Clone this repository and pip install:
 ```bash
