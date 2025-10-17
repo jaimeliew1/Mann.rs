@@ -9,7 +9,6 @@ mod python_interface;
 mod tensors;
 mod tests;
 mod utilities;
-mod spectra;
 
 pub use self::tensors::Tensors;
 pub use self::utilities::Utilities;
