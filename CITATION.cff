@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use mannrs in your work, please cite it as below."
+title: "mannrs"
+authors:
+  - family-names: Liew
+    given-names: Jaime
+    orcid: "https://orcid.org/0000-0002-5858-4614"
+date-released: 2022-10-01
+version: "v1.0.0"
+doi: 10.5281/zenodo.7254148
+repository-code: "https://github.com/jaimeliew1/Mann.rs"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Liew
+      given-names: Jaime
+    - family-names: Riva
+      given-names: Riccardo
+    - family-names: Göçmen
+      given-names: Tuhfe
+  title: "Efficient Mann turbulence generation for offshore wind farms with applications in fatigue load surrogate modelling"
+  journal: "Journal of Physics: Conference Series"
+  volume: "2626"
+  issue: "1"
+  pages: "012050"
+  year: "2023"
+  publisher: "IOP Publishing"
+references:
+  - type: software
+    authors:
+      - family-names: Liew
+        given-names: Jaime
+    title: "jaimeliew1/Mann.rs: Publish Mann.rs v1.0.0"
+    version: "v1.0.0"
+    date-released: 2022-10-01
+    doi: 10.5281/zenodo.7254148
+    url: "https://doi.org/10.5281/zenodo.7254148"

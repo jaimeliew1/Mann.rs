@@ -1,6 +1,6 @@
 [package]
 name = "mannrs"
-version = "1.3.0"
+version = "2.0.0"
 edition = "2018"
 
 
@@ -11,12 +11,17 @@ crate-type = ["cdylib"]
 
 
 [dependencies]
-pyo3 = { version = "0.21.1", features = ["extension-module"] }
-ndarray = { version = "0.15.4", features = ["rayon"] }
-numpy = "0.21.0"
-ndarray-rand = "0.14.0"
-num = "0.4.0"
-ndrustfft = "0.1.6"
+pyo3 = { version = "0.25.1", features = ["extension-module"] }
+ndarray = { version = "0.16.1", features = ["rayon"] }
+numpy = "0.25.0"
+ndarray-rand = "0.15.0"
+ndrustfft = "0.5.0"
+ninterp = "0.7.3"
+itertools = "0.14.0"
+faer-ext = { version = "0.6.0", features = ["ndarray"] }
+faer = "0.22.6"
+num = "0.4.3"
+rayon = "1.10.0"
 
 
 [package.metadata.docs.rs]

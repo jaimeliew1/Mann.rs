@@ -1,0 +1,60 @@
+#
+#             Mann.rs Turbulence Input File
+#
+# Defines parameters for generating synthetic turbulence
+# fields using the Mann model. This example generates
+# three turbulence boxes with different spectral scaling
+# and random seeds, all sharing the same stencil params.
+
+[stencil_spec]
+L = 30.0    # Length scale (m), size of large eddies
+gamma = 3.9 # Anisotropy, elongation of structures
+Lx = 200.0  # Domain length in x (m)
+Ly = 200.0  # Domain length in y (m)
+Lz = 8192.0 # Domain length in z (m)
+Nx = 8192   # Grid points in x
+Ny = 32     # Grid points in y
+Nz = 32     # Grid points in z
+# sinc_thres = 3.0  # Threshold for Mann sinc
+# correction at low frequencies (default = 3.0)
+
+# Periodicity flags: control whether the turbulence
+# box is periodic in each direction. Setting false
+# can cut cost ~half. Defaults: y,z = aperiodic.
+# aperiodic_x = false
+# aperiodic_y = true
+# aperiodic_z = true
+
+# Turbulence boxes:
+# Each defines a turbulence realization with its own
+# scaling and seed. Add as many as needed.
+[[turbulence_boxes]]
+ae = 0.1   # Spectral scaling factor (αε^{2/3})
+seed = 42  # Random seed
+output = "output1.npz"  # Output filename
+# format = "npz"   # 'npz', 'netCDF', or 'HAWC2'
+# u_offset = 0.0   # Velocity offset in u
+# y_offset = 0.0   # Spatial offset in y
+# z_offset = 0.0   # Spatial offset in z
+
+[[turbulence_boxes]]
+ae = 0.2
+seed = 123
+output = "output2.npz"
+
+[[turbulence_boxes]]
+ae = 0.3
+seed = 234
+output = "output3.nc"
+format = "netCDF"
+
+# Constraints: omit [constraint_spec] for an
+# unconstrained box. See example_constrained.toml
+# for constrained turbulence input files.
+# [constraint_spec]
+# spectral_compression_target = 0.8
+# corr_thres = 0.0001
+# constraints = [
+#   { x = 10, y = 10, z = 10, u = 0.3 },
+#   { x = 20, y = 20, z = 20, u = 0.3 },
+# ]

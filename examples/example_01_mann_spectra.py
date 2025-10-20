@@ -2,34 +2,34 @@
 Plots the Mann frequency spectrum for given values of ae, L, and Gamma.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-
 import mannrs
-
-ae = 1
-L = 33.6
-gamma = 3.9
+import matplotlib.pyplot as plt
 
 
 if __name__ == "__main__":
+    # Parameters
+    ae = 1.0
+    L = 33.6
+    gamma = 3.9
+
+    # Wavenumber range
     Kxs = np.logspace(-5, 1, 50)
 
-    Suu, Svv, Sww, Suw = mannrs.spectra(Kxs, ae, L, gamma)
+    # Compute spectra
+    UU, VV, WW, UW = mannrs.mann_spectra(Kxs, ae, L, gamma)
 
-    plt.figure()
+    # Plotting
+    plt.figure(figsize=(8, 5))
+    plt.semilogx(Kxs, Kxs * UU, "--", label="UU")
+    plt.semilogx(Kxs, Kxs * VV, "--", label="VV")
+    plt.semilogx(Kxs, Kxs * WW, "--", label="WW")
+    plt.semilogx(Kxs, Kxs * UW, "--", label="UW")
 
-    plt.semilogx(Kxs, Kxs * Suu, "--", label="UU")
-    plt.semilogx(Kxs, Kxs * Svv, "--", label="VV")
-    plt.semilogx(Kxs, Kxs * Sww, "--", label="WW")
-    plt.semilogx(Kxs, Kxs * Suw, "--", label="UW")
-
+    plt.title(rf"Mann Spectrum: $\gamma = {gamma:.2f}$")
+    plt.xlabel("Wavenumber $k_1$ [rad/m]")
+    plt.ylabel(r"Cross-spectra $k_1 \cdot \Phi(k_1)$ [(rad/m)(m²/s²)]")
     plt.legend()
-    plt.grid()
-
-    plt.title(rf"$\gamma={gamma:2.2f}$")
-    plt.xlabel("Wave number, $k1$ [rad/m]")
-    plt.ylabel("Cross spectra [(rad/m)(m^2/s^2)]")
-
+    plt.grid(True)
+    plt.tight_layout()
     plt.show()
-    plt.savefig("asfd.png")

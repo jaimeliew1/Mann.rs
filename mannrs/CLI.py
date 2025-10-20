@@ -1,10 +1,12 @@
-from pathlib import Path
-
 import click
-import toml
-from tqdm import tqdm
+from pathlib import Path
+from time import perf_counter
+from typing import Union
 
-from . import Stencil, ForgetfulStencil, save_box
+import toml
+from pydantic import BaseModel
+from rich import print
+from .Stencil import Stencil
 
 
 @click.command()
@@ -15,156 +17,95 @@ from . import Stencil, ForgetfulStencil, save_box
     show_default=True,
 )
 @click.option(
-    "--forgetful",
-    is_flag=True,
-    default=False,
-    help="Use low-memory stencil (slower).  [default: off]",
-    show_default=True,
-)
-@click.option(
     "--dryrun",
     is_flag=True,
     default=False,
     help="Evaluate input files without generating turbulence.",
+    show_default=True,
 )
-@click.argument("src", type=click.Path(exists=True, path_type=Path), nargs=-1)
-def CLI(src, forgetful, parallel, dryrun):
+@click.option(
+    "--skip-existing",
+    is_flag=True,
+    default=False,
+    help="Do not overwrite existing files.",
+    show_default=True,
+)
+@click.option(
+    "--benchmark",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Optional path to benchmarking output file",
+)
+@click.argument("filename", type=click.Path(exists=True, path_type=Path))
+def CLI(
+    filename: Path,
+    parallel: bool,
+    dryrun: bool,
+    skip_existing: bool,
+    benchmark: Union[Path, None],
+):
     """
     Mann.rs turbulence generator.
     Author: Jaime Liew <jaimeliew1@gmail.com>
     """
 
-    main(src, forgetful, parallel, dryrun)
-
-
-required_params = [
-    "L",
-    "ae",
-    "gamma",
-    "seed",
-    "Nx",
-    "Ny",
-    "Nz",
-    "Lx",
-    "Ly",
-    "Lz",
-    "fn_u",
-    "fn_v",
-    "fn_w",
-]
-turb_param_keys = ["fn_u", "fn_v", "fn_w", "ae", "seed"]
-
-# https://stackoverflow.com/a/1151705
-class hashabledict(dict):
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
-
-
-def extract_toml_mann_params(fn):
-    """
-    Search a toml file (e.g. a HAWC2Farm input file) for Mann box inputs. Return
-    list of Mann box parameters found in file.
-    """
-    data = toml.load(fn)
-    out = toml_traverse(data)
-    return out
-
-
-def toml_traverse(input):
-    out = []
-    if type(input) == dict:
-        if all(x in input for x in required_params):
-            return [{k: input[k] for k in required_params}]
-
-        for val in input.values():
-            if type(val) in [dict, list]:
-                out.extend(toml_traverse(val))
-    elif type(input) == list:
-        for val in input:
-            if type(val) in [dict, list]:
-                out.extend(toml_traverse(val))
-
-    return out
-
-
-parsers = {
-    ".toml": extract_toml_mann_params,
-}
-
-
-def separate_stencil_and_turb_params(param_list):
-    out = {}
-
-    for params in param_list:
-        stencil_params = hashabledict(params)
-        turb_params = {key: stencil_params.pop(key) for key in turb_param_keys}
-
-        if stencil_params not in out:
-            out[stencil_params] = [turb_params]
-        else:
-            out[stencil_params].append(turb_params)
-
-    return out
-
-
-def generate_single_separated(
-    stencil_params, turb_param_list, parallel=True, forgetful=False, progress_bar=None
-):
-    """
-    Generate turbulence with fixed stencil parameters and a list of turbulence parameters.
-    args:
-        stencil_params (dict): Mann turbulence stencil parameters.
-        turb_param_list (list[dict]): List of turbulence box parameters.
-        parallel (bool): Activate parallel execution (default=True)
-        forgetful (bool): Activate low-memory stencil (default=False)
-        progress_bar (tqdm.tqdm): Progress bar object (default=None)
-    return:
-        None
-    """
-    if forgetful:
-        stencil = ForgetfulStencil(**stencil_params, parallel=parallel)
-    else:
-        stencil = Stencil(**stencil_params, parallel=parallel)
-
-    for turb_params in turb_param_list:
-        U, V, W = stencil.turbulence(
-            turb_params["ae"], turb_params["seed"], parallel=parallel
-        )
-
-        save_box(turb_params["fn_u"], U)
-        save_box(turb_params["fn_v"], V)
-        save_box(turb_params["fn_w"], W)
-
-        if progress_bar:
-            progress_bar.update(1)
-
-
-def main(src, forgetful, parallel, dryrun):
-
-    param_list = []
-    for fn in src:
-
-        if fn.suffix in parsers:
-            param_list.extend(parsers[fn.suffix](fn))
-
-    # https://stackoverflow.com/questions/11092511/python-list-of-unique-dictionaries
-    unique_params = [dict(s) for s in set(frozenset(d.items()) for d in param_list)]
-
-    separated_params = separate_stencil_and_turb_params(unique_params)
-
-    print(
-        f"{len(param_list)} turbulence box inputs ({len(unique_params)} unique boxes, {len(separated_params)} unique stencils) found from {len(src)} input files."
-    )
+    sim = Stencil.from_toml(filename)
 
     if dryrun:
+        print("[DRY RUN] Input file successfully read. Skipping turbulence generation.")
+        print("Parsed simulation parameters:")
+        print(sim)
         return
 
-    progress_bar = tqdm(total=len(unique_params))
-    for stencil_params, turb_param_list in separated_params.items():
-        generate_single_separated(
-            stencil_params,
-            turb_param_list,
-            parallel=parallel,
-            forgetful=forgetful,
-            progress_bar=progress_bar,
+    if skip_existing and all(x.output.exists() for x in sim.turbulence_boxes):
+        print("All turbulence boxes already exist. Skipping generation.")
+        return
+
+    if sim.constrained:
+        print(
+            f"Generating constrained stencil with {len(sim.constraint_spec.constraints)} constraints..."
         )
+        print(sim.stencil_spec)
+        print(sim.constraint_spec)
+    else:
+        print("Generating unconstrained stencil...")
+        print(sim.stencil_spec)
+
+    stencil = sim.build(parallel=parallel)
+
+    if sim.constrained:
+        print(f"Correlation matrix sparsity: {100*stencil.sparsity:.4f} %")
+        print(f"Spectral compression: {100*stencil.spectral_compression:.4f} %")
+    print(f"Stencil generated in {stencil.stencil_time:.4f} seconds.\n")
+
+    turb_times: list[float] = []
+    for i, turbbox in enumerate(sim.turbulence_boxes, start=1):
+        print(f"Generating turbulence box {i}/{len(sim.turbulence_boxes)}...")
+        print(f"Parameters: {turbbox}")
+        if skip_existing and turbbox.output.exists():
+            print(f"Output '{turbbox.output}' already exists. Skipping.")
+            continue
+        tstart = perf_counter()
+        turbbox.generate_and_save(stencil, parallel=parallel)
+
+        turb_times.append(perf_counter() - tstart)
+        print(f"Turbulence box {i} generated in {turb_times[-1]:.4f} seconds.\n")
+
+    if benchmark:
+        Benchmark(
+            stencil_time=stencil.stencil_time,
+            sparsity=stencil.sparsity,
+            spectral_compression=stencil.spectral_compression,
+            turb_times=turb_times,
+        ).to_toml(benchmark)
+
+
+class Benchmark(BaseModel):
+    stencil_time: float
+    sparsity: Union[float, None] = None
+    spectral_compression: Union[float, None] = None
+    turb_times: list[float]
+
+    def to_toml(self, fn: Path) -> None:
+        with open(fn, "w") as f:
+            toml.dump(self.model_dump(), f)

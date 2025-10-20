@@ -1,0 +1,104 @@
+site_name: Mann.rs
+site_description: A constrained Mann turbulence generator for Python written in Rust
+site_author: Jaime Liew
+site_url: https://jaimeliew1.github.io/Mann.rs/  # Update with your actual URL
+repo_url: https://github.com/jaimeliew1/Mann.rs
+repo_name: jaimeliew1/Mann.rs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: orange
+      accent: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: orange
+      accent: green
+      toggle:
+        icon: material/weather-sunny
+
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: 
+    - Basic usage: usage/basic_usage.md
+  - API Reference:
+    - Input file schema: api/schema.md
+    - Python API: api/python.md
+    - Rust API: api/rust.md
+  - About:
+    - About: about/about.md
+
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            extensions:
+            - griffe_typingdoc
+            - griffe_pydantic:
+                schema: false
+            docstring_style: numpy
+            show_source: false
+            summary: true
+            separate_signature: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            merge_init_into_class: false
+            type_parameter_headings: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            heading_level: 2
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: "."
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jaimeliew1/Mann.rs
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/mannrs/
+
+
+
+
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
