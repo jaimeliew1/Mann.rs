@@ -11,19 +11,21 @@
 
 Built in Rust for speed and efficiency, Mann.rs provides seamless Python bindings and a command-line interface for easy integration and scalability into engineering workflows.
 
+For more information, see the [**Documentation**](https://jaimeliew1.github.io/Mann.rs/).
+
 ## **Installation**
 **Mann.rs** is available for **Windows**, **MacOS**, and **Linux** as a Python package.
 ```bash
 pip install mannrs
 ```
-For more details on the installation process, see the [**installation Guide**](installation).
+For more details on the installation process, see the [**installation Guide**](https://jaimeliew1.github.io/Mann.rs/installation/).
 ## **Usage**
 
 ### **Command line**
 ```bash
 mannrs input.toml
 ```
-Define your simulation parameters in a TOML file. See the [**Input file format**](api/schema) for details.
+Define your simulation parameters in a TOML file. See the [**Input file format**](https://jaimeliew1.github.io/Mann.rs/api/schema/) for details.
 
 ### **Python**
 
@@ -41,7 +43,7 @@ from mannrs import Stencil
 )
 
 ```
-For a step-by-step walkthrough, visit the [**Basic usage**](usage/basic_usage) page.
+For a step-by-step walkthrough, visit the [**Basic usage**](https://jaimeliew1.github.io/Mann.rs/usage/basic_usage/) page.
 
 
 
