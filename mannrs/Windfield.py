@@ -88,6 +88,10 @@ class Windfield:
         - In "HAWC2" mode, three separate files are created for the velocity
           components (u, v, w) with suffixes appended to the given filename stem.
         """
+
+        # Create directory if it does not exist
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
+
         if format == "npz":
             self.to_npz(
                 filename, U_offset=u_offset, y_offset=y_offset, z_offset=z_offset
