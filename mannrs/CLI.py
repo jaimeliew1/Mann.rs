@@ -36,6 +36,7 @@ from .Stencil import Stencil
     default=None,
     help="Optional path to benchmarking output file",
 )
+@click.version_option(message="%(prog)s v%(version)s")
 @click.argument("filename", type=click.Path(exists=True, path_type=Path))
 def CLI(
     filename: Path,
