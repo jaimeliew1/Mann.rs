@@ -60,7 +60,7 @@ class Stencil(BaseModel, extra="allow"):
 
     @property
     def constrained(self) -> bool:
-        return self.constraint_spec is not None
+        return self.constraint_spec is not None and len(self.constraint_spec.constraints) > 0
 
     def build(self, parallel: bool = True) -> StencilInstance:
         """
@@ -68,7 +68,7 @@ class Stencil(BaseModel, extra="allow"):
         """
         benchmark = {}
         tstart = perf_counter()
-        if self.constraint_spec is not None:
+        if self.constrained:
             _constraints = np.array(
                 [[x.x, x.y, x.z, x.u] for x in self.constraint_spec.constraints],
                 dtype=np.float32,
