@@ -1,6 +1,6 @@
 # Mann.rs
 
-[![DOI](https://zenodo.org/badge/450532624.svg)](https://zenodo.org/badge/latestdoi/450532624)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7254148.svg)](https://doi.org/10.5281/zenodo.7254148)
 [![PyPI version](https://badge.fury.io/py/mannrs.svg)](https://badge.fury.io/py/mannrs)
 [![PyPI downloads](https://img.shields.io/pypi/dm/mannrs.svg)](https://pypi.org/project/mannrs/)
 [![GitHub stars](https://img.shields.io/github/stars/jaimeliew1/mann.rs.svg?style=social)](https://github.com/jaimeliew1/Mann.rs)
