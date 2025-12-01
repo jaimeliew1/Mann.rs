@@ -1,8 +1,8 @@
+use crate::spectral_impulse::SpectralImpulseResponse;
 use crate::tensors::Tensors::{Sheared, ShearedSinc, TensorGenerator};
 use crate::utilities::{
-    complex_random_gaussian, fftfreq, freq_components, irfft3d, irfft3d_par, rfftfreq
+    complex_random_gaussian, fftfreq, freq_components, irfft3d, irfft3d_par, rfftfreq,
 };
-use crate::spectral_impulse::SpectralImpulseResponse;
 use ndrustfft::Complex;
 use numpy::Complex32;
 use std::f32::consts::PI;
@@ -172,6 +172,97 @@ impl Stencil {
         }
         (U_f, V_f, W_f)
     }
+
+    fn decompose_stencil(
+        &self,
+    ) -> (
+        Array3<Complex32>,
+        Array3<Complex32>,
+        Array3<Complex32>,
+        Array3<Complex32>,
+    ) {
+        let Nx: usize = if self.p.aperiodic_x {
+            2 * self.p.Nx
+        } else {
+            self.p.Nx
+        };
+        let Ny: usize = if self.p.aperiodic_y {
+            2 * self.p.Ny
+        } else {
+            self.p.Ny
+        };
+        let Nz: usize = if self.p.aperiodic_z {
+            2 * self.p.Nz
+        } else {
+            self.p.Nz
+        };
+
+        let mut Ruu_f: Array3<Complex32> = Array3::zeros((Nx, Ny, Nz / 2 + 1));
+        let mut Rvv_f: Array3<Complex32> = Array3::zeros((Nx, Ny, Nz / 2 + 1));
+        let mut Rww_f: Array3<Complex32> = Array3::zeros((Nx, Ny, Nz / 2 + 1));
+        let mut Ruw_f: Array3<Complex32> = Array3::zeros((Nx, Ny, Nz / 2 + 1));
+        Zip::from(Ruu_f.outer_iter_mut())
+            .and(Rvv_f.outer_iter_mut())
+            .and(Rww_f.outer_iter_mut())
+            .and(Ruw_f.outer_iter_mut())
+            .and(self.stencil.outer_iter())
+            .par_for_each(
+                |mut Ruu_f_slice,
+                 mut Rvv_f_slice,
+                 mut Rww_f_slice,
+                 mut Ruw_f_slice,
+                 stencil_slice| {
+                    Zip::from(Ruu_f_slice.outer_iter_mut())
+                        .and(Rvv_f_slice.outer_iter_mut())
+                        .and(Rww_f_slice.outer_iter_mut())
+                        .and(Ruw_f_slice.outer_iter_mut())
+                        .and(stencil_slice.outer_iter())
+                        .par_for_each(
+                            |mut Ruu_f_col,
+                             mut Rvv_f_col,
+                             mut Rww_f_col,
+                             mut Ruw_f_col,
+                             stencil_col| {
+                                Zip::from(Ruu_f_col.outer_iter_mut())
+                                    .and(Rvv_f_col.outer_iter_mut())
+                                    .and(Rww_f_col.outer_iter_mut())
+                                    .and(Ruw_f_col.outer_iter_mut())
+                                    .and(stencil_col.outer_iter())
+                                    .for_each(
+                                        |mut Ruu_comp,
+                                         mut Rvv_comp,
+                                         mut Rww_comp,
+                                         mut Ruw_comp,
+                                         decomp| {
+                                            let _tensor = decomp.dot(&decomp.t());
+                                            Ruu_comp.assign(
+                                                &_tensor
+                                                    .slice(s![0, 0])
+                                                    .mapv(|x| Complex32::new(x, 0.0)),
+                                            );
+                                            Rvv_comp.assign(
+                                                &_tensor
+                                                    .slice(s![1, 1])
+                                                    .mapv(|x| Complex32::new(x, 0.0)),
+                                            );
+                                            Rww_comp.assign(
+                                                &_tensor
+                                                    .slice(s![2, 2])
+                                                    .mapv(|x| Complex32::new(x, 0.0)),
+                                            );
+                                            Ruw_comp.assign(
+                                                &_tensor
+                                                    .slice(s![0, 2])
+                                                    .mapv(|x| Complex32::new(x, 0.0)),
+                                            );
+                                        },
+                                    )
+                            },
+                        )
+                },
+            );
+        (Ruu_f, Rvv_f, Rww_f, Ruw_f)
+    }
     /// Returns the normalized spectral component from a stencil of shape `(Nx, Ny,
     /// Nz, 3, 3)`.
     ///
@@ -195,28 +286,12 @@ impl Stencil {
     /// part of the normalized spectral component for the corresponding correlation
     /// tensor entry.
     pub fn spectral_component_grids(&self) -> (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) {
-        let mut Ruu_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 0, 0])
-            .mapv(|x| Complex32::new(x, 0.0));
-        let mut Rvv_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 1, 1])
-            .mapv(|x| Complex32::new(x, 0.0));
-        let mut Rww_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 2, 2])
-            .mapv(|x| Complex32::new(x, 0.0));
-        let Ruw_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 0, 2])
-            .mapv(|x| Complex32::new(x, 0.0));
+        let (mut Ruu_f, mut Rvv_f, mut Rww_f, mut Ruw_f) = self.decompose_stencil();
 
         let Ruu: Array3<f32> = irfft3d(&mut Ruu_f);
         let Rvv: Array3<f32> = irfft3d(&mut Rvv_f);
         let Rww: Array3<f32> = irfft3d(&mut Rww_f);
-
-        // Normalize frequency components
+        // let Ruw: Array3<f32> = irfft3d(&mut Ruw_f);
         (
             Ruu_f.mapv(|x| x.re / Ruu[[0, 0, 0]]),
             Rvv_f.mapv(|x| x.re / Rvv[[0, 0, 0]]),
@@ -244,23 +319,7 @@ impl Stencil {
     /// correlation matrix for the U, V and W wind components as well as the cross
     /// correlation between U and W.
     pub fn correlation_grids(&self) -> (Array3<f32>, Array3<f32>, Array3<f32>, Array3<f32>) {
-        let mut Ruu_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 0, 0])
-            .mapv(|x| Complex32::new(x, 0.0));
-        let mut Rvv_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 1, 1])
-            .mapv(|x| Complex32::new(x, 0.0));
-        let mut Rww_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 2, 2])
-            .mapv(|x| Complex32::new(x, 0.0));
-        let mut Ruw_f: Array3<Complex32> = self
-            .stencil
-            .slice(s![.., .., .., 0, 2])
-            .mapv(|x| Complex32::new(x, 0.0));
-
+        let (mut Ruu_f, mut Rvv_f, mut Rww_f, mut Ruw_f) = self.decompose_stencil();
         let Ruu: Array3<f32> = irfft3d(&mut Ruu_f);
         drop(Ruu_f);
         let Rvv: Array3<f32> = irfft3d(&mut Rvv_f);
@@ -269,7 +328,6 @@ impl Stencil {
         drop(Rww_f);
         let Ruw: Array3<f32> = irfft3d(&mut Ruw_f);
         drop(Ruw_f);
-
         (
             Ruu.mapv(|x| x / Ruu[[0, 0, 0]]),
             Rvv.mapv(|x| x / Rvv[[0, 0, 0]]),
