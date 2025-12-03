@@ -71,6 +71,7 @@ class RustConstrainedStencil:
         corr_thres: float,
         spectral_compression_target: float,
         sinc_thres: float,
+        solver_type: int,
     ): ...
     def turbulence(
         self, ae: float, seed: int, parallel: bool
@@ -78,6 +79,17 @@ class RustConstrainedStencil:
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
     def sparsity(self) -> float: ...
     def spectral_compression(self) -> float: ...
+    def spectral_impulses(
+        self,
+    ) -> tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]: ...
 
 def distance_matrix(x: np.ndarray) -> np.ndarray: ...
 def isotropic_f32(k: np.ndarray, ae: float, L: float) -> np.ndarray: ...

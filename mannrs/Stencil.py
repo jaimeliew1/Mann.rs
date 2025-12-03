@@ -62,10 +62,19 @@ class Stencil(BaseModel, extra="allow"):
     def constrained(self) -> bool:
         return self.constraint_spec is not None and len(self.constraint_spec.constraints) > 0
 
-    def build(self, parallel: bool = True) -> StencilInstance:
+    def build(self, parallel: bool = True, solver: Literal["lu", "cholesky", "qr"] = "lu") -> StencilInstance:
         """
         Materialize the Mann turbulence stencil in memory.
         """
+        match solver:
+            case "lu":
+                solver_type = 0
+            case "cholesky":
+                solver_type = 1
+            case "qr":
+                solver_type = 2
+            case _:
+                raise ValueError("Invalid solver type! Use 'lu', 'cholesky', or 'qr'.")
         benchmark = {}
         tstart = perf_counter()
         if self.constrained:
@@ -90,6 +99,7 @@ class Stencil(BaseModel, extra="allow"):
                 corr_thres=self.constraint_spec.corr_thres,
                 spectral_compression_target=self.constraint_spec.spectral_compression_target,
                 sinc_thres=self.stencil_spec.sinc_thres,
+                solver_type=solver_type,
             )
             benchmark["sparsity"] = stencil.sparsity()
             benchmark["spectral_compression"] = stencil.spectral_compression()

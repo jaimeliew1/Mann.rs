@@ -12,7 +12,10 @@ use std::mem::drop;
 
 use faer::prelude::*;
 use faer::sparse::linalg::solvers::Lu;
+use faer::sparse::linalg::solvers::Llt;
+use faer::sparse::linalg::solvers::Qr;
 use faer::sparse::*;
+use faer::Side;
 
 use numpy::Complex32;
 
@@ -26,10 +29,46 @@ pub struct Constraint {
     pub u: f32,
 }
 
+pub enum MatrixSolver {
+    Lu,
+    Llt,
+    Qr
+}
+pub enum FactorizedMatrix {
+    Lu(Lu<usize, f32>),
+    Llt(Llt<usize, f32>),
+    Qr(Qr<usize, f32>),
+}
+
+impl FactorizedMatrix {
+    pub fn cholesky(A: SparseColMat<usize, f32>) -> Self {
+        let llt = A.sp_cholesky(Side::Lower).unwrap();
+        FactorizedMatrix::Llt(llt)
+    }
+
+    pub fn LU(A: SparseColMat<usize, f32>) -> Self {
+        let lu = A.sp_lu().unwrap();
+        FactorizedMatrix::Lu(lu)
+    }
+
+    pub fn QR(A: SparseColMat<usize, f32>) -> Self {
+        let qr = A.sp_qr().unwrap();
+        FactorizedMatrix::Qr(qr)
+    }
+
+    pub fn solve(&self, b: &faer::col::Col<f32>) -> faer::col::Col<f32> {
+        match self {
+            FactorizedMatrix::Lu(lu) => lu.solve(b),
+            FactorizedMatrix::Llt(llt) => llt.solve(b),
+            FactorizedMatrix::Qr(qr) => qr.solve_lstsq(b),
+        }
+    }
+}
+
 pub struct ConstrainedStencil {
     pub stencil: Stencil,
     pub constraints: Vec<Constraint>,
-    A_factorized: Lu<usize, f32>,
+    A_factorized: FactorizedMatrix,
     pub impulse_u: CompressedSpectralImpulseResponse,
     pub sparsity: f64,
     pub spectral_compression: f64,
@@ -41,6 +80,7 @@ impl ConstrainedStencil {
         constraints: Vec<Constraint>,
         corr_thres: f32,
         spectral_compression_target: f64,
+        solver: MatrixSolver,
     ) -> Self {
         let p: &StencilParams = &stencil.p;
 
@@ -107,8 +147,18 @@ impl ConstrainedStencil {
         )
         .unwrap();
 
-        // factorize
-        let llt = A.sp_lu().unwrap();
+        //print sum of A to monitor stability
+        let diag_sum: f32 = A.triplet_iter()
+            .map(|x| x.val)
+            .sum();
+        println!("Sum of A: {}", diag_sum);
+
+        let llt: FactorizedMatrix = match solver {
+            MatrixSolver::Lu => FactorizedMatrix::LU(A),
+            MatrixSolver::Llt => FactorizedMatrix::cholesky(A),
+            MatrixSolver::Qr => FactorizedMatrix::QR(A),
+        };
+
 
         // Calculate compressed impulse responses
         let (impulse_u, _impulse_v, _impulse_w, _impulse_uw) = stencil.spectral_impulses();
@@ -164,7 +214,10 @@ impl ConstrainedStencil {
 
         //solve linear system
         let Uweight: Vec<f32> = self.A_factorized.solve(&b).iter().map(|&x| x).collect();
+        
 
+        // print the sum of Uweight to monitor stability
+        println!("Sum of Uweight: {}", Uweight.iter().sum::<f32>());
         //perform spectral superposition
 
         // Calculate normalized spectral component grids

@@ -1,3 +1,4 @@
+use crate::constrained::MatrixSolver;
 use crate::utilities;
 use crate::Tensors::*;
 use crate::{ConstrainedStencil, Constraint, Stencil};
@@ -16,7 +17,6 @@ struct RustStencil {
 struct RustConstrainedStencil {
     stencil: ConstrainedStencil,
 }
-
 
 #[pymethods]
 impl RustStencil {
@@ -60,6 +60,7 @@ impl RustStencil {
         constraints: PyReadonlyArray2<'py, f32>,
         corr_thres: f32,
         spectral_compression_target: f64,
+        solver_type: u64,
     ) -> RustConstrainedStencil {
         let mut constraints_new: Vec<Constraint> = Vec::new();
         for row in constraints.as_array().rows() {
@@ -72,12 +73,20 @@ impl RustStencil {
                 u: u,
             });
         }
+
+        let solver: MatrixSolver = match solver_type {
+            0 => MatrixSolver::Lu,
+            1 => MatrixSolver::Llt,
+            2 => MatrixSolver::Qr,
+            _ => panic!("Invalid solver type! Use 0 for LU, 1 for Cholesky, and 2 for QR."),
+        };
         RustConstrainedStencil {
             stencil: ConstrainedStencil::new(
                 self.stencil.clone(),
                 constraints_new,
                 corr_thres,
                 spectral_compression_target,
+                solver,
             ),
         }
     }
@@ -211,6 +220,7 @@ impl RustConstrainedStencil {
         corr_thres: f32,
         spectral_compression_target: f64,
         sinc_thres: f32,
+        solver_type: u64,
     ) -> Self {
         let mut constraints_new: Vec<Constraint> = Vec::new();
         for row in constraints.as_array().rows() {
@@ -223,6 +233,14 @@ impl RustConstrainedStencil {
                 u: u,
             });
         }
+
+        let solver: MatrixSolver = match solver_type {
+            0 => MatrixSolver::Lu,
+            1 => MatrixSolver::Llt,
+            2 => MatrixSolver::Qr,
+            _ => panic!("Invalid solver type! Use 0 for LU, 1 for Cholesky, and 2 for QR."),
+        };
+
         RustConstrainedStencil {
             stencil: ConstrainedStencil::new(
                 Stencil::from_params(
@@ -243,6 +261,7 @@ impl RustConstrainedStencil {
                 constraints_new,
                 corr_thres,
                 spectral_compression_target,
+                solver,
             ),
         }
     }
@@ -280,6 +299,31 @@ impl RustConstrainedStencil {
 
     fn spectral_compression<'py>(&self) -> f64 {
         self.stencil.spectral_compression
+    }
+
+    fn spectral_impulses<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> (
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray1<f32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+        Bound<'py, PyArray3<numpy::Complex32>>,
+    ) {
+        let (imp_uu, imp_vv, imp_ww, imp_uw) = &self.stencil.stencil.spectral_impulses();
+
+        (
+            imp_uu.kx.to_pyarray(py),
+            imp_uu.ky.to_pyarray(py),
+            imp_uu.kz.to_pyarray(py),
+            imp_uu.impulse.to_pyarray(py),
+            imp_vv.impulse.to_pyarray(py),
+            imp_ww.impulse.to_pyarray(py),
+            imp_uw.impulse.to_pyarray(py),
+        )
     }
 }
 
