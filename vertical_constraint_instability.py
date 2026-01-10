@@ -6,15 +6,22 @@ from rich import print
 from time import perf_counter
 
 
+def make_vertical_constraints(Nv: int, seed: int, Nx: int = 350) -> list[Constraint]:
+    rng = np.random.default_rng(seed=seed)
+
+    py = 100.0
+    pxs = np.linspace(0, 7000, Nx)
+    constraints = []
+    for pz in np.linspace(100, 200, Nv):
+        constraints.extend(
+            [Constraint(x=_x, y=py, z=pz, u=rng.normal(0, 5)) for _x in pxs]
+        )
+    return constraints
 
 if __name__ == "__main__":
-    constraints = [
-        Constraint(**x)
-        for x in pl.read_csv("vertical_constraint_instability_data.csv").iter_rows(
-            named=True
-        )
-    ]
+    constraints = make_vertical_constraints(Nv=5, seed=1234)
     # print(constraints)
+    
     # Create constrained stencil
     stencil_def = Stencil(
         L=90.0,
@@ -22,11 +29,11 @@ if __name__ == "__main__":
         Lx=7000,
         Ly=200,
         Lz=210,
-        Nx=1000,
-        Ny=57,
-        Nz=59,
+        Nx=300,
+        Ny=32,
+        Nz=32,
         sinc_thres=3.0,
-        aperiodic_x=False,
+        aperiodic_x=True,
         aperiodic_y=True,
         aperiodic_z=True,
     ).constrain(
@@ -45,7 +52,7 @@ if __name__ == "__main__":
     print("generating turbulence...")
     start_time = perf_counter()
     wf = stencil.turbulence(ae=0.2, seed=1234)
-    wf2 = stencil.turbulence(ae=0.2, seed=1234)
+    # wf2 = stencil.turbulence(ae=0.2, seed=1234)
 
     print(f"Turbulence generated in {perf_counter() - start_time:.2f} seconds.")
 
@@ -58,22 +65,32 @@ if __name__ == "__main__":
     plt.savefig("vertical_constraint_instability.png", dpi=300)
 
     # Plot a vertical and a horizontal slice
-    fig, axes = plt.subplots(2, 1)
-    axes[0].imshow(wf2.U[:, 16, :].T)
-    axes[0].set_title("Vertical slice (y=16)")
-    axes[1].imshow(wf2.U[:, :, 16].T)
-    axes[1].set_title("Horizontal slice (z=16)")
-    plt.savefig("vertical_constraint_instability2.png", dpi=300)
 
 
     # plot slices of spectral impulses
     fig, axes = plt.subplots(2, 2, figsize=(6, 12))
-    axes[0, 0].imshow(Suu[:, :, 0].real.T, extent=(kx.min(), kx.max(), ky.min(), ky.max()), aspect='auto')
+    axes[0, 0].imshow(
+        Suu[:, :, 0].real.T,
+        extent=(kx.min(), kx.max(), ky.min(), ky.max()),
+        aspect="auto",
+    )
     axes[0, 0].set_title("Suu slice (kz=0)")
-    axes[0, 1].imshow(Svv[:, :, 0].real.T, extent=(kx.min(), kx.max(), ky.min(), ky.max()), aspect='auto')
+    axes[0, 1].imshow(
+        Svv[:, :, 0].real.T,
+        extent=(kx.min(), kx.max(), ky.min(), ky.max()),
+        aspect="auto",
+    )
     axes[0, 1].set_title("Svv slice (kz=0)")
-    axes[1, 0].imshow(Sww[:, :, 0].real.T, extent=(kx.min(), kx.max(), ky.min(), ky.max()), aspect='auto')
+    axes[1, 0].imshow(
+        Sww[:, :, 0].real.T,
+        extent=(kx.min(), kx.max(), ky.min(), ky.max()),
+        aspect="auto",
+    )
     axes[1, 0].set_title("Sww slice (kz=0)")
-    axes[1, 1].imshow(Suw[:, :, 0].real.T, extent=(kx.min(), kx.max(), ky.min(), ky.max()), aspect='auto')
+    axes[1, 1].imshow(
+        Suw[:, :, 0].real.T,
+        extent=(kx.min(), kx.max(), ky.min(), ky.max()),
+        aspect="auto",
+    )
     axes[1, 1].set_title("Suw slice (kz=0)")
     plt.savefig("spectral_impulses_slices.png", dpi=300)
