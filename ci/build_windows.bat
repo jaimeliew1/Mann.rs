@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
         -Command "irm https://astral.sh/uv/install.ps1 | iex"
 
     :: Ensure uv is on PATH for this session
-    set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
+    set Path=%USERPROFILE%\.local\bin;%Path%
 ) else (
     echo uv is already installed.
 )
