@@ -13,6 +13,21 @@ if %errorlevel% neq 0 (
     echo Rust is already installed.
 )
 
+
+echo Checking for uv installation...
+where uv >nul 2>nul
+if %errorlevel% neq 0 (
+    echo Installing uv...
+    powershell -NoProfile -ExecutionPolicy Bypass ^
+        -Command "irm https://astral.sh/uv/install.ps1 | iex"
+
+    :: Ensure uv is on PATH for this session
+    set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
+) else (
+    echo uv is already installed.
+)
+
+
 :: Change to parent directory of script
 cd /d "%~dp0\.."
 
