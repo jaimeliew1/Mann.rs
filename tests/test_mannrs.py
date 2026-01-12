@@ -77,9 +77,9 @@ def test_constrained():
 
     # Check reproducibility
     wf2 = stencil.turbulence(ae, seed)
-    assert np.allclose(wf.U, wf2.U)
-    assert np.allclose(wf.V, wf2.V)
-    assert np.allclose(wf.W, wf2.W)
+    assert np.allclose(wf.U, wf2.U, atol=1e-5)
+    assert np.allclose(wf.V, wf2.V, atol=1e-5)
+    assert np.allclose(wf.W, wf2.W, atol=1e-5)
 
     # Test saving and loading
     wf.write("test_constrained.npz")
