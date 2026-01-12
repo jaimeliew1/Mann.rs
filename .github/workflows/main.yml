@@ -1,0 +1,63 @@
+
+name: Build Python Wheels
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  # ============================================================
+  # LINUX BUILDS — manylinux (recommended)
+  # ============================================================
+  linux:
+    runs-on: ubuntu-latest
+
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make build script executable
+        run: chmod +x ci/build_linux.sh
+
+      - name: Build wheels (manylinux)
+        run: ./ci/build_linux.sh
+
+      - name: Upload Linux wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux
+          path: wheelhouse/*
+          retention-days: 14
+
+  # ============================================================
+  # WINDOWS BUILDS — run your script directly
+  # ============================================================
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --------------------------------------------------------
+      # 🛠️ Run your Windows build script (includes all setup)
+      # --------------------------------------------------------
+      - name: Run Windows build script
+        run: ci\build_windows.bat
+        shell: cmd
+
+      # --------------------------------------------------------
+      # 📦 Upload built wheels
+      # --------------------------------------------------------
+      - name: Upload Windows wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows
+          path: wheelhouse/*
+          retention-days: 14
