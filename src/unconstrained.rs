@@ -37,26 +37,26 @@ impl StencilParams {
 
     pub fn linear_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         // Calculate linear wave number arrays.
-        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / ((self.Nx) as f32));
-        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / ((self.Ny) as f32));
-        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / ((self.Nz) as f32));
+        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / ((self.Nx - 1) as f32));
+        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / ((self.Ny - 1) as f32));
+        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / ((self.Nz - 1) as f32));
         (kxs, kys, kzs)
     }
 
     pub fn aperiodic_linear_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         // Calculate linear wave number arrays.
         let Nx: usize = if self.aperiodic_x {
-            2 * self.Nx
+            2 * self.Nx - 1
         } else {
             self.Nx
         };
         let Ny: usize = if self.aperiodic_y {
-            2 * self.Ny
+            2 * self.Ny - 1
         } else {
             self.Ny
         };
         let Nz: usize = if self.aperiodic_z {
-            2 * self.Nz
+            2 * self.Nz - 1
         } else {
             self.Nz
         };
@@ -76,16 +76,16 @@ impl StencilParams {
         } else {
             self.Lz
         };
-        let kxs: Array1<f32> = fftfreq(Nx, Lx / ((Nx) as f32));
-        let kys: Array1<f32> = fftfreq(Ny, Ly / ((Ny) as f32));
-        let kzs: Array1<f32> = rfftfreq(Nz, Lz / ((Nz) as f32));
+        let kxs: Array1<f32> = fftfreq(Nx, Lx / ((Nx - 1) as f32));
+        let kys: Array1<f32> = fftfreq(Ny, Ly / ((Ny - 1) as f32));
+        let kzs: Array1<f32> = rfftfreq(Nz, Lz / ((Nz - 1) as f32));
         (kxs, kys, kzs)
     }
     pub fn angular_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         // Calculate linear wave number arrays.
-        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / (2.0 * PI * (self.Nx) as f32));
-        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / (2.0 * PI * (self.Ny) as f32));
-        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / (2.0 * PI * (self.Nz) as f32));
+        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / (2.0 * PI * (self.Nx - 1) as f32));
+        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / (2.0 * PI * (self.Ny - 1) as f32));
+        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / (2.0 * PI * (self.Nz - 1) as f32));
         (kxs, kys, kzs)
     }
 }
@@ -182,17 +182,17 @@ impl Stencil {
         Array3<Complex32>,
     ) {
         let Nx: usize = if self.p.aperiodic_x {
-            2 * self.p.Nx
+            2 * self.p.Nx - 1
         } else {
             self.p.Nx
         };
         let Ny: usize = if self.p.aperiodic_y {
-            2 * self.p.Ny
+            2 * self.p.Ny - 1
         } else {
             self.p.Ny
         };
         let Nz: usize = if self.p.aperiodic_z {
-            2 * self.p.Nz
+            2 * self.p.Nz - 1
         } else {
             self.p.Nz
         };
@@ -356,9 +356,9 @@ impl Stencil {
 }
 
 pub fn stencilate_par(p: StencilParams) -> Array5<f32> {
-    let Nx: usize = if p.aperiodic_x { 2 * p.Nx } else { p.Nx };
-    let Ny: usize = if p.aperiodic_y { 2 * p.Ny } else { p.Ny };
-    let Nz: usize = if p.aperiodic_z { 2 * p.Nz } else { p.Nz };
+    let Nx: usize = if p.aperiodic_x { 2 * p.Nx - 1 } else { p.Nx };
+    let Ny: usize = if p.aperiodic_y { 2 * p.Ny - 1 } else { p.Ny };
+    let Nz: usize = if p.aperiodic_z { 2 * p.Nz - 1 } else { p.Nz };
 
     let Lx: f32 = if p.aperiodic_x { 2.0 * p.Lx } else { p.Lx };
     let Ly: f32 = if p.aperiodic_y { 2.0 * p.Ly } else { p.Ly };
@@ -384,9 +384,9 @@ pub fn stencilate_par(p: StencilParams) -> Array5<f32> {
 }
 
 pub fn stencilate_sinc_par(p: &StencilParams, sinc_thres: f32) -> Array5<f32> {
-    let Nx: usize = if p.aperiodic_x { 2 * p.Nx } else { p.Nx };
-    let Ny: usize = if p.aperiodic_y { 2 * p.Ny } else { p.Ny };
-    let Nz: usize = if p.aperiodic_z { 2 * p.Nz } else { p.Nz };
+    let Nx: usize = if p.aperiodic_x { 2 * p.Nx - 1 } else { p.Nx };
+    let Ny: usize = if p.aperiodic_y { 2 * p.Ny - 1 } else { p.Ny };
+    let Nz: usize = if p.aperiodic_z { 2 * p.Nz - 1 } else { p.Nz };
 
     let Lx: f32 = if p.aperiodic_x { 2.0 * p.Lx } else { p.Lx };
     let Ly: f32 = if p.aperiodic_y { 2.0 * p.Ly } else { p.Ly };
@@ -424,9 +424,9 @@ pub fn partial_turbulate_par(
     seed: u64,
     p: &StencilParams,
 ) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
-    let Nx: usize = if p.aperiodic_x { 2 * p.Nx } else { p.Nx };
-    let Ny: usize = if p.aperiodic_y { 2 * p.Ny } else { p.Ny };
-    let Nz: usize = if p.aperiodic_z { 2 * p.Nz } else { p.Nz };
+    let Nx: usize = if p.aperiodic_x { 2 * p.Nx - 1 } else { p.Nx };
+    let Ny: usize = if p.aperiodic_y { 2 * p.Ny - 1 } else { p.Ny };
+    let Nz: usize = if p.aperiodic_z { 2 * p.Nz - 1 } else { p.Nz };
 
     let Lx: f32 = if p.aperiodic_x { 2.0 * p.Lx } else { p.Lx };
     let Ly: f32 = if p.aperiodic_y { 2.0 * p.Ly } else { p.Ly };
@@ -516,9 +516,9 @@ pub fn stencilate(
 }
 
 pub fn stencilate_sinc(p: &StencilParams, sinc_thres: f32) -> Array5<f32> {
-    let Nx: usize = if p.aperiodic_x { 2 * p.Nx } else { p.Nx };
-    let Ny: usize = if p.aperiodic_y { 2 * p.Ny } else { p.Ny };
-    let Nz: usize = if p.aperiodic_z { 2 * p.Nz } else { p.Nz };
+    let Nx: usize = if p.aperiodic_x { 2 * p.Nx - 1 } else { p.Nx };
+    let Ny: usize = if p.aperiodic_y { 2 * p.Ny - 1 } else { p.Ny };
+    let Nz: usize = if p.aperiodic_z { 2 * p.Nz - 1 } else { p.Nz };
 
     let Lx: f32 = if p.aperiodic_x { 2.0 * p.Lx } else { p.Lx };
     let Ly: f32 = if p.aperiodic_y { 2.0 * p.Ly } else { p.Ly };
@@ -556,9 +556,9 @@ pub fn partial_turbulate(
     seed: u64,
     p: &StencilParams,
 ) -> (Array3<Complex32>, Array3<Complex32>, Array3<Complex32>) {
-    let Nx: usize = if p.aperiodic_x { 2 * p.Nx } else { p.Nx };
-    let Ny: usize = if p.aperiodic_y { 2 * p.Ny } else { p.Ny };
-    let Nz: usize = if p.aperiodic_z { 2 * p.Nz } else { p.Nz };
+    let Nx: usize = if p.aperiodic_x { 2 * p.Nx - 1 } else { p.Nx };
+    let Ny: usize = if p.aperiodic_y { 2 * p.Ny - 1 } else { p.Ny };
+    let Nz: usize = if p.aperiodic_z { 2 * p.Nz - 1 } else { p.Nz };
 
     let Lx: f32 = if p.aperiodic_x { 2.0 * p.Lx } else { p.Lx };
     let Ly: f32 = if p.aperiodic_y { 2.0 * p.Ly } else { p.Ly };

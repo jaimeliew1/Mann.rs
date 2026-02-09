@@ -32,7 +32,7 @@ pub fn sinc2(x: f32) -> f32 {
 /// sampling distance. This function replicates the behaviour of
 /// `numpy.fft.fftfreq`.
 pub fn fftfreq(N: usize, dx: f32) -> Array1<f32> {
-    let df = 1.0 / (N as f32 * dx);
+    let df = 1.0 / ((N - 1) as f32 * dx);
     let _N = (N as i32 - 1) / 2 + 1;
     let f1: Array1<f32> = Array1::from_iter(0.._N).mapv(|elem| elem as f32);
     let f2: Array1<f32> = Array1::from_iter(-(N as i32) / 2..0).mapv(|elem| elem as f32);
@@ -117,7 +117,7 @@ pub fn irfft3d(input: &mut Array3<Complex32>) -> Array3<f32> {
 /// and a sampling distance. This function replicates the behaviour of
 /// `numpy.fft.rfftfreq`.
 pub fn rfftfreq(N: usize, dx: f32) -> Array1<f32> {
-    let df = 1.0 / (N as f32 * dx);
+    let df = 1.0 / ((N - 1) as f32 * dx);
     let _N = (N as i32) / 2 + 1;
     let f: Array1<f32> = Array1::from_iter(0.._N).mapv(|elem| elem as f32);
     df * f
@@ -169,9 +169,9 @@ pub fn freq_components(
     Nz: usize,
 ) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
     (
-        fftfreq(Nx, Lx / (2.0 * PI * Nx as f32)),
-        fftfreq(Ny, Ly / (2.0 * PI * Ny as f32)),
-        rfftfreq(Nz, Lz / (2.0 * PI * Nz as f32)),
+        fftfreq(Nx, Lx / (2.0 * PI * (Nx - 1) as f32)),
+        fftfreq(Ny, Ly / (2.0 * PI * (Ny - 1) as f32)),
+        rfftfreq(Nz, Lz / (2.0 * PI * (Nz - 1) as f32)),
     )
 }
 
@@ -434,7 +434,6 @@ where
         count = count + 1
     }
 }
-
 
 pub fn analyze_array<A, S, D>(array: &ArrayBase<S, D>)
 where
