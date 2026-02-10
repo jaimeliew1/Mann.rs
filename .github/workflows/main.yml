@@ -34,7 +34,7 @@ jobs:
         with:
           name: wheels-linux
           path: wheelhouse/*
-          retention-days: 14
+          retention-days: 1
 
   # ============================================================
   # WINDOWS BUILDS — run your script directly
@@ -61,7 +61,7 @@ jobs:
         with:
           name: wheels-windows
           path: wheelhouse/*
-          retention-days: 14
+          retention-days: 1
 
   # ============================================================
   # MACOS BUILDS — universal2 wheels (Intel + Apple Silicon)
@@ -84,7 +84,7 @@ jobs:
         with:
           name: wheels-macos
           path: wheelhouse/*
-          retention-days: 14
+          retention-days: 1
 
   # ============================================================
   # COMBINE WHEELS — merge Linux, Windows, and macOS outputs
