@@ -6,7 +6,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import toml
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, PositiveInt, PositiveFloat
 
 from .mannrs import RustConstrainedStencil, RustStencil
 from .Windfield import Windfield
@@ -16,6 +16,7 @@ class Stencil(BaseModel, extra="allow"):
     """
     Main entry point for defining a turbulence stencil, constraints, and turbulence field generation specs.
     """
+
     stencil_spec: StencilSpec
     """Parameters for the turbulence stencil."""
     constraint_spec: Optional[ConstraintSpec] = None
@@ -60,7 +61,10 @@ class Stencil(BaseModel, extra="allow"):
 
     @property
     def constrained(self) -> bool:
-        return self.constraint_spec is not None and len(self.constraint_spec.constraints) > 0
+        return (
+            self.constraint_spec is not None
+            and len(self.constraint_spec.constraints) > 0
+        )
 
     def build(self, parallel: bool = True) -> StencilInstance:
         """
@@ -136,7 +140,9 @@ class StencilInstance:
         self.params: Stencil = params
         self.benchmark: dict = benchmark
         self.sparsity: Union[float, None] = benchmark.get("sparsity")
-        self.spectral_compression: Union[float, None] = benchmark.get("spectral_compression")
+        self.spectral_compression: Union[float, None] = benchmark.get(
+            "spectral_compression"
+        )
         self.stencil_time: Union[float, None] = benchmark.get("stencil_time")
 
     def get_axes(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -179,21 +185,21 @@ class StencilSpec(BaseModel, extra="allow"):
     Base stencil template. Can be constrained via `constrain`.
     """
 
-    L: float
+    L: PositiveFloat
     """Length scale (m), characterizes the size of energy-containing eddies"""
-    gamma: float
+    gamma: PositiveFloat
     """Anisotropy parameter [-]"""
-    Lx: float
+    Lx: PositiveFloat
     """Domain length in x-direction (m)"""
-    Ly: float
+    Ly: PositiveFloat
     """Domain length in y-direction (m)"""
-    Lz: float
+    Lz: PositiveFloat
     """Domain length in z-direction (m)"""
-    Nx: int
+    Nx: PositiveInt
     """Number of grid points in x-direction"""
-    Ny: int
+    Ny: PositiveInt
     """Number of grid points in y-direction"""
-    Nz: int
+    Nz: PositiveInt
     """Number of grid points in z-direction"""
     aperiodic_x: bool = False
     """sets aperiodicity in the x-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
@@ -201,7 +207,7 @@ class StencilSpec(BaseModel, extra="allow"):
     """sets aperiodicity in the y-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
     aperiodic_z: bool = True
     """sets aperiodicity in the z-direction. Turning off aperiodicity (false) can reduce computational cost by approximately half."""
-    sinc_thres: float = 3.0
+    sinc_thres: PositiveFloat = 3.0
     """Threshold for applying the Mann sinc correction to low-frequency modes."""
 
 
@@ -209,6 +215,7 @@ class ConstraintSpec(BaseModel, extra="allow"):
     """
     Specification for velocity constraints and related parameters.
     """
+
     constraints: list[Constraint] = Field(..., repr=False)
     """List of velocity constraints at certain positions in 3D space."""
     spectral_compression_target: float = 0.8
@@ -245,6 +252,7 @@ class TurbulenceSpec(BaseModel, extra="allow"):
     """
     Parameters for generating and saving a turbulence wind field realization.
     """
+
     ae: float
     """Turbulence intensity scaling factor."""
     seed: int
@@ -263,11 +271,9 @@ class TurbulenceSpec(BaseModel, extra="allow"):
     def generate_and_save(
         self, stencil: StencilInstance, parallel: bool = True
     ) -> None:
-        wf = stencil.turbulence(self.ae, self.seed, parallel=parallel)
-        wf.write(
-            self.output,
-            format=self.format,
-            u_offset=self.u_offset,
-            y_offset=self.y_offset,
-            z_offset=self.z_offset,
+        wf = (
+            stencil.turbulence(self.ae, self.seed, parallel=parallel)
+            .translate(self.y_offset, self.z_offset)
+            .velocity_offset(self.u_offset)
         )
+        wf.write(self.output, format=self.format)
