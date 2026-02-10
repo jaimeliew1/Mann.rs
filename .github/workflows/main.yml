@@ -3,9 +3,13 @@ name: Build Python Wheels
 
 on:
   push:
-    branches: 
-      - '**'
+    branches:
+      - master
+      - dev
   pull_request:
+    branches:
+      - master
+      - dev
   workflow_dispatch:
 
 jobs:
