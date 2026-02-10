@@ -32,7 +32,7 @@ if %errorlevel% neq 0 (
 cd /d "%~dp0\.."
 
 :: Define Python versions
-set PY_VERSIONS=3.8 3.9 3.10 3.11 3.12 3.13
+set PY_VERSIONS=3.9 3.10 3.11 3.12 3.13
 
 echo Building wheels for Python versions: %PY_VERSIONS%
 for %%V in (%PY_VERSIONS%) do (
