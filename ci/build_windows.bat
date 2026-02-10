@@ -32,7 +32,7 @@ if %errorlevel% neq 0 (
 cd /d "%~dp0\.."
 
 :: Define Python versions
-set PY_VERSIONS=3.8 3.9 3.10 3.11 3.12 3.13
+set PY_VERSIONS=3.9 3.10 3.11 3.12 3.13
 
 echo Building wheels for Python versions: %PY_VERSIONS%
 for %%V in (%PY_VERSIONS%) do (
@@ -46,3 +46,28 @@ if not exist wheelhouse mkdir wheelhouse
 copy dist\* wheelhouse\
 
 echo Build complete. Files are in .\wheelhouse\
+
+:: ----------------------------------------
+:: Test all built wheels with pytest using uv (no gotos)
+:: ----------------------------------------
+echo.
+echo Testing built wheels with pytest using uv...
+
+for %%V in (%PY_VERSIONS%) do (
+    set "VER=%%V"
+    rem remove the dot from the version to match wheel tags (e.g. 3.10 -> 310)
+    set "PYP=cp!VER:.=!"
+    set "WHEEL="
+    for %%W in (wheelhouse\*!PYP!* ) do set "WHEEL=%%~fW"
+    if defined WHEEL (
+        echo Testing !WHEEL! with python%%V...
+        uv run --python python%%V --with pytest --with "!WHEEL!" pytest tests/ -v
+        if errorlevel 1 exit /b 1
+        echo Tests passed for python%%V
+    ) else (
+        echo No wheel found for !PYP!
+        exit /b 1
+    )
+)
+
+echo Build and test complete. Files are in .\wheelhouse\
