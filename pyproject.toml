@@ -35,9 +35,9 @@ dev = [
     "griffe-typingdoc>=0.2.9",
     "ipython>=7.34.0",
     "matplotlib>=3.5.3",
-    "mkdocs>=1.5.3",
     "mkdocs-material>=9.2.7",
     "mkdocstrings[python]>=0.22.0",
     "pymdown-extensions>=10.16.1",
     "pytest>=7.4.4",
+    "zensical>=0.0.2",
 ]
