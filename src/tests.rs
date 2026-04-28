@@ -159,6 +159,83 @@ mod tests {
     }
 
     #[test]
+    fn test_fftfreq_standard() {
+        let arr: Array1<f32> = utilities::fftfreq(10, 1.0);
+        let expected = [0.0, 0.1, 0.2, 0.3, 0.4, -0.5, -0.4, -0.3, -0.2, -0.1];
+        arr.into_iter()
+            .zip(expected.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+    }
+
+    #[test]
+    fn test_rfftfreq_standard() {
+        let arr: Array1<f32> = utilities::rfftfreq(10, 1.0);
+        let expected = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5];
+        arr.into_iter()
+            .zip(expected.iter())
+            .for_each(|(a, b)| assert!((a - b).abs() < TOL));
+    }
+
+    #[test]
+    fn test_get_axes_periodic_spacing() {
+        let p = crate::unconstrained::StencilParams {
+            L: 1.0,
+            gamma: 0.0,
+            Lx: 10.0,
+            Ly: 20.0,
+            Lz: 30.0,
+            Nx: 10,
+            Ny: 10,
+            Nz: 10,
+            aperiodic_x: false,
+            aperiodic_y: false,
+            aperiodic_z: false,
+        };
+        let (x, y, z) = p.get_axes();
+        assert_eq!(x[0], 0.0);
+        assert_eq!(x[9], 9.0);
+        assert_eq!(y[9], 18.0);
+        assert_eq!(z[9], 27.0);
+    }
+
+    #[test]
+    fn test_constrained_stencil_preserves_constraint_point() {
+        let stencil = Stencil::from_params(
+            1.0,
+            0.0,
+            10.0,
+            10.0,
+            10.0,
+            8,
+            8,
+            8,
+            false,
+            false,
+            false,
+            0.0,
+            false,
+        );
+        let ae = 1.0;
+        let seed = 42;
+        let (U, _, _) = stencil.turbulate(ae, seed, false);
+        let (x, y, z) = stencil.p.get_axes();
+
+        let ix = 1;
+        let iy = 2;
+        let iz = 3;
+        let constraint = Constraint {
+            x: x[ix],
+            y: y[iy],
+            z: z[iz],
+            u: U[[ix, iy, iz]],
+        };
+        let constrained = ConstrainedStencil::new(stencil.clone(), vec![constraint], 0.0, 0.0);
+        let (U_constrained, _, _) = constrained.turbulate(ae, seed, false);
+
+        assert!((U_constrained[[ix, iy, iz]] - U[[ix, iy, iz]]).abs() < 1e-5);
+    }
+
+    #[test]
     fn test_distance_matrix() {
         let x: Array1<f32> = array![1.0, 2.0, 4.0];
 

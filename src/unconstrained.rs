@@ -29,17 +29,17 @@ pub struct StencilParams {
 impl StencilParams {
     pub fn get_axes(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         (
-            linspace(0.0, self.Lx, self.Nx).collect(),
-            linspace(0.0, self.Ly, self.Ny).collect(),
-            linspace(0.0, self.Lz, self.Nz).collect(),
+            Array1::from_iter((0..self.Nx).map(|i| i as f32 * self.Lx / self.Nx as f32)),
+            Array1::from_iter((0..self.Ny).map(|j| j as f32 * self.Ly / self.Ny as f32)),
+            Array1::from_iter((0..self.Nz).map(|k| k as f32 * self.Lz / self.Nz as f32)),
         )
     }
 
     pub fn linear_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         // Calculate linear wave number arrays.
-        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / ((self.Nx - 1) as f32));
-        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / ((self.Ny - 1) as f32));
-        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / ((self.Nz - 1) as f32));
+        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / (self.Nx as f32));
+        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / (self.Ny as f32));
+        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / (self.Nz as f32));
         (kxs, kys, kzs)
     }
 
@@ -76,16 +76,16 @@ impl StencilParams {
         } else {
             self.Lz
         };
-        let kxs: Array1<f32> = fftfreq(Nx, Lx / ((Nx - 1) as f32));
-        let kys: Array1<f32> = fftfreq(Ny, Ly / ((Ny - 1) as f32));
-        let kzs: Array1<f32> = rfftfreq(Nz, Lz / ((Nz - 1) as f32));
+        let kxs: Array1<f32> = fftfreq(Nx, Lx / (Nx as f32));
+        let kys: Array1<f32> = fftfreq(Ny, Ly / (Ny as f32));
+        let kzs: Array1<f32> = rfftfreq(Nz, Lz / (Nz as f32));
         (kxs, kys, kzs)
     }
     pub fn angular_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         // Calculate linear wave number arrays.
-        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / (2.0 * PI * (self.Nx - 1) as f32));
-        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / (2.0 * PI * (self.Ny - 1) as f32));
-        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / (2.0 * PI * (self.Nz - 1) as f32));
+        let kxs: Array1<f32> = 2.0 * PI * fftfreq(self.Nx, self.Lx / (self.Nx as f32));
+        let kys: Array1<f32> = 2.0 * PI * fftfreq(self.Ny, self.Ly / (self.Ny as f32));
+        let kzs: Array1<f32> = 2.0 * PI * rfftfreq(self.Nz, self.Lz / (self.Nz as f32));
         (kxs, kys, kzs)
     }
 }
