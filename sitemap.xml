@@ -1,43 +1,13 @@
+{#-
+  This file was automatically generated - do not edit
+-#}
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/installation/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/quickstart/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/about/about/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/api/python/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/api/rust/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/api/schema/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/usage/basic_usage/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/usage/stencil/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
-    <url>
-         <loc>https://jaimeliew1.github.io/Mann.rs/usage/unconstrained/</loc>
-         <lastmod>2025-10-16</lastmod>
-    </url>
+  {%- for page in pages -%}
+    {%- if page.canonical_url %}
+      <url>
+        <loc>{{ page.canonical_url }}</loc>
+      </url>
+    {%- endif -%}
+  {%- endfor %}
 </urlset>
