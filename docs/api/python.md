@@ -32,6 +32,11 @@
 ::: mannrs.Windfield.Windfield
     options:
       members:
+        - translate
+        - velocity_offset
         - write
+        - to_HAWC2
+        - to_npz
+        - to_netCDF
       show_root_heading: true
       heading_level: 3
