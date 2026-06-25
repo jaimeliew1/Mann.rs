@@ -82,10 +82,11 @@ impl StencilParams {
         (kxs, kys, kzs)
     }
     pub fn angular_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
-        // Calculate linear wave number arrays.
-        let kxs: Array1<f32> = 2.0 * PI * fftfreq(self.Nx, self.Lx / (self.Nx as f32));
-        let kys: Array1<f32> = 2.0 * PI * fftfreq(self.Ny, self.Ly / (self.Ny as f32));
-        let kzs: Array1<f32> = 2.0 * PI * rfftfreq(self.Nz, self.Lz / (self.Nz as f32));
+        // Calculate angular wave number arrays consistent with a physical box
+        // where L = (N - 1) * dx.
+        let kxs: Array1<f32> = 2.0 * PI * fftfreq(self.Nx, self.Lx / ((self.Nx - 1) as f32));
+        let kys: Array1<f32> = 2.0 * PI * fftfreq(self.Ny, self.Ly / ((self.Ny - 1) as f32));
+        let kzs: Array1<f32> = 2.0 * PI * rfftfreq(self.Nz, self.Lz / ((self.Nz - 1) as f32));
         (kxs, kys, kzs)
     }
 }

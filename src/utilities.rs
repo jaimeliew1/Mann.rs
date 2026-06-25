@@ -169,9 +169,9 @@ pub fn freq_components(
     Nz: usize,
 ) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
     (
-        2.0 * PI * fftfreq(Nx, Lx / (Nx as f32)),
-        2.0 * PI * fftfreq(Ny, Ly / (Ny as f32)),
-        2.0 * PI * rfftfreq(Nz, Lz / (Nz as f32)),
+        2.0 * PI * fftfreq(Nx, Lx / ((Nx - 1) as f32)),
+        2.0 * PI * fftfreq(Ny, Ly / ((Ny - 1) as f32)),
+        2.0 * PI * rfftfreq(Nz, Lz / ((Nz - 1) as f32)),
     )
 }
 

@@ -236,6 +236,98 @@ mod tests {
     }
 
     #[test]
+    fn test_axes_physical_box_convention() {
+        let p = crate::unconstrained::StencilParams {
+            L: 1.0,
+            gamma: 0.0,
+            Lx: 10.0,
+            Ly: 20.0,
+            Lz: 30.0,
+            Nx: 10,
+            Ny: 11,
+            Nz: 12,
+            aperiodic_x: false,
+            aperiodic_y: false,
+            aperiodic_z: false,
+        };
+        let (x, y, z) = p.get_axes();
+
+        assert_eq!(x.len(), p.Nx);
+        assert_eq!(y.len(), p.Ny);
+        assert_eq!(z.len(), p.Nz);
+
+        assert!((x[0] - 0.0).abs() < TOL);
+        assert!((x[p.Nx - 1] - p.Lx).abs() < TOL);
+        assert!((x[p.Nx - 1] - x[0] - p.Lx).abs() < TOL);
+        assert!((x[1] - x[0] - p.Lx / ((p.Nx - 1) as f32)).abs() < TOL);
+
+        assert!((y[0] - 0.0).abs() < TOL);
+        assert!((y[p.Ny - 1] - p.Ly).abs() < TOL);
+        assert!((y[p.Ny - 1] - y[0] - p.Ly).abs() < TOL);
+        assert!((y[1] - y[0] - p.Ly / ((p.Ny - 1) as f32)).abs() < TOL);
+
+        assert!((z[0] - 0.0).abs() < TOL);
+        assert!((z[p.Nz - 1] - p.Lz).abs() < TOL);
+        assert!((z[p.Nz - 1] - z[0] - p.Lz).abs() < TOL);
+        assert!((z[1] - z[0] - p.Lz / ((p.Nz - 1) as f32)).abs() < TOL);
+    }
+
+    #[test]
+    fn test_linear_wave_numbers_physical_box() {
+        let p = crate::unconstrained::StencilParams {
+            L: 1.0,
+            gamma: 0.0,
+            Lx: 10.0,
+            Ly: 20.0,
+            Lz: 30.0,
+            Nx: 10,
+            Ny: 10,
+            Nz: 10,
+            aperiodic_x: false,
+            aperiodic_y: false,
+            aperiodic_z: false,
+        };
+        let (kx, ky, kz) = p.linear_wave_numbers();
+
+        assert_eq!(kx.len(), p.Nx);
+        assert_eq!(ky.len(), p.Ny);
+        assert_eq!(kz.len(), p.Nz / 2 + 1);
+        assert!((kx[1] - 1.0 / p.Lx).abs() < TOL);
+        assert!((ky[1] - 1.0 / p.Ly).abs() < TOL);
+        assert!((kz[1] - 1.0 / p.Lz).abs() < TOL);
+        assert!((kx[p.Nx - 1] + 1.0 / p.Lx).abs() < TOL);
+    }
+
+    #[test]
+    fn test_aperiodic_linear_wave_numbers_physical_box() {
+        let p = crate::unconstrained::StencilParams {
+            L: 1.0,
+            gamma: 0.0,
+            Lx: 10.0,
+            Ly: 20.0,
+            Lz: 30.0,
+            Nx: 10,
+            Ny: 10,
+            Nz: 10,
+            aperiodic_x: true,
+            aperiodic_y: false,
+            aperiodic_z: false,
+        };
+
+        let (kx, ky, kz) = p.aperiodic_linear_wave_numbers();
+        let Nx_ext = 2 * p.Nx - 1;
+        let Lx_ext = 2.0 * p.Lx;
+
+        assert_eq!(kx.len(), Nx_ext);
+        assert_eq!(ky.len(), p.Ny);
+        assert_eq!(kz.len(), p.Nz / 2 + 1);
+        assert!((kx[1] - 1.0 / Lx_ext).abs() < TOL);
+        assert!((kx[Nx_ext - 1] + 1.0 / Lx_ext).abs() < TOL);
+        assert!((ky[1] - 1.0 / p.Ly).abs() < TOL);
+        assert!((kz[1] - 1.0 / p.Lz).abs() < TOL);
+    }
+
+    #[test]
     fn test_distance_matrix() {
         let x: Array1<f32> = array![1.0, 2.0, 4.0];
 
