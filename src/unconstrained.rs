@@ -29,9 +29,9 @@ pub struct StencilParams {
 impl StencilParams {
     pub fn get_axes(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
         (
-            Array1::from_iter((0..self.Nx).map(|i| i as f32 * self.Lx / self.Nx as f32)),
-            Array1::from_iter((0..self.Ny).map(|j| j as f32 * self.Ly / self.Ny as f32)),
-            Array1::from_iter((0..self.Nz).map(|k| k as f32 * self.Lz / self.Nz as f32)),
+            Array1::from_iter((0..self.Nx).map(|i| i as f32 * self.Lx / ((self.Nx - 1) as f32))),
+            Array1::from_iter((0..self.Ny).map(|j| j as f32 * self.Ly / ((self.Ny - 1) as f32))),
+            Array1::from_iter((0..self.Nz).map(|k| k as f32 * self.Lz / ((self.Nz - 1) as f32))),
         )
     }
 
