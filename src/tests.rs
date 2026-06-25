@@ -296,10 +296,10 @@ mod tests {
         assert_eq!(kx.len(), p.Nx);
         assert_eq!(ky.len(), p.Ny);
         assert_eq!(kz.len(), p.Nz / 2 + 1);
-        assert!((kx[1] - 1.0 / p.Lx).abs() < TOL);
-        assert!((ky[1] - 1.0 / p.Ly).abs() < TOL);
-        assert!((kz[1] - 1.0 / p.Lz).abs() < TOL);
-        assert!((kx[p.Nx - 1] + 1.0 / p.Lx).abs() < TOL);
+        assert!((kx[1] - 0.09).abs() < TOL);
+        assert!((ky[1] - 0.045).abs() < TOL);
+        assert!((kz[1] - 0.03).abs() < TOL);
+        assert!((kx[p.Nx - 1] + 0.09).abs() < TOL);
     }
 
     #[test]
@@ -325,10 +325,10 @@ mod tests {
         assert_eq!(kx.len(), Nx_ext);
         assert_eq!(ky.len(), p.Ny);
         assert_eq!(kz.len(), p.Nz / 2 + 1);
-        assert!((kx[1] - 1.0 / Lx_ext).abs() < TOL);
-        assert!((kx[Nx_ext - 1] + 1.0 / Lx_ext).abs() < TOL);
-        assert!((ky[1] - 1.0 / p.Ly).abs() < TOL);
-        assert!((kz[1] - 1.0 / p.Lz).abs() < TOL);
+        assert!((kx[1] - 0.04736842).abs() < TOL);
+        assert!((kx[Nx_ext - 1] + 0.04736842).abs() < TOL);
+        assert!((ky[1] - 0.045).abs() < TOL);
+        assert!((kz[1] - 0.03).abs() < TOL);
     }
 
     #[test]

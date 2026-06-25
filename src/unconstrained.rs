@@ -36,15 +36,16 @@ impl StencilParams {
     }
 
     pub fn linear_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
-        // Calculate linear wave number arrays.
-        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / (self.Nx as f32));
-        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / (self.Ny as f32));
-        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / (self.Nz as f32));
+        // Calculate linear wave number arrays for a physical box where L = (N - 1) * dx.
+        let kxs: Array1<f32> = fftfreq(self.Nx, self.Lx / ((self.Nx - 1) as f32));
+        let kys: Array1<f32> = fftfreq(self.Ny, self.Ly / ((self.Ny - 1) as f32));
+        let kzs: Array1<f32> = rfftfreq(self.Nz, self.Lz / ((self.Nz - 1) as f32));
         (kxs, kys, kzs)
     }
 
     pub fn aperiodic_linear_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
-        // Calculate linear wave number arrays.
+        // Calculate linear wave number arrays for an aperiodic extension of the
+        // physical box.
         let Nx: usize = if self.aperiodic_x {
             2 * self.Nx - 1
         } else {
@@ -76,9 +77,9 @@ impl StencilParams {
         } else {
             self.Lz
         };
-        let kxs: Array1<f32> = fftfreq(Nx, Lx / (Nx as f32));
-        let kys: Array1<f32> = fftfreq(Ny, Ly / (Ny as f32));
-        let kzs: Array1<f32> = rfftfreq(Nz, Lz / (Nz as f32));
+        let kxs: Array1<f32> = fftfreq(Nx, Lx / ((Nx - 1) as f32));
+        let kys: Array1<f32> = fftfreq(Ny, Ly / ((Ny - 1) as f32));
+        let kzs: Array1<f32> = rfftfreq(Nz, Lz / ((Nz - 1) as f32));
         (kxs, kys, kzs)
     }
     pub fn angular_wave_numbers(&self) -> (Array1<f32>, Array1<f32>, Array1<f32>) {
